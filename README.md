@@ -26,7 +26,7 @@ Description here.
 
 ### Install from download
 
-1. [Download the ZIP file](https://github.com/amoreaux/Sketch-Icons/raw/master/Releases/Sketch-Icons.zip) and unzip
+1. [Download the ZIP file](https://github.com/amoreaux/Sketch-Icons-V2/raw/master/releases/Sketch-Icons.zip) and unzip
 2. Open `Sketch Icons.sketchplugin`
 
 ### Install with Sketch Plugin Manager
