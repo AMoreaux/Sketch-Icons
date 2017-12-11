@@ -1,9 +1,9 @@
 {
   "compatibleVersion": 3,
   "bundleVersion": 1,
-  "name": "Sketch Icons V2",
+  "name": "Sketch Icons",
   "identifier": "import.icon.plugin.v2",
-  "version": "1.9",
+  "version": "1.9.1",
   "description": "Import your icons, apply a color mask and create a dynamic icons library.",
   "authorEmail": "moreaux.antoine@gmail.com",
   "author": "Valentin Chrétien, Antoine Moreaux",
@@ -32,7 +32,7 @@
     }
   ],
   "menu" : {
-    "title" : "Sketch Icons V2",
+    "title" : "Sketch Icons",
     "items" : [
       "import",
       "update.selected.artboard",
