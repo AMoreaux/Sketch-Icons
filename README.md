@@ -12,31 +12,31 @@ That's all. ❤️
 
 ### Import icons
 
-Depuis l'arrivée des symboles imbriqués et des bibliothèques Sketch, notre worfklow a été incroyablement amélioré. 
+Since the arrival of nested symbols and Sketch libraries, our worfklow has been incredibly improved.
 
-Mais si, comme nous, vous vous êtes demandés comment importer l'ensemble de vos icônes dans Sketch et comment leur appliquer un masque de couleur individuellement... Alors ce plug-in est fait pour vous.
+But if, like us, you have wondered how to import all of your icons into Sketch and how to apply a color mask individually... Then this plug-in is for you.
 
-Il vous suffit d'aller dans `Plugins -> Sketch Icons -> Import icons...` and select your folder or your icons. Vous pouvez également utiliser le raccourci `cmd + shit + y`.
+Just go to `Plugins -> Sketch Icons -> Import icons...` and select your folder or your icons. You can also use the keyboard shortcut `cmd + shit + y`.
 
 ![alt text](images/import-icons.gif)
 
-Et... Voilà ! Votre bibliothèque d'icônes dynamiques est prête !
+And... Voilà ! Your dynamic icons library is ready!
 
 ### Update severals icons
 
-Pour vous faire gagner encore plus de temps, nous avons conçu une fonctionnalité qui vous permet de remplacer ou de mettre à jour des icônes déjà importés dans votre bibliothèque. Vous retrouverez cette fonctionnalité dans `Plugins -> Sketch Icons -> Update icons on selected artboards...`.
+To save you even more time, we have designed a feature that allows you to replace or update icons already imported into your library. You will find this feature in `Plugins -> Sketch Icons -> Update icons on selected artboards...`.
 
 ![alt text](images/update-icons.gif)
 
 ### Add a color mask on several icons
 
-Si vous souhaitez appliquer un masque de couleur sur un icône - ou un ensemble d'icônes - vous pouvez vous aider de la fonctionnalité `Plugins -> Sketch Icons -> Apply a color mask on selected artboards...`.
+If you want to apply a color mask to an icon - or a set of icons - you can use this functionality `Plugins -> Sketch Icons -> Apply a color mask on selected artboards...`.
 
 ![alt text](images/add-mask-icons.gif)
 
-C'est à peu près tout ce que vous devez savoir. Cela devrait vous faire gagner beaucoup de temps ! 
+That's about all you need to know. This should save you a lot of time! 
 
-N'hésitez pas à revenir vers nous. Vos avis nous intéressent :)
+Do not hesitate to come back to us. We want your feedback :)
 
 ## How to install the plugin
 
