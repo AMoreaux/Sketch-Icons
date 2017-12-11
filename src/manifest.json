@@ -1,17 +1,43 @@
 {
   "compatibleVersion": 3,
   "bundleVersion": 1,
+  "name": "Sketch Icons V2",
+  "identifier": "import.icon.plugin.v2",
+  "version": "1.9",
+  "description": "Import your icons, apply a color mask and create a dynamic icons library.",
+  "authorEmail": "moreaux.antoine@gmail.com",
+  "author": "Valentin Chrétien, Antoine Moreaux",
   "commands": [
     {
-      "name": "my-command",
-      "identifier": "my-command-identifier",
-      "script": "./my-command.js"
+      "script": "commands.js",
+      "handler": "importIcons",
+      "shortcut": "command shift y",
+      "name": "Import icons...",
+      "identifier": "import",
+      "description" : "Import your icons library"
+    },
+    {
+      "script": "commands.js",
+      "handler": "updateIconsOnSelectedArtboards",
+      "name": "Update icons on selected artboards...",
+      "identifier": "update.selected.artboard",
+      "description" : "Update icons on selected artboards"
+    },
+    {
+      "script": "commands.js",
+      "handler": "addMaskOnSelectedArtboards",
+      "name": "Add color mask on selected artboards...",
+      "identifier": "mask.selected.artboard",
+      "description" : "Apply mask on selecteds artboard"
     }
   ],
-  "menu": {
-    "title": "my-plugin",
-    "items": [
-      "my-command-identifier"
+  "menu" : {
+    "title" : "Sketch Icons V2",
+    "items" : [
+      "import",
+      "update.selected.artboard",
+      "-",
+      "mask.selected.artboard"
     ]
   }
 }

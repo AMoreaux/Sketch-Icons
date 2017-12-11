@@ -1,8 +1,69 @@
-# my-plugin
+# Sketch Icons
 
-_This plugin was created using `skpm`. For a detailed explanation on how things work, checkout the [skpm Readme](https://github.com/skpm/skpm/blob/master/README.md)._
+Import a set of icons, apply a color mask and create a dynamic icons library.
 
-## Usage
+1. Select a folder or a selection of icons.
+2. Apply automatically a color mask.
+3. Enjoy your dynamic icons library.
+
+That's all.
+
+## Import icons
+
+![alt text](images/import-icons.gif)
+
+## Update severals icons
+
+![alt text](images/update-icons.gif)
+
+## Add a color mask on several icons
+
+![alt text](images/add-mask-icons.gif)
+
+Description here.
+
+## How to install the plugin
+
+### Install from download
+
+1. [Download the ZIP file](https://github.com/amoreaux/Sketch-Icons/raw/master/Releases/Sketch-Icons.zip) and unzip
+2. Open `Sketch Icons.sketchplugin`
+
+### Install with Sketch Plugin Manager
+
+### Install with Sketchpacks
+
+<!-- <a href="https://sketchpacks.com/sonburn/symbol-instance-locator/install"> -->
+	<!-- <img width="160" height="41" src="http://sketchpacks-com.s3.amazonaws.com/assets/badges/sketchpacks-badge-install.png" > -->
+<!-- </a> -->
+
+### Install with Sketch runner
+
+<!-- <a href="http://bit.ly/SketchRunnerWebsite"> -->
+	<!-- <img width="160" height="41" src="http://bit.ly/RunnerBadgeBlue" alt="runner-badge-blue"> -->
+<!-- </a> -->
+
+### Shout me a coffee
+
+<a href="https://www.paypal.me/AntoineMoreaux">
+	<img width="160" height="41" src="https://raw.githubusercontent.com/DWilliames/PDF-export-sketch-plugin/master/images/paypal-badge.png">
+</a>
+
+## Contact
+
+Sketch Icons is designed by [Valentin Chrétien](https://twitter.com/valentinchrt) and developed by [Antoine Moreaux](https://twitter.com/Antoine_Moreaux).
+
+Don't hesitate to send us a message!
+
+## Contribute
+
+If you'd like the plugin to do something that it doesn't do or want to report a bug please use the github issue tracker on github.
+
+### Fork / Patches / Pull requests
+
+You are very welcome to send patches or pull requests.
+
+### DEVELOPERS Usage
 
 Install the dependencies
 
@@ -28,46 +89,4 @@ Additionally, if you wish to run the plugin every time it is built:
 npm run start
 ```
 
-## Custom Configuration
-
-### Babel
-
-To customize Babel, you have two options:
-
-* You may create a [`.babelrc`](https://babeljs.io/docs/usage/babelrc) file in your project's root directory. Any settings you define here will overwrite matching config-keys within skpm preset. For example, if you pass a "presets" object, it will replace & reset all Babel presets that skpm defaults to.
-
-* If you'd like to modify or add to the existing Babel config, you must use a `webpack.skpm.config.js` file. Visit the [Webpack](#webpack) section for more info.
-
-### Webpack
-
-To customize webpack create `webpack.skpm.config.js` file which exports function that will change webpack's config.
-
-```js
-/**
- * Function that mutates original webpack config.
- * Supports asynchronous changes when promise is returned.
- *
- * @param {object} config - original webpack config.
- * @param {boolean} isPluginCommand - wether the config is for a plugin command or a resource
- **/
-module.exports = function (config, isPluginCommand) {
-  /** you can change config here **/
-}
-```
-
-## Debugging
-
-To view the output of your `console.log`, you have a few different options:
-
-* Use the [`sketch-dev-tools`](https://github.com/skpm/sketch-dev-tools)
-* Open `Console.app` and look for the sketch logs
-* Look at the `~/Library/Logs/com.bohemiancoding.sketch3/Plugin Output.log` file
-
-Skpm provides a convenient way to do the latter:
-
-```bash
-skpm log
-```
-
-The `-f` option causes `skpm log` to not stop when the end of logs is reached, but rather to wait for additional data to be appended to the input
 
