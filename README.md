@@ -16,7 +16,7 @@ Depuis l'arrivée des symboles imbriqués et des bibliothèques Sketch, notre wo
 
 Mais si, comme nous, vous vous êtes demandés comment importer l'ensemble de vos icônes dans Sketch et comment leur appliquer un masque de couleur individuellement... Alors ce plug-in est fait pour vous.
 
-Il vous suffit d'aller dans Plugins -> Sketch Icons -> Import your icons and select your folder or your icons. Vous pouvez également utiliser le raccourci `cmd + shit + y.
+Il vous suffit d'aller dans Plugins -> Sketch Icons -> Import your icons and select your folder or your icons. Vous pouvez également utiliser le raccourci `cmd + shit + y`.
 
 ![alt text](images/import-icons.gif)
 
