@@ -30,7 +30,7 @@ Pour vous faire gagner encore plus de temps, nous avons conçu une fonctionnalit
 
 ### Add a color mask on several icons
 
-Si vous souhaitez appliquer un masque de couleur sur un icône - ou un ensemble d'icônes - vous pouvez vous aider de la fonctionnalité `Plugins -> Sketch Icons -> Apply a color mask on selected artboards....
+Si vous souhaitez appliquer un masque de couleur sur un icône - ou un ensemble d'icônes - vous pouvez vous aider de la fonctionnalité `Plugins -> Sketch Icons -> Apply a color mask on selected artboards...`.
 
 ![alt text](images/add-mask-icons.gif)
 
