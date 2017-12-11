@@ -16,7 +16,7 @@ Depuis l'arrivée des symboles imbriqués et des bibliothèques Sketch, notre wo
 
 Mais si, comme nous, vous vous êtes demandés comment importer l'ensemble de vos icônes dans Sketch et comment leur appliquer un masque de couleur individuellement... Alors ce plug-in est fait pour vous.
 
-Il vous suffit d'aller dans Plugins -> Sketch Icons -> Import your icons and select your folder or your icons. Vous pouvez également utiliser le raccourci `cmd + shit + y`.
+Il vous suffit d'aller dans `Plugins -> Sketch Icons -> Import icons...` and select your folder or your icons. Vous pouvez également utiliser le raccourci `cmd + shit + y`.
 
 ![alt text](images/import-icons.gif)
 
@@ -24,13 +24,13 @@ Et... Voilà ! Votre bibliothèque d'icônes dynamiques est prête !
 
 ### Update severals icons
 
-Pour vous faire gagner encore plus de temps, nous avons conçu une fonctionnalité qui vous permet de remplacer ou de mettre à jour des icônes déjà importés dans votre bibliothèque. Vous retrouverez cette fonctionnalité dans Plugins -> Sketch Icons -> Update your icons.
+Pour vous faire gagner encore plus de temps, nous avons conçu une fonctionnalité qui vous permet de remplacer ou de mettre à jour des icônes déjà importés dans votre bibliothèque. Vous retrouverez cette fonctionnalité dans `Plugins -> Sketch Icons -> Update icons on selected artboards...`.
 
 ![alt text](images/update-icons.gif)
 
 ### Add a color mask on several icons
 
-Si vous souhaitez appliquer un masque de couleur sur un icône - ou un ensemble d'icônes - vous pouvez vous aider de la fonctionnalité "Apply a color mask on selected artboards".
+Si vous souhaitez appliquer un masque de couleur sur un icône - ou un ensemble d'icônes - vous pouvez vous aider de la fonctionnalité `Plugins -> Sketch Icons -> Apply a color mask on selected artboards....
 
 ![alt text](images/add-mask-icons.gif)
 
