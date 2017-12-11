@@ -14,7 +14,7 @@ That's all. ❤️
 
 Since the arrival of nested symbols and Sketch libraries, our worfklow has been incredibly improved.
 
-But if, like us, you have wondered how to import all of your icons into Sketch and how to apply a color mask individually... Then this plug-in is for you.
+But if, like us, you have wondered how to import all of your icons into Sketch and how to apply a color mask individually... Then this plug-in is made for you.
 
 Just go to `Plugins -> Sketch Icons -> Import icons...` and select your folder or your icons. You can also use the keyboard shortcut `cmd + shit + y`.
 
