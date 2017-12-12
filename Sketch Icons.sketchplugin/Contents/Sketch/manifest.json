@@ -14,30 +14,32 @@
       "shortcut": "command shift y",
       "name": "Import icons...",
       "identifier": "import",
-      "description" : "Import your icons library"
+      "description": "Import your icons library"
     },
     {
       "script": "commands.js",
       "handler": "updateIconsOnSelectedArtboards",
       "name": "Update icons on selected artboards...",
       "identifier": "update.selected.artboard",
-      "description" : "Update icons on selected artboards"
+      "description": "Update icons on selected artboards"
     },
     {
       "script": "commands.js",
       "handler": "addMaskOnSelectedArtboards",
       "name": "Add color mask on selected artboards...",
       "identifier": "mask.selected.artboard",
-      "description" : "Apply mask on selecteds artboard"
+      "description": "Apply mask on selecteds artboard"
     }
   ],
-  "menu" : {
-    "title" : "Sketch Icons",
-    "items" : [
+  "menu": {
+    "title": "Sketch Icons",
+    "items": [
       "import",
       "update.selected.artboard",
       "-",
       "mask.selected.artboard"
     ]
-  }
+  },
+  "disableCocoaScriptPreprocessor": true,
+  "appcast": "https://raw.githubusercontent.com//master/.appcast.xml"
 }

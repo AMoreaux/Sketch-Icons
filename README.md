@@ -26,16 +26,14 @@ Description here.
 
 ### Install from download
 
-1. [Download the ZIP file](https://github.com/amoreaux/Sketch-Icons/raw/master/release/Sketch-Icons.zip) and unzip
+1. [Download the ZIP file](https://github.com/AMoreaux/Sketch-Icons/releases/latest) and unzip
 2. Open `Sketch Icons.sketchplugin`
 
 ### Install with Sketch Plugin Manager
 
 ### Install with Sketchpacks
 
-<!-- <a href="https://sketchpacks.com/sonburn/symbol-instance-locator/install"> -->
-	<!-- <img width="160" height="41" src="http://sketchpacks-com.s3.amazonaws.com/assets/badges/sketchpacks-badge-install.png" > -->
-<!-- </a> -->
+[![Install PLUGIN NAME with Sketchpacks](http://sketchpacks-com.s3.amazonaws.com/assets/badges/sketchpacks-badge-install.png "Install PLUGIN NAME with Sketchpacks")](https://sketchpacks.com/AMoreaux/Sketch-Icons/install)
 
 ### Install with Sketch runner
 

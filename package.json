@@ -1,13 +1,13 @@
 {
-  "name": "my-plugin",
+  "name": "Sketch Icons",
   "version": "0.1.0",
   "engines": {
     "sketch": ">=3.0"
   },
   "skpm": {
-    "name": "my-plugin",
+    "name": "Sketch Icons",
     "manifest": "src/manifest.json",
-    "main": "plugin.sketchplugin"
+    "main": "Sketch Icons.sketchplugin"
   },
   "scripts": {
     "build": "skpm-build",
