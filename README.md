@@ -48,7 +48,7 @@ We recommend methods 1, 2 and 3. These are simpler and cleaner ways.
 
 Open Sketchpacks, search for "Sketch Icons", and click "Install". Or you may click the "Install it with Sketchpacks" button below :)
 
-[![Install PLUGIN NAME with Sketchpacks](http://sketchpacks-com.s3.amazonaws.com/assets/badges/sketchpacks-badge-install.png "Install PLUGIN NAME with Sketchpacks")](https://sketchpacks.com/AMoreaux/Sketch-Icons/install)
+[![Install Sketch Icons with Sketchpacks](images/sketchpacks.png)](https://sketchpacks.com/AMoreaux/Sketch-Icons/install)
 
 ### Method 2: Sketch runner
 
