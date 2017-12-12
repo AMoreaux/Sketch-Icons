@@ -50,11 +50,11 @@ Open Sketchpacks, search for "Sketch Icons", and click "Install". Or you may cli
 
 ### Method 2: Sketch runner
 
-Open Sketch Runner, search for "Sketch Icons", and click "Install". Or you may click the "Install it with Sketch Runner" button below :)
+Open Sketch Runner, search for "Sketch Icons", and click "Install".
 
-<!-- <a href="http://bit.ly/SketchRunnerWebsite"> -->
-	<!-- <img width="160" height="41" src="http://bit.ly/RunnerBadgeBlue" alt="runner-badge-blue"> -->
-<!-- </a> -->
+<a href="http://bit.ly/SketchRunnerWebsite">
+	<img width="320" height="82" src="http://bit.ly/RunnerBadgeBlue" alt="runner-badge-blue">
+</a>
 
 ### Method 3: Sketch Plugin Manager
 
