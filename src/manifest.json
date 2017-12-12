@@ -2,7 +2,7 @@
   "compatibleVersion": 3,
   "bundleVersion": 1,
   "name": "Sketch Icons",
-  "identifier": "import.icon.plugin",
+  "identifier": "sketch.icons.plugin",
   "version": "1.0.0",
   "description": "Import your icons, apply a color mask and create a dynamic icons library.",
   "authorEmail": "moreaux.antoine@gmail.com",
