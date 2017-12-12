@@ -1,4 +1,4 @@
-![alt text](images/import-icons-cover.jpg)
+![alt text](images/sketch-icons-cover.jpg)
 
 # Sketch Icons
 
