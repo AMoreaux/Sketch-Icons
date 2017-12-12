@@ -60,11 +60,7 @@ Open Sketch Runner, search for "Sketch Icons", and click "Install".
 	<img width="160" height="41" src="http://bit.ly/RunnerBadgeBlue" alt="runner-badge-blue">
 </a>
 
-### Method 3: Sketch Plugin Manager
-
-Open Sketch Plugin Manager, search for "Sketch Icons", and click "Install".
-
-### Method 4: Manually
+### Method 3: Manually
 
 1. [Download the ZIP file](https://github.com/AMoreaux/Sketch-Icons/releases/latest) and unzip
 2. Open `Sketch Icons.sketchplugin`
@@ -80,41 +76,3 @@ If you have any questions, feel free to contact us directly on Twitter or by ema
 <a href="https://www.paypal.me/AntoineMoreaux">
 	<img width="160" height="41" src="https://raw.githubusercontent.com/DWilliames/PDF-export-sketch-plugin/master/images/paypal-badge.png">
 </a>
-
-# DEVELOPERS
-
-## Contribute
-
-If you'd like the plugin to do something that it doesn't do or want to report a bug please use the github issue tracker on github.
-
-### Fork / Patches / Pull requests
-
-You are very welcome to send patches or pull requests.
-
-## Usage
-
-Install the dependencies
-
-```bash
-npm install
-```
-
-Once the installation is done, you can run some commands inside the project folder:
-
-```bash
-npm run build
-```
-
-To watch for changes:
-
-```bash
-npm run watch
-```
-
-Additionally, if you wish to run the plugin every time it is built:
-
-```bash
-npm run start
-```
-
-

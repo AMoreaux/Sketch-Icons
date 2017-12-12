@@ -12,9 +12,10 @@
     "sketch": ">=3.0"
   },
   "skpm": {
-    "name": "Sketch Icons",
+    "name": "Sketch-Icons",
     "manifest": "src/manifest.json",
-    "main": "Sketch Icons.sketchplugin"
+    "main": "Sketch Icons.sketchplugin",
+    "title": "Sketch Icons"
   },
   "scripts": {
     "build": "skpm-build",
