@@ -48,19 +48,21 @@ We recommend methods 1, 2 and 3. These are simpler and cleaner ways.
 
 Open Sketchpacks, search for "Sketch Icons", and click "Install". Or you may click the "Install it with Sketchpacks" button below :)
 
-[![Install Sketch Icons with Sketchpacks](images/sketchpacks.png)](https://sketchpacks.com/AMoreaux/Sketch-Icons/install)
+<a href="https://sketchpacks.com/AMoreaux/Sketch-Icons/install">
+  <img width="160" height="41" src="http://sketchpacks-com.s3.amazonaws.com/assets/badges/sketchpacks-badge-install.png" >
+</a>
 
 ### Method 2: Sketch runner
 
 Open Sketch Runner, search for "Sketch Icons", and click "Install".
 
 <a href="http://bit.ly/SketchRunnerWebsite">
-	<img width="320" height="82" src="http://bit.ly/RunnerBadgeBlue" alt="runner-badge-blue">
+	<img width="160" height="41" src="http://bit.ly/RunnerBadgeBlue" alt="runner-badge-blue">
 </a>
 
 ### Method 3: Sketch Plugin Manager
 
-Open Sketch Plugin Manager, search for "Sketch Icons", and click "Install". Or you may click the "Install it with Sketch Plugin Manager" button below :)
+Open Sketch Plugin Manager, search for "Sketch Icons", and click "Install".
 
 ### Method 4: Manually
 
