@@ -1,3 +1,5 @@
+![alt text](images/import-icons-cover.jpg)
+
 # Sketch Icons
 
 A Sketch plugin that allows you to import a set of icons and automatically apply a color mask.
