@@ -2,11 +2,12 @@
   "compatibleVersion": 3,
   "bundleVersion": 1,
   "name": "Sketch Icons",
-  "identifier": "sketch.icons.plugin",
+  "identifier": "com.amoreaux.sketch-icons",
   "version": "1.0.0",
   "description": "Import your icons, apply a color mask and create a dynamic icons library.",
   "authorEmail": "moreaux.antoine@gmail.com",
   "author": "Valentin Chrétien, Antoine Moreaux",
+  "appcast": "https://raw.githubusercontent.com/AMoreaux/Sketch-Icons/master/Sketch%20Icons.sketchplugin/Contents/Sketch/appcast.xml",
   "commands": [
     {
       "script": "commands.js",
