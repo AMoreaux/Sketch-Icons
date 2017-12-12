@@ -4,7 +4,7 @@ A Sketch plugin that allows you to import a set of icons and automatically apply
 
 ## Features
 
-1. Select a folder or a set of icons.
+1. Import a folder or a set of icons.
 2. Choose a color library and apply automatically a color mask.
 3. Enjoy your dynamic icons library.
 
