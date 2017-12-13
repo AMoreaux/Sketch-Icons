@@ -18,7 +18,7 @@ That's all. ❤️
 
 ### Import icons
 
-Just go to `Plugins -> Sketch Icons -> Import icons...` and select your folder or your icons. You can also use the keyboard shortcut `cmd + shit + y`.
+Just go to `Plugins -> Sketch Icons -> Import icons...` and select your folder or your icons. You can also use the keyboard shortcut `cmd + shift + y`.
 
 ![alt text](images/import-icons.gif)
 
