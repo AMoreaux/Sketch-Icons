@@ -75,7 +75,7 @@ If you have any questions, feel free to contact us directly on Twitter or [drop 
 
 If this plugin saves you time, do not hesitate to send us small messages of thanks! 
 
-You can also [offer us some beers](https://www.paypal.me/AntoineMoreaux).
+You can also [offer us some beers or coffees](https://www.paypal.me/AntoineMoreaux).
 
 <a href="https://www.paypal.me/AntoineMoreaux">
 	<img width="160" height="41" src="https://raw.githubusercontent.com/DWilliames/PDF-export-sketch-plugin/master/images/paypal-badge.png">
