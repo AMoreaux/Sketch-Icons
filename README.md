@@ -69,7 +69,7 @@ Open Sketch Runner, search for "Sketch Icons", and click "Install".
 
 Sketch Icons is designed by [Valentin Chrétien](https://twitter.com/valentinchrt) and developed by [Antoine Moreaux](https://twitter.com/Antoine_Moreaux).
 
-If you have any questions, feel free to contact us directly on Twitter or [drop us an email]<moreaux.antoine@gmail.com>. Feedback is always appreciated :)
+If you have any questions, feel free to contact us directly on Twitter or [drop us an email](mailto:moreaux.antoine@gmail.com). Feedback is always appreciated :)
 
 ### Thanks guys!
 
