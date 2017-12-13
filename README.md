@@ -6,6 +6,10 @@ A Sketch plugin that allows you to import a set of icons and automatically apply
 
 ## Features
 
+Since the arrival of nested symbols and Sketch libraries, our worfklow has been incredibly improved.
+
+But if, like us, you have wondered how to import all of your icons into Sketch and how to apply a color mask individually... Then this plug-in is made for you.
+
 1. Import a folder or a set of icons.
 2. Choose a color library and apply automatically a color mask.
 3. Enjoy your dynamic icons library.
@@ -13,10 +17,6 @@ A Sketch plugin that allows you to import a set of icons and automatically apply
 That's all. ❤️
 
 ### Import icons
-
-Since the arrival of nested symbols and Sketch libraries, our worfklow has been incredibly improved.
-
-But if, like us, you have wondered how to import all of your icons into Sketch and how to apply a color mask individually... Then this plug-in is made for you.
 
 Just go to `Plugins -> Sketch Icons -> Import icons...` and select your folder or your icons. You can also use the keyboard shortcut `cmd + shit + y`.
 
