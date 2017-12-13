@@ -42,7 +42,7 @@ Do not hesitate to come back to us. We want your feedback :)
 
 ## How to install the plugin
 
-We recommend methods 1, 2 and 3. These are simpler and cleaner ways.
+We recommend installing the plugin with Sketchpacks or Sketch Runner.
 
 ### Method 1: Sketchpacks
 
@@ -69,9 +69,13 @@ Open Sketch Runner, search for "Sketch Icons", and click "Install".
 
 Sketch Icons is designed by [Valentin Chrétien](https://twitter.com/valentinchrt) and developed by [Antoine Moreaux](https://twitter.com/Antoine_Moreaux).
 
-If you have any questions, feel free to contact us directly on Twitter or by email. Feedback is always appreciated :)
+If you have any questions, feel free to contact us directly on Twitter or [drop us an email]<moreaux.antoine@gmail.>. Feedback is always appreciated :)
 
-### Shout me a coffee
+### Thanks guys!
+
+If this plugin saves you time, do not hesitate to send us small messages of thanks! 
+
+You can also [offer us some beers](https://www.paypal.me/AntoineMoreaux).
 
 <a href="https://www.paypal.me/AntoineMoreaux">
 	<img width="160" height="41" src="https://raw.githubusercontent.com/DWilliames/PDF-export-sketch-plugin/master/images/paypal-badge.png">
