@@ -59,7 +59,7 @@ Open Sketchpacks, search for "Sketch Icons", and click "Install". Or you may cli
 
 ## Contact/Feedback
 
-Sketch Icons is designed by Valentin Chrétien ([@valentinchrt])(https://twitter.com/valentinchrt) and developed by Antoine Moreaux ([@AMoreaux])(https://twitter.com/Antoine_Moreaux).
+Sketch Icons is designed by [Valentin Chrétien](https://twitter.com/valentinchrt) and developed by [Antoine Moreaux](https://twitter.com/Antoine_Moreaux).
 
 If you have any questions, feel free to contact us directly on Twitter or [drop us an email](mailto:moreaux.antoine@gmail.com). Feedback is always appreciated :)
 
