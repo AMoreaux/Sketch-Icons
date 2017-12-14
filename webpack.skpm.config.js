@@ -1,6 +1,7 @@
 'use strict'
 
 const CopyWebpackPlugin = require('copy-webpack-plugin')
+const merge = require('lodash.merge')
 const { skpm } = require('./package.json')
 const path = require('path')
 
@@ -19,6 +20,6 @@ const webpackConfig = {
 
 module.exports = function (config, isPluginCommand) {
   if (isPluginCommand) {
-    Object.assign(config, webpackConfig)
+    merge(config, webpackConfig)
   }
 }

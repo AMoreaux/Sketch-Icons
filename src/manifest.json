@@ -10,7 +10,7 @@
   "icon": "icons/icon-square-1.jpg",
   "commands": [
     {
-      "script": "commands.js",
+      "script": "./commands.js",
       "handler": "importIcons",
       "shortcut": "command shift y",
       "name": "Import icons...",
@@ -19,7 +19,7 @@
       "icon": "icons/icon-square-1.jpg"
     },
     {
-      "script": "commands.js",
+      "script": "./commands.js",
       "handler": "updateIconsOnSelectedArtboards",
       "name": "Update icons on selected artboards...",
       "identifier": "update.selected.artboard",
@@ -27,7 +27,7 @@
       "description" : "Update icons on selected artboards"
     },
     {
-      "script": "commands.js",
+      "script": "./commands.js",
       "handler": "addMaskOnSelectedArtboards",
       "name": "Add color mask on selected artboards...",
       "identifier": "mask.selected.artboard",
