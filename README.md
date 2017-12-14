@@ -6,6 +6,10 @@ A Sketch plugin that allows you to import a set of icons and automatically apply
 
 ## Features
 
+Since the arrival of nested symbols and Sketch libraries, our worfklow has been incredibly improved.
+
+But if, like us, you have wondered how to import all of your icons into Sketch and how to apply a color mask individually... Then this plug-in is made for you.
+
 1. Import a folder or a set of icons.
 2. Choose a color library and apply automatically a color mask.
 3. Enjoy your dynamic icons library.
@@ -14,11 +18,7 @@ That's all. ❤️
 
 ### Import icons
 
-Since the arrival of nested symbols and Sketch libraries, our worfklow has been incredibly improved.
-
-But if, like us, you have wondered how to import all of your icons into Sketch and how to apply a color mask individually... Then this plug-in is made for you.
-
-Just go to `Plugins -> Sketch Icons -> Import icons...` and select your folder or your icons. You can also use the keyboard shortcut `cmd + shit + y`.
+Just go to `Plugins -> Sketch Icons -> Import icons...` and select your folder or your icons. You can also use the keyboard shortcut `cmd + shift + y`.
 
 ![alt text](images/import-icons.gif)
 
@@ -42,7 +42,7 @@ Do not hesitate to come back to us. We want your feedback :)
 
 ## How to install the plugin
 
-We recommend methods 1, 2 and 3. These are simpler and cleaner ways.
+We recommend installing the plugin with Sketchpacks or Sketch Runner.
 
 ### Method 1: Sketchpacks
 
@@ -69,9 +69,13 @@ Open Sketch Runner, search for "Sketch Icons", and click "Install".
 
 Sketch Icons is designed by [Valentin Chrétien](https://twitter.com/valentinchrt) and developed by [Antoine Moreaux](https://twitter.com/Antoine_Moreaux).
 
-If you have any questions, feel free to contact us directly on Twitter or by email. Feedback is always appreciated :)
+If you have any questions, feel free to contact us directly on Twitter or [drop us an email](mailto:moreaux.antoine@gmail.com). Feedback is always appreciated :)
 
-### Shout me a coffee
+### Thanks guys!
+
+If this plugin saves you time, do not hesitate to send us small messages of thanks! 
+
+You can also [offer us some beers or coffees](https://www.paypal.me/AntoineMoreaux).
 
 <a href="https://www.paypal.me/AntoineMoreaux">
 	<img width="160" height="41" src="https://raw.githubusercontent.com/DWilliames/PDF-export-sketch-plugin/master/images/paypal-badge.png">
