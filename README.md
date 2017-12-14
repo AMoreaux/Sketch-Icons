@@ -20,7 +20,7 @@ That's all. ❤️
 
 Just go to `Plugins -> Sketch Icons -> Import icons...` and select your folder or your icons. You can also use the keyboard shortcut `cmd + shift + y`.
 
-![alt text](images/import-icons.gif)
+![alt text](https://github.com/AMoreaux/Sketch-Icons/blob/master/images/import-icons.gif)
 
 And... Voilà ! Your dynamic icons library is ready!
 
@@ -28,13 +28,13 @@ And... Voilà ! Your dynamic icons library is ready!
 
 To save you even more time, we have designed a feature that allows you to replace or update icons already imported into your library. You will find this feature in `Plugins -> Sketch Icons -> Update icons on selected artboards...`.
 
-![alt text](images/update-icons.gif)
+![alt text](https://github.com/AMoreaux/Sketch-Icons/blob/master/images/update-icons.gif)
 
 ### Add a color mask on several icons
 
 If you want to apply a color mask to an icon - or a set of icons - you can use this functionality `Plugins -> Sketch Icons -> Apply a color mask on selected artboards...`.
 
-![alt text](images/add-mask-icons.gif)
+![alt text](https://github.com/AMoreaux/Sketch-Icons/blob/master/images/add-mask-icons.gif)
 
 That's about all you need to know. This should save you a lot of time!
 
