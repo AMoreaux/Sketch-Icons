@@ -119,7 +119,6 @@ function createCheckBoxes() {
   }]
 }
 
-
 /**
  * @name createMaskFields
  * @description create fields for mask params to add mask
@@ -128,27 +127,27 @@ function createCheckBoxes() {
  */
 function createMaskFields(checkboxFields, context) {
 
-  const colorLibsMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(0, 0, 120, 20));
-  const colorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(140, 0, 50, 20));
-  const documentColorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(200, 0, 50, 20));
+  const colorLibsMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(0, 0, 130, 20));
+  const colorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(140, 0, 130, 20));
+  // const documentColorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(200, 0, 50, 20));
 
   colorLibsMenu.setEnabled(false)
   colorMenu.setEnabled(false)
-  documentColorMenu.setEnabled(false)
+  // documentColorMenu.setEnabled(false)
 
   colorLibsMenu.menu = libraries.initLibsSelectList(libraries.getLibs(), colorMenu);
-  libraries.initColorSelectList(documentColorMenu, utils.getDocumentColors(context))
+  // libraries.initColorSelectList(documentColorMenu, utils.getDocumentColors(context))
 
   if (checkboxFields) {
     checkboxFields[1].item.setCOSJSTargetFunction(function (mask) {
       if (mask.state()) {
         colorLibsMenu.setEnabled(true)
-        documentColorMenu.setEnabled(true)
+        // documentColorMenu.setEnabled(true)
         if (colorMenu.selectedItem()) colorMenu.setEnabled(true)
       } else {
         colorLibsMenu.setEnabled(false)
         colorMenu.setEnabled(false)
-        documentColorMenu.setEnabled(false)
+        // documentColorMenu.setEnabled(false)
       }
     });
   } else {
@@ -171,15 +170,17 @@ function createMaskFields(checkboxFields, context) {
       let currentItem = this.item.selectedItem()
       return (currentItem) ? currentItem.representedObject() : null
     }
-  }, {
-    item: documentColorMenu,
-    label: utils.createLabel('Document Color', 200, 25, 130, 20),
-    name: 'colorDoc',
-    getter: function () {
-      let currentItem = this.item.selectedItem()
-      return (currentItem) ? currentItem.representedObject() : null
-    }
-  }]
+  }
+    //   {
+    //   item: documentColorMenu,
+    //   label: utils.createLabel('Document Color', 200, 25, 130, 20),
+    //   name: 'colorDoc',
+    //   getter: function () {
+    //     let currentItem = this.item.selectedItem()
+    //     return (currentItem) ? currentItem.representedObject() : null
+    //   }
+    // }
+  ]
 }
 
 /**
@@ -187,14 +188,16 @@ function createMaskFields(checkboxFields, context) {
  * @description append fields on view to create modal
  * @param view {Object} : NSView
  * @param viewSize {Object} :
+ * @param withLabelBottom {Boolean}
  * @param allFields
  */
-function appendsFields({view, viewSize}, allFields) {
+function appendsFields({view, viewSize}, allFields, withLabelBottom) {
   allFields.reverse().forEach(function (fields) {
-    const viewCell = NSView.alloc().initWithFrame(NSMakeRect(0, view.subviews().length * 50, viewSize.width, 50));
+    const y = (withLabelBottom) ? view.subviews().length * 50 + 25 : view.subviews().length * 50;
+    const viewCell = NSView.alloc().initWithFrame(NSMakeRect(0, y, viewSize.width, 50));
     fields.forEach(function (field) {
       if (field.label) viewCell.addSubview(field.label);
-      viewCell.addSubview(field.item);
+      if (field.item) viewCell.addSubview(field.item);
     })
     view.addSubview(viewCell)
   })
@@ -224,7 +227,7 @@ function getParams(allFields) {
  */
 function setNextKey(fields) {
   fields.forEach((field, index) => {
-    if (fields[index + 1]) field.item.setNextKeyView(fields[index + 1].item)
+    if (fields[index + 1] && field.item) field.item.setNextKeyView(fields[index + 1].item)
   })
 }
 

@@ -47,18 +47,16 @@ function addMask(context, currentArtboard, params) {
  */
 function createMask(context, currentArtboard, colorSymbolMaster, colorLibrary) {
   utils.clearSelection(context)
-  librairiesController = AppController.sharedInstance().librariesController()
-  symbolMaster = librairiesController.importForeignSymbol_fromLibrary_intoDocument(colorSymbolMaster, colorLibrary, context.document.documentData())
+  const librairiesController = AppController.sharedInstance().librariesController()
+  const symbolMaster = librairiesController.importForeignSymbol_fromLibrary_intoDocument(colorSymbolMaster, colorLibrary, context.document.documentData())
 
-  symbolInstance = symbolMaster.symbolMaster().newSymbolInstance();
+  const symbolInstance = symbolMaster.symbolMaster().newSymbolInstance();
 
   const currentArtboardSize = currentArtboard.rect()
   symbolInstance.setHeightRespectingProportions(currentArtboardSize.size.height)
   symbolInstance.setWidthRespectingProportions(currentArtboardSize.size.width)
   symbolInstance.setName('🎨 color')
   currentArtboard.addLayer(symbolInstance);
-  logger.info(currentArtboard.layers()[2].isMasked())
-  logger.info(currentArtboard.layers()[2])
   currentArtboard.layers()[0].prepareAsMask()
 }
 

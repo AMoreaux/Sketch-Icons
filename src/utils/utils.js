@@ -34,16 +34,17 @@ function getIconNameByNSUrl(icon){
  * @param y {Number}
  * @param w {Number}
  * @param h {Number}
+ * @param fontSize {Number}
  * @returns {Object} : NSTextField
  */
-function createLabel(name, x, y, w, h) {
+function createLabel(name, x, y, w, h, fontSize = 13) {
 
   const label = NSTextField.alloc().initWithFrame_(NSMakeRect(x, y, w, h));
   label.setEditable_(false);
   label.setSelectable_(false);
   label.setBezeled_(false);
   label.setDrawsBackground_(false);
-  label.setFont(NSFont.systemFontOfSize_(13));
+  label.setFont(NSFont.systemFontOfSize_(fontSize));
   label.setStringValue_(name);
   return label;
 }
@@ -60,7 +61,7 @@ function getSelectedArtboardsAndSymbols(context) {
   context.selection.forEach(function (layer) {
       let className = String(layer.class())
       if (className !== 'MSArtboardGroup' || className !== 'MSSymbolMaster') {
-        layer = layer.parentArtboard()
+        layer = layer.parentRoot()
         className = String(layer.class())
       }
 

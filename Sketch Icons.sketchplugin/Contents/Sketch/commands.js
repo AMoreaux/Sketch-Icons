@@ -111,16 +111,19 @@ function getIconNameByNSUrl(icon) {
  * @param y {Number}
  * @param w {Number}
  * @param h {Number}
+ * @param fontSize {Number}
  * @returns {Object} : NSTextField
  */
 function createLabel(name, x, y, w, h) {
+  var fontSize = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 13;
+
 
   var label = NSTextField.alloc().initWithFrame_(NSMakeRect(x, y, w, h));
   label.setEditable_(false);
   label.setSelectable_(false);
   label.setBezeled_(false);
   label.setDrawsBackground_(false);
-  label.setFont(NSFont.systemFontOfSize_(13));
+  label.setFont(NSFont.systemFontOfSize_(fontSize));
   label.setStringValue_(name);
   return label;
 }
@@ -137,7 +140,7 @@ function getSelectedArtboardsAndSymbols(context) {
   context.selection.forEach(function (layer) {
     var className = String(layer['class']());
     if (className !== 'MSArtboardGroup' || className !== 'MSSymbolMaster') {
-      layer = layer.parentArtboard();
+      layer = layer.parentRoot();
       className = String(layer['class']());
     }
 
@@ -428,18 +431,16 @@ function addMask(context, currentArtboard, params) {
  */
 function createMask(context, currentArtboard, colorSymbolMaster, colorLibrary) {
   _utils2['default'].clearSelection(context);
-  librairiesController = AppController.sharedInstance().librariesController();
-  symbolMaster = librairiesController.importForeignSymbol_fromLibrary_intoDocument(colorSymbolMaster, colorLibrary, context.document.documentData());
+  var librairiesController = AppController.sharedInstance().librariesController();
+  var symbolMaster = librairiesController.importForeignSymbol_fromLibrary_intoDocument(colorSymbolMaster, colorLibrary, context.document.documentData());
 
-  symbolInstance = symbolMaster.symbolMaster().newSymbolInstance();
+  var symbolInstance = symbolMaster.symbolMaster().newSymbolInstance();
 
   var currentArtboardSize = currentArtboard.rect();
   symbolInstance.setHeightRespectingProportions(currentArtboardSize.size.height);
   symbolInstance.setWidthRespectingProportions(currentArtboardSize.size.width);
   symbolInstance.setName('🎨 color');
   currentArtboard.addLayer(symbolInstance);
-  _logger2['default'].info(currentArtboard.layers()[2].isMasked());
-  _logger2['default'].info(currentArtboard.layers()[2]);
   currentArtboard.layers()[0].prepareAsMask();
 }
 
@@ -929,27 +930,27 @@ function createCheckBoxes() {
  */
 function createMaskFields(checkboxFields, context) {
 
-  var colorLibsMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(0, 0, 120, 20));
-  var colorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(140, 0, 50, 20));
-  var documentColorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(200, 0, 50, 20));
+  var colorLibsMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(0, 0, 130, 20));
+  var colorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(140, 0, 130, 20));
+  // const documentColorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(200, 0, 50, 20));
 
   colorLibsMenu.setEnabled(false);
   colorMenu.setEnabled(false);
-  documentColorMenu.setEnabled(false);
+  // documentColorMenu.setEnabled(false)
 
   colorLibsMenu.menu = _libraries2['default'].initLibsSelectList(_libraries2['default'].getLibs(), colorMenu);
-  _libraries2['default'].initColorSelectList(documentColorMenu, _utils2['default'].getDocumentColors(context));
+  // libraries.initColorSelectList(documentColorMenu, utils.getDocumentColors(context))
 
   if (checkboxFields) {
     checkboxFields[1].item.setCOSJSTargetFunction(function (mask) {
       if (mask.state()) {
         colorLibsMenu.setEnabled(true);
-        documentColorMenu.setEnabled(true);
+        // documentColorMenu.setEnabled(true)
         if (colorMenu.selectedItem()) colorMenu.setEnabled(true);
       } else {
         colorLibsMenu.setEnabled(false);
         colorMenu.setEnabled(false);
-        documentColorMenu.setEnabled(false);
+        // documentColorMenu.setEnabled(false)
       }
     });
   } else {
@@ -980,18 +981,15 @@ function createMaskFields(checkboxFields, context) {
 
       return getter;
     }()
-  }, {
-    item: documentColorMenu,
-    label: _utils2['default'].createLabel('Document Color', 200, 25, 130, 20),
-    name: 'colorDoc',
-    getter: function () {
-      function getter() {
-        var currentItem = this.item.selectedItem();
-        return currentItem ? currentItem.representedObject() : null;
-      }
-
-      return getter;
-    }()
+    //   {
+    //   item: documentColorMenu,
+    //   label: utils.createLabel('Document Color', 200, 25, 130, 20),
+    //   name: 'colorDoc',
+    //   getter: function () {
+    //     let currentItem = this.item.selectedItem()
+    //     return (currentItem) ? currentItem.representedObject() : null
+    //   }
+    // }
   }];
 }
 
@@ -1000,17 +998,19 @@ function createMaskFields(checkboxFields, context) {
  * @description append fields on view to create modal
  * @param view {Object} : NSView
  * @param viewSize {Object} :
+ * @param withLabelBottom {Boolean}
  * @param allFields
  */
-function appendsFields(_ref2, allFields) {
+function appendsFields(_ref2, allFields, withLabelBottom) {
   var view = _ref2.view,
       viewSize = _ref2.viewSize;
 
   allFields.reverse().forEach(function (fields) {
-    var viewCell = NSView.alloc().initWithFrame(NSMakeRect(0, view.subviews().length * 50, viewSize.width, 50));
+    var y = withLabelBottom ? view.subviews().length * 50 + 25 : view.subviews().length * 50;
+    var viewCell = NSView.alloc().initWithFrame(NSMakeRect(0, y, viewSize.width, 50));
     fields.forEach(function (field) {
       if (field.label) viewCell.addSubview(field.label);
-      viewCell.addSubview(field.item);
+      if (field.item) viewCell.addSubview(field.item);
     });
     view.addSubview(viewCell);
   });
@@ -1040,7 +1040,7 @@ function getParams(allFields) {
  */
 function setNextKey(fields) {
   fields.forEach(function (field, index) {
-    if (fields[index + 1]) field.item.setNextKeyView(fields[index + 1].item);
+    if (fields[index + 1] && field.item) field.item.setNextKeyView(fields[index + 1].item);
   });
 }
 
@@ -1240,8 +1240,7 @@ function getImportIconsParams(context) {
 
   var viewSize = {
     width: 300,
-    height: 150
-
+    height: 175
   };
 
   var modalParams = {
@@ -1255,8 +1254,12 @@ function getImportIconsParams(context) {
   var artboardFields = _modals2['default'].createArtboardFields();
 
   var allFields = [artboardFields, checkboxFields, maskFields];
-  _modals2['default'].appendsFields(modal, allFields);
+  _modals2['default'].appendsFields(modal, allFields, true);
   _modals2['default'].setNextKey(_utils2['default'].flatten(allFields));
+
+  var viewCell = NSView.alloc().initWithFrame(NSMakeRect(0, 0, viewSize.width, 25));
+  viewCell.addSubview(_utils2['default'].createLabel('Works only with color symbols.', 0, 0, 300, 20, 11));
+  modal.view.addSubview(viewCell);
 
   return Object.assign(_modals2['default'].getMainButtonParam(_modals2['default'].runModal(modal)), _modals2['default'].getParams(allFields));
 }

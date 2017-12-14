@@ -15,8 +15,7 @@ function getImportIconsParams(context) {
 
   const viewSize = {
     width: 300,
-    height: 150
-
+    height: 175
   }
 
   const modalParams = {
@@ -30,8 +29,12 @@ function getImportIconsParams(context) {
   const artboardFields = modals.createArtboardFields()
 
   const allFields = [artboardFields, checkboxFields, maskFields]
-  modals.appendsFields(modal, allFields)
+  modals.appendsFields(modal, allFields, true)
   modals.setNextKey(utils.flatten(allFields))
+
+  const viewCell = NSView.alloc().initWithFrame(NSMakeRect(0, 0, viewSize.width, 25));
+  viewCell.addSubview(utils.createLabel('Works only with color symbols.', 0, 0, 300, 20, 11))
+  modal.view.addSubview(viewCell)
 
   return Object.assign(
     modals.getMainButtonParam(modals.runModal(modal)),
