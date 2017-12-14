@@ -47,7 +47,7 @@ function createArtboard(context, index, icon) {
   newArtboardFrame.setHeight(artboardParams.size.height)
   newArtboardFrame.setX(artboardParams.position.x)
   newArtboardFrame.setY(artboardParams.position.y)
-  context.document.currentPage().addLayers(NSArray.arrayWithObjects(newArtboard))
+  context.document.currentPage().addLayers([newArtboard])
   return newArtboard
 }
 

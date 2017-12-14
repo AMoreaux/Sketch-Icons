@@ -1,4 +1,5 @@
 import utils from '../utils/utils'
+import logger from '../utils/logger'
 import librairiesProvider from './libraries'
 
 export default {

@@ -1,3 +1,5 @@
+import logger from '../utils/logger'
+
 export default {
   selectIconsFiles,
   getFilesByUrls
@@ -9,12 +11,13 @@ export default {
  * @returns {Array.NSFile}
  */
 function selectIconsFiles() {
+
   const panel = NSOpenPanel.openPanel();
   panel.setAllowsMultipleSelection(true);
   panel.setCanChooseDirectories(true);
-  panel.setAllowedFileTypes(NSArray.arrayWithObjects("svg"))
+  panel.setAllowedFileTypes(["svg"]);
   panel.setCanChooseFiles(true);
-  panel.setPrompt("Select")
+  panel.setPrompt("Select");
 
   if (panel.runModal() !== NSFileHandlingPanelOKButton) return []
 
