@@ -16,6 +16,7 @@ function getImportIconsParams(context) {
   const viewSize = {
     width: 300,
     height: 150
+
   }
 
   const modalParams = {
@@ -25,7 +26,7 @@ function getImportIconsParams(context) {
 
   const modal = modals.newModal(context, viewSize, modalParams)
   const checkboxFields = modals.createCheckBoxes()
-  const maskFields = modals.createMaskFields(checkboxFields)
+  const maskFields = modals.createMaskFields(checkboxFields, context)
   const artboardFields = modals.createArtboardFields()
 
   const allFields = [artboardFields, checkboxFields, maskFields]

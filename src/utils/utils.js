@@ -3,7 +3,8 @@ export default {
   getIconNameByNSUrl,
   createLabel,
   getSelectedArtboardsAndSymbols,
-  flatten
+  flatten,
+  getDocumentColors
 }
 
 /**
@@ -81,4 +82,13 @@ function getSelectedArtboardsAndSymbols(context) {
  */
 function flatten(list){
   return list.reduce((a, b) => a.concat(Array.isArray(b) ? flatten(b) : b), []);
+}
+
+/**
+ * @name getDocumentColors
+ * @param context
+ * @return {Array}
+ */
+function getDocumentColors(context){
+  return context.document.documentData().assets().colors()
 }

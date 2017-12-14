@@ -126,24 +126,29 @@ function createCheckBoxes() {
  * @param checkboxFields {Object}
  * @returns {[null,null]}
  */
-function createMaskFields(checkboxFields) {
+function createMaskFields(checkboxFields, context) {
 
-  const colorLibsMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(0, 0, 130, 20));
-  const colorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(140, 0, 130, 20));
+  const colorLibsMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(0, 0, 120, 20));
+  const colorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(140, 0, 50, 20));
+  const documentColorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(200, 0, 50, 20));
+
   colorLibsMenu.setEnabled(false)
   colorMenu.setEnabled(false)
+  documentColorMenu.setEnabled(false)
+
   colorLibsMenu.menu = libraries.initLibsSelectList(libraries.getLibs(), colorMenu);
+  libraries.initColorSelectList(documentColorMenu, utils.getDocumentColors(context))
 
   if (checkboxFields) {
     checkboxFields[1].item.setCOSJSTargetFunction(function (mask) {
       if (mask.state()) {
         colorLibsMenu.setEnabled(true)
-        if (colorMenu.selectedItem()) {
-          colorMenu.setEnabled(true)
-        }
+        documentColorMenu.setEnabled(true)
+        if (colorMenu.selectedItem()) colorMenu.setEnabled(true)
       } else {
         colorLibsMenu.setEnabled(false)
         colorMenu.setEnabled(false)
+        documentColorMenu.setEnabled(false)
       }
     });
   } else {
@@ -162,6 +167,14 @@ function createMaskFields(checkboxFields) {
     item: colorLibsMenu,
     label: utils.createLabel('Colors Library', 0, 25, 130, 20),
     name: 'colorLib',
+    getter: function () {
+      let currentItem = this.item.selectedItem()
+      return (currentItem) ? currentItem.representedObject() : null
+    }
+  }, {
+    item: documentColorMenu,
+    label: utils.createLabel('Document Color', 200, 25, 130, 20),
+    name: 'colorDoc',
     getter: function () {
       let currentItem = this.item.selectedItem()
       return (currentItem) ? currentItem.representedObject() : null
@@ -209,9 +222,9 @@ function getParams(allFields) {
  * @description set tab path in form
  * @param fields
  */
-function setNextKey(fields){
+function setNextKey(fields) {
   fields.forEach((field, index) => {
-    if(fields[index+1])field.item.setNextKeyView(fields[index+1].item)
+    if (fields[index + 1]) field.item.setNextKeyView(fields[index + 1].item)
   })
 }
 

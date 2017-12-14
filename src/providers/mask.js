@@ -57,6 +57,8 @@ function createMask(context, currentArtboard, colorSymbolMaster, colorLibrary) {
   symbolInstance.setWidthRespectingProportions(currentArtboardSize.size.width)
   symbolInstance.setName('🎨 color')
   currentArtboard.addLayer(symbolInstance);
+  logger.info(currentArtboard.layers()[2].isMasked())
+  logger.info(currentArtboard.layers()[2])
   currentArtboard.layers()[0].prepareAsMask()
 }
 

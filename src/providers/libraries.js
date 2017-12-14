@@ -1,3 +1,5 @@
+import logger from "../utils/logger";
+
 export default {
   getLibs,
   getLibById,
@@ -106,14 +108,14 @@ function initLibsSelectList(libs, colorMenu) {
  */
 function initColorSelectList(popColorMenu, colors) {
 
-  function swatch(symbolColor) {
+  function swatch(color) {
     const size = CGSizeMake(14, 14);
     const image = NSImage.alloc().init()
     image.size = size
     image.lockFocus()
-    const color = MSBackgroundColorView.alloc().init()
-    color.backgroundColor = symbolColor
-    color.drawRect(NSMakeRect(0, 0, 14, 14))
+    const colorCell = MSBackgroundColorView.alloc().init()
+    colorCell.backgroundColor = color
+    colorCell.drawRect(NSMakeRect(0, 0, 14, 14))
     image.unlockFocus()
 
     return image
@@ -125,9 +127,10 @@ function initColorSelectList(popColorMenu, colors) {
 
   colors.forEach(function(color){
     let item = NSMenuItem.alloc().init()
-    item.title = color.symbol.name()
-    item.representedObject = color.symbol
-    item.image = swatch(NSColor.colorWithRed_green_blue_alpha(color.color.red(), color.color.green(), color.color.blue(), color.color.alpha()))
+    item.title = (color.symbol) ? color.symbol.name() : ""
+    let colorRGBA = (color.color) ? NSColor.colorWithRed_green_blue_alpha(color.color.red(), color.color.green(), color.color.blue(), color.color.alpha()) : NSColor.colorWithRed_green_blue_alpha(color.red(), color.green(), color.blue(), color.alpha())
+    item.representedObject = (color.symbol)  ? color.symbol : colorRGBA
+    item.image = swatch(colorRGBA)
     menu.addItem(item)
   })
 

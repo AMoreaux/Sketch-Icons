@@ -80,7 +80,8 @@ exports['default'] = {
   getIconNameByNSUrl: getIconNameByNSUrl,
   createLabel: createLabel,
   getSelectedArtboardsAndSymbols: getSelectedArtboardsAndSymbols,
-  flatten: flatten
+  flatten: flatten,
+  getDocumentColors: getDocumentColors
 
   /**
    * @name clearSelection
@@ -161,6 +162,15 @@ function flatten(list) {
   }, []);
 }
 
+/**
+ * @name getDocumentColors
+ * @param context
+ * @return {Array}
+ */
+function getDocumentColors(context) {
+  return context.document.documentData().assets().colors();
+}
+
 /***/ }),
 /* 1 */
 /***/ (function(module, exports) {
@@ -201,11 +211,18 @@ exports['default'] = function () {
 
 /***/ }),
 /* 2 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+
+var _logger = __webpack_require__(1);
+
+var _logger2 = _interopRequireDefault(_logger);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
 exports["default"] = {
   getLibs: getLibs,
   getLibById: getLibById,
@@ -314,14 +331,14 @@ function initLibsSelectList(libs, colorMenu) {
  */
 function initColorSelectList(popColorMenu, colors) {
 
-  function swatch(symbolColor) {
+  function swatch(color) {
     var size = CGSizeMake(14, 14);
     var image = NSImage.alloc().init();
     image.size = size;
     image.lockFocus();
-    var color = MSBackgroundColorView.alloc().init();
-    color.backgroundColor = symbolColor;
-    color.drawRect(NSMakeRect(0, 0, 14, 14));
+    var colorCell = MSBackgroundColorView.alloc().init();
+    colorCell.backgroundColor = color;
+    colorCell.drawRect(NSMakeRect(0, 0, 14, 14));
     image.unlockFocus();
 
     return image;
@@ -333,9 +350,10 @@ function initColorSelectList(popColorMenu, colors) {
 
   colors.forEach(function (color) {
     var item = NSMenuItem.alloc().init();
-    item.title = color.symbol.name();
-    item.representedObject = color.symbol;
-    item.image = swatch(NSColor.colorWithRed_green_blue_alpha(color.color.red(), color.color.green(), color.color.blue(), color.color.alpha()));
+    item.title = color.symbol ? color.symbol.name() : "";
+    var colorRGBA = color.color ? NSColor.colorWithRed_green_blue_alpha(color.color.red(), color.color.green(), color.color.blue(), color.color.alpha()) : NSColor.colorWithRed_green_blue_alpha(color.red(), color.green(), color.blue(), color.alpha());
+    item.representedObject = color.symbol ? color.symbol : colorRGBA;
+    item.image = swatch(colorRGBA);
     menu.addItem(item);
   });
 
@@ -420,6 +438,8 @@ function createMask(context, currentArtboard, colorSymbolMaster, colorLibrary) {
   symbolInstance.setWidthRespectingProportions(currentArtboardSize.size.width);
   symbolInstance.setName('🎨 color');
   currentArtboard.addLayer(symbolInstance);
+  _logger2['default'].info(currentArtboard.layers()[2].isMasked());
+  _logger2['default'].info(currentArtboard.layers()[2]);
   currentArtboard.layers()[0].prepareAsMask();
 }
 
@@ -907,24 +927,29 @@ function createCheckBoxes() {
  * @param checkboxFields {Object}
  * @returns {[null,null]}
  */
-function createMaskFields(checkboxFields) {
+function createMaskFields(checkboxFields, context) {
 
-  var colorLibsMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(0, 0, 130, 20));
-  var colorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(140, 0, 130, 20));
+  var colorLibsMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(0, 0, 120, 20));
+  var colorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(140, 0, 50, 20));
+  var documentColorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(200, 0, 50, 20));
+
   colorLibsMenu.setEnabled(false);
   colorMenu.setEnabled(false);
+  documentColorMenu.setEnabled(false);
+
   colorLibsMenu.menu = _libraries2['default'].initLibsSelectList(_libraries2['default'].getLibs(), colorMenu);
+  _libraries2['default'].initColorSelectList(documentColorMenu, _utils2['default'].getDocumentColors(context));
 
   if (checkboxFields) {
     checkboxFields[1].item.setCOSJSTargetFunction(function (mask) {
       if (mask.state()) {
         colorLibsMenu.setEnabled(true);
-        if (colorMenu.selectedItem()) {
-          colorMenu.setEnabled(true);
-        }
+        documentColorMenu.setEnabled(true);
+        if (colorMenu.selectedItem()) colorMenu.setEnabled(true);
       } else {
         colorLibsMenu.setEnabled(false);
         colorMenu.setEnabled(false);
+        documentColorMenu.setEnabled(false);
       }
     });
   } else {
@@ -947,6 +972,18 @@ function createMaskFields(checkboxFields) {
     item: colorLibsMenu,
     label: _utils2['default'].createLabel('Colors Library', 0, 25, 130, 20),
     name: 'colorLib',
+    getter: function () {
+      function getter() {
+        var currentItem = this.item.selectedItem();
+        return currentItem ? currentItem.representedObject() : null;
+      }
+
+      return getter;
+    }()
+  }, {
+    item: documentColorMenu,
+    label: _utils2['default'].createLabel('Document Color', 200, 25, 130, 20),
+    name: 'colorDoc',
     getter: function () {
       function getter() {
         var currentItem = this.item.selectedItem();
@@ -1204,6 +1241,7 @@ function getImportIconsParams(context) {
   var viewSize = {
     width: 300,
     height: 150
+
   };
 
   var modalParams = {
@@ -1213,7 +1251,7 @@ function getImportIconsParams(context) {
 
   var modal = _modals2['default'].newModal(context, viewSize, modalParams);
   var checkboxFields = _modals2['default'].createCheckBoxes();
-  var maskFields = _modals2['default'].createMaskFields(checkboxFields);
+  var maskFields = _modals2['default'].createMaskFields(checkboxFields, context);
   var artboardFields = _modals2['default'].createArtboardFields();
 
   var allFields = [artboardFields, checkboxFields, maskFields];
