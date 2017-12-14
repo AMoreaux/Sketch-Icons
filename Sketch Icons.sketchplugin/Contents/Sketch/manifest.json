@@ -1,6 +1,7 @@
 {
   "compatibleVersion": 3,
   "bundleVersion": 1,
+  "version": "1.0.18",
   "name": "Sketch Icons",
   "identifier": "com.amoreaux.sketch-icons",
   "description": "Import your icons, apply a color mask and create a dynamic icons library.",
@@ -44,6 +45,5 @@
       "mask.selected.artboard"
     ]
   },
-  "version": "1.0.18",
   "disableCocoaScriptPreprocessor": true
 }
