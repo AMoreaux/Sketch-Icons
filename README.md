@@ -42,7 +42,7 @@ Do not hesitate to come back to us. We want your feedback :)
 
 ## How to install the plugin
 
-We recommend installing the plugin with Sketchpacks or Sketch Runner.
+We recommend installing the plugin with Sketchpacks.
 
 ### Method 1: Sketchpacks
 
