@@ -1,7 +1,3 @@
-var that = this;
-function __skpm_run (key, context) {
-  that.context = context;
-
 var exports =
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -1239,13 +1235,3 @@ function getAddMaskOnSelectedArtboardsParams(context) {
 
 /***/ })
 /******/ ]);
-  if (key === 'default' && typeof exports === 'function') {
-    exports(context);
-  } else {
-    exports[key](context);
-  }
-}
-that['importIcons'] = __skpm_run.bind(this, 'importIcons');
-that['onRun'] = __skpm_run.bind(this, 'default');
-that['updateIconsOnSelectedArtboards'] = __skpm_run.bind(this, 'updateIconsOnSelectedArtboards');
-that['addMaskOnSelectedArtboards'] = __skpm_run.bind(this, 'addMaskOnSelectedArtboards')

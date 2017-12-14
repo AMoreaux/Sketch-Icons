@@ -8,6 +8,7 @@
   "authorEmail": "moreaux.antoine@gmail.com",
   "author": "Valentin Chrétien, Antoine Moreaux",
   "appcast": "https://raw.githubusercontent.com/AMoreaux/Sketch-Icons/master/.appcast.xml",
+  "icon": "icons/icon-square-1.jpg",
   "commands": [
     {
       "script": "commands.js",
@@ -15,13 +16,15 @@
       "shortcut": "command shift y",
       "name": "Import icons...",
       "identifier": "import",
-      "description" : "Import your icons library"
+      "description" : "Import your icons library",
+      "icon": "icons/icon-square-1.jpg"
     },
     {
       "script": "commands.js",
       "handler": "updateIconsOnSelectedArtboards",
       "name": "Update icons on selected artboards...",
       "identifier": "update.selected.artboard",
+      "icon": "icons/icon-square-1.jpg",
       "description" : "Update icons on selected artboards"
     },
     {
@@ -29,6 +32,7 @@
       "handler": "addMaskOnSelectedArtboards",
       "name": "Add color mask on selected artboards...",
       "identifier": "mask.selected.artboard",
+      "icon": "icons/icon-square-1.jpg",
       "description" : "Apply mask on selecteds artboard"
     }
   ],
