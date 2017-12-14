@@ -52,22 +52,14 @@ Open Sketchpacks, search for "Sketch Icons", and click "Install". Or you may cli
   <img width="160" height="41" src="http://sketchpacks-com.s3.amazonaws.com/assets/badges/sketchpacks-badge-install.png" >
 </a>
 
-### Method 2: Sketch runner
-
-Open Sketch Runner, search for "Sketch Icons", and click "Install".
-
-<a href="http://bit.ly/SketchRunnerWebsite">
-	<img width="160" height="41" src="http://bit.ly/RunnerBadgeBlue" alt="runner-badge-blue">
-</a>
-
-### Method 3: Manually
+### Method 2: Manually
 
 1. [Download the ZIP file](https://github.com/AMoreaux/Sketch-Icons/releases/latest) and unzip
 2. Open `Sketch Icons.sketchplugin`
 
 ## Contact/Feedback
 
-Sketch Icons is designed by [Valentin Chrétien](https://twitter.com/valentinchrt) and developed by [Antoine Moreaux](https://twitter.com/Antoine_Moreaux).
+Sketch Icons is designed by Valentin Chrétien [@valentinchrt](https://twitter.com/valentinchrt) and developed by Antoine Moreaux [@AMoreaux](https://twitter.com/Antoine_Moreaux).
 
 If you have any questions, feel free to contact us directly on Twitter or [drop us an email](mailto:moreaux.antoine@gmail.com). Feedback is always appreciated :)
 
