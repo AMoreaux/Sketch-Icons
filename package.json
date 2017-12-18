@@ -28,5 +28,10 @@
     "copy-webpack-plugin": "^4.3.0",
     "lodash": "^4.17.4",
     "lodash.merge": "^4.6.0"
+  },
+  "dependencies": {
+    "react": "^16.2.0",
+    "react-dom": "^16.2.0",
+    "sketch-module-web-view": "^0.2.6"
   }
 }

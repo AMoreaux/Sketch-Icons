@@ -81,7 +81,8 @@ exports['default'] = {
   createLabel: createLabel,
   getSelectedArtboardsAndSymbols: getSelectedArtboardsAndSymbols,
   flatten: flatten,
-  getDocumentColors: getDocumentColors
+  getDocumentColors: getDocumentColors,
+  createWebview: createWebview
 
   /**
    * @name clearSelection
@@ -172,6 +173,39 @@ function flatten(list) {
  */
 function getDocumentColors(context) {
   return context.document.documentData().assets().colors();
+}
+
+/**
+ * @name createWebview
+ * @param context
+ * @param handlers
+ * @param title
+ * @param height
+ * @return {WebUI}
+ */
+function createWebview(context) {
+  var handlers = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+  var title = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+  var height = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 300;
+
+  var v = 242 / 255;
+  var grayColor = NSColor.colorWithRed_green_blue_alpha(v, v, v, 1);
+  var options = {
+    identifier: 'unique.id',
+    x: 0,
+    y: 0,
+    width: 630,
+    height: height,
+    background: grayColor,
+    blurredBackground: false,
+    onlyShowCloseButton: false,
+    title: title,
+    hideTitleBar: false,
+    shouldKeepAround: true,
+    resizable: false
+    // handlers: handlers,
+  };
+  return new WebUI(context, 'index.html', options);
 }
 
 /***/ }),
@@ -940,6 +974,8 @@ function createMaskFields(checkboxFields, context) {
 
   colorLibsMenu.menu = _libraries2['default'].initLibsSelectList(_libraries2['default'].getLibs(), colorMenu);
   // libraries.initColorSelectList(documentColorMenu, utils.getDocumentColors(context))
+
+  _utils2['default'].createWebview();
 
   if (checkboxFields) {
     checkboxFields[1].item.setCOSJSTargetFunction(function (mask) {

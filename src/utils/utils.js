@@ -4,7 +4,8 @@ export default {
   createLabel,
   getSelectedArtboardsAndSymbols,
   flatten,
-  getDocumentColors
+  getDocumentColors,
+  createWebview
 }
 
 /**
@@ -92,4 +93,33 @@ function flatten(list){
  */
 function getDocumentColors(context){
   return context.document.documentData().assets().colors()
+}
+
+/**
+ * @name createWebview
+ * @param context
+ * @param handlers
+ * @param title
+ * @param height
+ * @return {WebUI}
+ */
+function createWebview(context, handlers = null, title = null, height = 300) {
+  const v = 242 / 255
+  const grayColor = NSColor.colorWithRed_green_blue_alpha(v, v, v, 1)
+  let options = {
+    identifier: 'unique.id',
+    x: 0,
+    y: 0,
+    width: 630,
+    height: height,
+    background: grayColor,
+    blurredBackground: false,
+    onlyShowCloseButton: false,
+    title: title,
+    hideTitleBar: false,
+    shouldKeepAround: true,
+    resizable: false,
+    // handlers: handlers,
+  }
+  return new WebUI(context, 'index.html', options)
 }

@@ -138,6 +138,8 @@ function createMaskFields(checkboxFields, context) {
   colorLibsMenu.menu = libraries.initLibsSelectList(libraries.getLibs(), colorMenu);
   // libraries.initColorSelectList(documentColorMenu, utils.getDocumentColors(context))
 
+  utils.createWebview()
+
   if (checkboxFields) {
     checkboxFields[1].item.setCOSJSTargetFunction(function (mask) {
       if (mask.state()) {
