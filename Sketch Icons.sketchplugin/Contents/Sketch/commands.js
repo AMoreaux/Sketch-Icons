@@ -75,6 +75,55 @@ var exports =
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+
+exports['default'] = function () {
+  function _log(message) {
+    log(message);
+  }
+
+  function debug(message) {
+    log('DEBUG: ' + message);
+  }
+
+  function info(message) {
+    log('INFO: ' + message);
+  }
+
+  function warn(message) {
+    log('WARN: ' + message);
+  }
+
+  function error(message) {
+    log('ERROR: ' + message);
+  }
+
+  return {
+    log: _log,
+    debug: debug,
+    info: info,
+    warn: warn,
+    error: error
+  };
+}();
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _MochaJSDelegate = __webpack_require__(8);
+
+var _MochaJSDelegate2 = _interopRequireDefault(_MochaJSDelegate);
+
+var _logger = __webpack_require__(0);
+
+var _logger2 = _interopRequireDefault(_logger);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
 exports['default'] = {
   clearSelection: clearSelection,
   getIconNameByNSUrl: getIconNameByNSUrl,
@@ -183,68 +232,28 @@ function getDocumentColors(context) {
  * @param height
  * @return {WebUI}
  */
-function createWebview(context) {
-  var handlers = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-  var title = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-  var height = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 300;
+function createWebview(context, view, size) {
 
-  var v = 242 / 255;
-  var grayColor = NSColor.colorWithRed_green_blue_alpha(v, v, v, 1);
-  var options = {
-    identifier: 'unique.id',
-    x: 0,
-    y: 0,
-    width: 630,
-    height: height,
-    background: grayColor,
-    blurredBackground: false,
-    onlyShowCloseButton: false,
-    title: title,
-    hideTitleBar: false,
-    shouldKeepAround: true,
-    resizable: false
-    // handlers: handlers,
-  };
-  return new WebUI(context, 'index.html', options);
+  var webView = WebView.alloc().initWithFrame(NSMakeRect(0, 0, 300, 500));
+  var windowObject = webView.windowScriptObject();
+  var delegate = new _MochaJSDelegate2['default']({
+    "webView:didFinishLoadForFrame:": function () {
+      function webViewDidFinishLoadForFrame(webView, webFrame) {
+
+        _logger2['default'].log('loaded');
+        // var rgba = MSColorToRGBA(initColor);
+        windowObject.evaluateWebScript('window.test()');
+      }
+
+      return webViewDidFinishLoadForFrame;
+    }()
+  });
+
+  webView.setDrawsBackground(false);
+  webView.setMainFrameURL_(context.plugin.urlForResourceNamed("webview.html").path());
+  webView.setFrameLoadDelegate_(delegate.getClassInstance());
+  modal.view.addSubview(webView);
 }
-
-/***/ }),
-/* 1 */
-/***/ (function(module, exports) {
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-exports['default'] = function () {
-  function _log(message) {
-    log(message);
-  }
-
-  function debug(message) {
-    log('DEBUG: ' + message);
-  }
-
-  function info(message) {
-    log('INFO: ' + message);
-  }
-
-  function warn(message) {
-    log('WARN: ' + message);
-  }
-
-  function error(message) {
-    log('ERROR: ' + message);
-  }
-
-  return {
-    log: _log,
-    debug: debug,
-    info: info,
-    warn: warn,
-    error: error
-  };
-}();
 
 /***/ }),
 /* 2 */
@@ -254,7 +263,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _logger = __webpack_require__(1);
+var _logger = __webpack_require__(0);
 
 var _logger2 = _interopRequireDefault(_logger);
 
@@ -406,11 +415,11 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _utils = __webpack_require__(0);
+var _utils = __webpack_require__(1);
 
 var _utils2 = _interopRequireDefault(_utils);
 
-var _logger = __webpack_require__(1);
+var _logger = __webpack_require__(0);
 
 var _logger2 = _interopRequireDefault(_logger);
 
@@ -551,11 +560,11 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _utils = __webpack_require__(0);
+var _utils = __webpack_require__(1);
 
 var _utils2 = _interopRequireDefault(_utils);
 
-var _logger = __webpack_require__(1);
+var _logger = __webpack_require__(0);
 
 var _logger2 = _interopRequireDefault(_logger);
 
@@ -694,7 +703,7 @@ var _artboard = __webpack_require__(4);
 
 var _artboard2 = _interopRequireDefault(_artboard);
 
-var _utils = __webpack_require__(0);
+var _utils = __webpack_require__(1);
 
 var _utils2 = _interopRequireDefault(_utils);
 
@@ -822,9 +831,13 @@ var _libraries = __webpack_require__(2);
 
 var _libraries2 = _interopRequireDefault(_libraries);
 
-var _utils = __webpack_require__(0);
+var _utils = __webpack_require__(1);
 
 var _utils2 = _interopRequireDefault(_utils);
+
+var _logger = __webpack_require__(0);
+
+var _logger2 = _interopRequireDefault(_logger);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
@@ -852,8 +865,6 @@ exports['default'] = {
 function newModal(context, viewSize, modalParams) {
 
   var modal = COSAlertWindow['new']();
-
-  // modal.setIcon(NSImage.alloc().initByReferencingFile(context.plugin.urlForResourceNamed("model1.jpg").path()));
 
   var view = NSView.alloc().initWithFrame(NSMakeRect(0, 0, viewSize.width, viewSize.height));
   modal.addAccessoryView(view);
@@ -959,14 +970,21 @@ function createCheckBoxes() {
 /**
  * @name createMaskFields
  * @description create fields for mask params to add mask
+ * @param context {Object}
+ * @param modal {Object}
  * @param checkboxFields {Object}
  * @returns {[null,null]}
  */
-function createMaskFields(checkboxFields, context) {
+function createMaskFields(context, modal, checkboxFields) {
 
   var colorLibsMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(0, 0, 130, 20));
   var colorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(140, 0, 130, 20));
   // const documentColorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(200, 0, 50, 20));
+  var pickerButton = NSButton.alloc().initWithFrame(NSMakeRect(140, 0, 40, 30));
+
+  pickerButton.setCOSJSTargetFunction(function () {
+    _utils2['default'].createWebview(context, modal);
+  });
 
   colorLibsMenu.setEnabled(false);
   colorMenu.setEnabled(false);
@@ -975,7 +993,6 @@ function createMaskFields(checkboxFields, context) {
   colorLibsMenu.menu = _libraries2['default'].initLibsSelectList(_libraries2['default'].getLibs(), colorMenu);
   // libraries.initColorSelectList(documentColorMenu, utils.getDocumentColors(context))
 
-  _utils2['default'].createWebview();
 
   if (checkboxFields) {
     checkboxFields[1].item.setCOSJSTargetFunction(function (mask) {
@@ -1017,15 +1034,17 @@ function createMaskFields(checkboxFields, context) {
 
       return getter;
     }()
-    //   {
-    //   item: documentColorMenu,
-    //   label: utils.createLabel('Document Color', 200, 25, 130, 20),
-    //   name: 'colorDoc',
-    //   getter: function () {
-    //     let currentItem = this.item.selectedItem()
-    //     return (currentItem) ? currentItem.representedObject() : null
-    //   }
-    // }
+  }, {
+    item: pickerButton,
+    label: _utils2['default'].createLabel('Color Picker', 200, 25, 130, 20),
+    name: 'colorPicker',
+    getter: function () {
+      function getter() {
+        return "frite";
+      }
+
+      return getter;
+    }()
   }];
 }
 
@@ -1103,11 +1122,11 @@ exports.importIcons = importIcons;
 exports.updateIconsOnSelectedArtboards = updateIconsOnSelectedArtboards;
 exports.addMaskOnSelectedArtboards = addMaskOnSelectedArtboards;
 
-var _logger = __webpack_require__(1);
+var _logger = __webpack_require__(0);
 
 var _logger2 = _interopRequireDefault(_logger);
 
-var _utils = __webpack_require__(0);
+var _utils = __webpack_require__(1);
 
 var _utils2 = _interopRequireDefault(_utils);
 
@@ -1127,7 +1146,7 @@ var _modals = __webpack_require__(6);
 
 var _modals2 = _interopRequireDefault(_modals);
 
-var _files = __webpack_require__(8);
+var _files = __webpack_require__(9);
 
 var _files2 = _interopRequireDefault(_files);
 
@@ -1135,7 +1154,7 @@ var _svg = __webpack_require__(5);
 
 var _svg2 = _interopRequireDefault(_svg);
 
-var _importIcons = __webpack_require__(9);
+var _importIcons = __webpack_require__(10);
 
 var _importIcons2 = _interopRequireDefault(_importIcons);
 
@@ -1148,10 +1167,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'd
  */
 function importIcons(context) {
   var params = _importIcons2['default'].getImportIconsParams(context);
-  if (params.button !== 1000) return;
-  params.listIcon = _files2['default'].selectIconsFiles();
-  if (!params.listIcon.length) return;
-  _artboard2['default'].initImportIcons(context, params);
+  // if (params.button !== 1000) return
+  // params.listIcon = files.selectIconsFiles()
+  // if(!params.listIcon.length) return
+  // artboardProvider.initImportIcons(context, params)
 }
 
 /**
@@ -1184,13 +1203,106 @@ function addMaskOnSelectedArtboards(context) {
 
 /***/ }),
 /* 8 */
+/***/ (function(module, exports) {
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+//
+//  MochaJSDelegate.js
+//  MochaJSDelegate
+//
+//  Created by Matt Curtis
+//  Copyright (c) 2015. All rights reserved.
+//
+exports["default"] = MochaJSDelegate;
+
+
+function MochaJSDelegate(selectorHandlerDict) {
+  var uniqueClassName = "MochaJSDelegate_DynamicClass_" + NSUUID.UUID().UUIDString();
+
+  var delegateClassDesc = MOClassDescription.allocateDescriptionForClassWithName_superclass_(uniqueClassName, NSObject);
+
+  delegateClassDesc.registerClass();
+
+  //	Handler storage
+
+  var handlers = {};
+
+  //	Define interface
+
+  this.setHandlerForSelector = function (selectorString, func) {
+    var handlerHasBeenSet = selectorString in handlers;
+    var selector = NSSelectorFromString(selectorString);
+
+    handlers[selectorString] = func;
+
+    if (!handlerHasBeenSet) {
+      /*
+        For some reason, Mocha acts weird about arguments:
+        https://github.com/logancollins/Mocha/issues/28
+        We have to basically create a dynamic handler with a likewise dynamic number of predefined arguments.
+      */
+
+      var dynamicHandler = function dynamicHandler() {
+        var functionToCall = handlers[selectorString];
+
+        if (!functionToCall) return;
+
+        return functionToCall.apply(delegateClassDesc, arguments);
+      };
+
+      var args = [],
+          regex = /:/g;
+      while (match = regex.exec(selectorString)) {
+        args.push("arg" + args.length);
+      }dynamicFunction = eval("(function(" + args.join(",") + "){ return dynamicHandler.apply(this, arguments); })");
+
+      delegateClassDesc.addInstanceMethodWithSelector_function_(selector, dynamicFunction);
+    }
+  };
+
+  this.removeHandlerForSelector = function (selectorString) {
+    delete handlers[selectorString];
+  };
+
+  this.getHandlerForSelector = function (selectorString) {
+    return handlers[selectorString];
+  };
+
+  this.getAllHandlers = function () {
+    return handlers;
+  };
+
+  this.getClass = function () {
+    return NSClassFromString(uniqueClassName);
+  };
+
+  this.getClassInstance = function () {
+    return NSClassFromString(uniqueClassName)["new"]();
+  };
+
+  //	Conveience
+
+  if ((typeof selectorHandlerDict === "undefined" ? "undefined" : _typeof(selectorHandlerDict)) == "object") {
+    for (var selectorString in selectorHandlerDict) {
+      this.setHandlerForSelector(selectorString, selectorHandlerDict[selectorString]);
+    }
+  }
+}
+
+/***/ }),
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _logger = __webpack_require__(1);
+var _logger = __webpack_require__(0);
 
 var _logger2 = _interopRequireDefault(_logger);
 
@@ -1245,7 +1357,7 @@ function getFilesByUrls(urls) {
 }
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", {
@@ -1256,9 +1368,13 @@ var _modals = __webpack_require__(6);
 
 var _modals2 = _interopRequireDefault(_modals);
 
-var _utils = __webpack_require__(0);
+var _utils = __webpack_require__(1);
 
 var _utils2 = _interopRequireDefault(_utils);
+
+var _logger = __webpack_require__(0);
+
+var _logger2 = _interopRequireDefault(_logger);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
@@ -1275,8 +1391,8 @@ exports['default'] = {
 function getImportIconsParams(context) {
 
   var viewSize = {
-    width: 300,
-    height: 175
+    width: 500,
+    height: 375
   };
 
   var modalParams = {
@@ -1286,7 +1402,7 @@ function getImportIconsParams(context) {
 
   var modal = _modals2['default'].newModal(context, viewSize, modalParams);
   var checkboxFields = _modals2['default'].createCheckBoxes();
-  var maskFields = _modals2['default'].createMaskFields(checkboxFields, context);
+  var maskFields = _modals2['default'].createMaskFields(context, modal, checkboxFields);
   var artboardFields = _modals2['default'].createArtboardFields();
 
   var allFields = [artboardFields, checkboxFields, maskFields];

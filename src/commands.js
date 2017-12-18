@@ -17,10 +17,10 @@ import importIconsModal from './modals/importIcons';
  */
 export function importIcons(context) {
   const params = importIconsModal.getImportIconsParams(context)
-  if (params.button !== 1000) return
-  params.listIcon = files.selectIconsFiles()
-  if(!params.listIcon.length) return
-  artboardProvider.initImportIcons(context, params)
+  // if (params.button !== 1000) return
+  // params.listIcon = files.selectIconsFiles()
+  // if(!params.listIcon.length) return
+  // artboardProvider.initImportIcons(context, params)
 }
 
 /**

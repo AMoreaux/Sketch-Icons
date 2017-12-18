@@ -1,3 +1,6 @@
+import MochaJSDelegate from './MochaJSDelegate.js'
+import logger from './logger'
+
 export default {
   clearSelection,
   getIconNameByNSUrl,
@@ -23,7 +26,7 @@ function clearSelection(context) {
  * @param icon {Object} : NSUrl
  * @returns {String}
  */
-function getIconNameByNSUrl(icon){
+function getIconNameByNSUrl(icon) {
   return icon.lastPathComponent().split('.')[0]
 }
 
@@ -60,16 +63,16 @@ function getSelectedArtboardsAndSymbols(context) {
   const selectedArtboardsAndSymbols = []
 
   context.selection.forEach(function (layer) {
-      let className = String(layer.class())
-      if (className !== 'MSArtboardGroup' || className !== 'MSSymbolMaster') {
-        layer = layer.parentRoot()
-        className = String(layer.class())
-      }
+    let className = String(layer.class())
+    if (className !== 'MSArtboardGroup' || className !== 'MSSymbolMaster') {
+      layer = layer.parentRoot()
+      className = String(layer.class())
+    }
 
-      selectedArtboardsAndSymbols.push({
-        'object': layer,
-        'type': className
-      })
+    selectedArtboardsAndSymbols.push({
+      'object': layer,
+      'type': className
+    })
 
   })
 
@@ -82,8 +85,10 @@ function getSelectedArtboardsAndSymbols(context) {
  * @param list
  * @return {Array}
  */
-function flatten(list){
-  return list.reduce((a, b) => a.concat(Array.isArray(b) ? flatten(b) : b), []);
+function flatten(list) {
+  return list.reduce((a, b) => a.concat(Array.isArray(b) ? flatten(b) : b), []
+)
+  ;
 }
 
 /**
@@ -91,7 +96,7 @@ function flatten(list){
  * @param context
  * @return {Array}
  */
-function getDocumentColors(context){
+function getDocumentColors(context) {
   return context.document.documentData().assets().colors()
 }
 
@@ -103,23 +108,23 @@ function getDocumentColors(context){
  * @param height
  * @return {WebUI}
  */
-function createWebview(context, handlers = null, title = null, height = 300) {
-  const v = 242 / 255
-  const grayColor = NSColor.colorWithRed_green_blue_alpha(v, v, v, 1)
-  let options = {
-    identifier: 'unique.id',
-    x: 0,
-    y: 0,
-    width: 630,
-    height: height,
-    background: grayColor,
-    blurredBackground: false,
-    onlyShowCloseButton: false,
-    title: title,
-    hideTitleBar: false,
-    shouldKeepAround: true,
-    resizable: false,
-    // handlers: handlers,
-  }
-  return new WebUI(context, 'index.html', options)
+function createWebview(context, view, size) {
+
+  const webView = WebView.alloc().initWithFrame(NSMakeRect(0, 0, 300, 500));
+  const windowObject = webView.windowScriptObject();
+  const delegate = new MochaJSDelegate({
+    "webView:didFinishLoadForFrame:" : (function(webView, webFrame) {
+
+      logger.log('loaded')
+      // var rgba = MSColorToRGBA(initColor);
+      windowObject.evaluateWebScript(
+        'window.test()'
+      );
+    })
+  })
+
+  webView.setDrawsBackground(false)
+  webView.setMainFrameURL_(context.plugin.urlForResourceNamed("webview.html").path());
+  webView.setFrameLoadDelegate_(delegate.getClassInstance());
+  modal.view.addSubview(webView);
 }

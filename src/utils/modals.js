@@ -1,5 +1,6 @@
 import libraries from '../providers/libraries'
 import utils from '../utils/utils'
+import logger from '../utils/logger'
 
 export default {
   newModal,
@@ -25,8 +26,6 @@ export default {
 function newModal(context, viewSize, modalParams) {
 
   const modal = COSAlertWindow.new();
-
-  // modal.setIcon(NSImage.alloc().initByReferencingFile(context.plugin.urlForResourceNamed("model1.jpg").path()));
 
   const view = NSView.alloc().initWithFrame(NSMakeRect(0, 0, viewSize.width, viewSize.height));
   modal.addAccessoryView(view);
@@ -122,14 +121,21 @@ function createCheckBoxes() {
 /**
  * @name createMaskFields
  * @description create fields for mask params to add mask
+ * @param context {Object}
+ * @param modal {Object}
  * @param checkboxFields {Object}
  * @returns {[null,null]}
  */
-function createMaskFields(checkboxFields, context) {
+function createMaskFields(context, modal, checkboxFields) {
 
   const colorLibsMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(0, 0, 130, 20));
   const colorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(140, 0, 130, 20));
   // const documentColorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(200, 0, 50, 20));
+  const pickerButton = NSButton.alloc().initWithFrame(NSMakeRect(140, 0, 40, 30));
+
+  pickerButton.setCOSJSTargetFunction(function () {
+    utils.createWebview(context, modal)
+  })
 
   colorLibsMenu.setEnabled(false)
   colorMenu.setEnabled(false)
@@ -138,7 +144,6 @@ function createMaskFields(checkboxFields, context) {
   colorLibsMenu.menu = libraries.initLibsSelectList(libraries.getLibs(), colorMenu);
   // libraries.initColorSelectList(documentColorMenu, utils.getDocumentColors(context))
 
-  utils.createWebview()
 
   if (checkboxFields) {
     checkboxFields[1].item.setCOSJSTargetFunction(function (mask) {
@@ -172,16 +177,15 @@ function createMaskFields(checkboxFields, context) {
       let currentItem = this.item.selectedItem()
       return (currentItem) ? currentItem.representedObject() : null
     }
+  }, {
+    item: pickerButton,
+    label: utils.createLabel('Color Picker', 200, 25, 130, 20),
+    name: 'colorPicker',
+    getter: function () {
+      return "frite"
+    }
   }
-    //   {
-    //   item: documentColorMenu,
-    //   label: utils.createLabel('Document Color', 200, 25, 130, 20),
-    //   name: 'colorDoc',
-    //   getter: function () {
-    //     let currentItem = this.item.selectedItem()
-    //     return (currentItem) ? currentItem.representedObject() : null
-    //   }
-    // }
+
   ]
 }
 
@@ -228,7 +232,7 @@ function getParams(allFields) {
  * @param fields
  */
 function setNextKey(fields) {
-  fields.forEach((field, index) => {
+  fields.forEach(function (field, index) {
     if (fields[index + 1] && field.item) field.item.setNextKeyView(fields[index + 1].item)
   })
 }

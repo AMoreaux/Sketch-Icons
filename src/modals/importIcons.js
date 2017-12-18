@@ -1,5 +1,6 @@
 import modals from '../utils/modals'
 import utils from '../utils/utils'
+import logger from '../utils/logger'
 
 export default {
   getImportIconsParams,
@@ -14,8 +15,8 @@ export default {
 function getImportIconsParams(context) {
 
   const viewSize = {
-    width: 300,
-    height: 175
+    width: 500,
+    height: 375
   }
 
   const modalParams = {
@@ -25,7 +26,7 @@ function getImportIconsParams(context) {
 
   const modal = modals.newModal(context, viewSize, modalParams)
   const checkboxFields = modals.createCheckBoxes()
-  const maskFields = modals.createMaskFields(checkboxFields, context)
+  const maskFields = modals.createMaskFields(context, modal, checkboxFields)
   const artboardFields = modals.createArtboardFields()
 
   const allFields = [artboardFields, checkboxFields, maskFields]
