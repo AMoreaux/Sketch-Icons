@@ -107,8 +107,9 @@ function initImportIcons(context, params) {
  * @returns {{iconPadding: Number, artboardSize: Number}}
  */
 function getPaddingAndSize(artboard){
+  const icon = artboard.layers()[0].rect()
   return {
-    iconPadding: parseInt(artboard.layers()[0].rect().origin.x),
-    artboardSize: parseInt(artboard.rect().size.width)
+    iconPadding: parseInt(Math.min(icon.origin.x, icon.origin.y)),
+    artboardSize: parseInt(icon.size.width)
   }
 }

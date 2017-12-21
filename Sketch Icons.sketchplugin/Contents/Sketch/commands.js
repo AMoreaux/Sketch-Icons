@@ -468,7 +468,7 @@ function dedupeLayers(currentArtboard) {
   });
 
   container.setName("icon");
-  // container.resizeToFitChildrenWithOption(0)
+  container.resizeToFitChildrenWithOption(0);
 }
 
 /***/ }),
@@ -763,9 +763,10 @@ function initImportIcons(context, params) {
  * @returns {{iconPadding: Number, artboardSize: Number}}
  */
 function getPaddingAndSize(artboard) {
+  var icon = artboard.layers()[0].rect();
   return {
-    iconPadding: parseInt(artboard.layers()[0].rect().origin.x),
-    artboardSize: parseInt(artboard.rect().size.width)
+    iconPadding: parseInt(Math.min(icon.origin.x, icon.origin.y)),
+    artboardSize: parseInt(icon.size.width)
   };
 }
 
@@ -1177,6 +1178,7 @@ function initUpdateIconsSelectedArtboards(context, artboards, listIcon) {
     var layers = artboard.object.layers();
     var isMasked = _utils2['default'].isArtboardMasked(artboard.object);
     var params = Object.assign(_artboard2['default'].getPaddingAndSize(artboard.object), { iconPath: listIcon[index] });
+    _logger2['default'].log(params);
     layers[0].removeFromParent();
     addSVG(context, artboard.object, params.iconPadding, params.iconPath);
     if (isMasked) {

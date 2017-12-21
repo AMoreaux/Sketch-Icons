@@ -127,5 +127,5 @@ function dedupeLayers(currentArtboard) {
   })
 
   container.setName("icon")
-  // container.resizeToFitChildrenWithOption(0)
+  container.resizeToFitChildrenWithOption(0)
 }
