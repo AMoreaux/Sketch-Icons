@@ -30,7 +30,8 @@
     "@skpm/builder": "^0.2.0",
     "copy-webpack-plugin": "^4.3.0",
     "lodash": "^4.17.4",
-    "lodash.merge": "^4.6.0"
+    "lodash.merge": "^4.6.0",
+    "rename-output-webpack-plugin": "^1.0.1"
   },
   "dependencies": {
     "react": "^16.2.0",

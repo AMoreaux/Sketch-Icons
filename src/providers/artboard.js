@@ -48,6 +48,7 @@ function createArtboard(context, index, icon) {
   newArtboardFrame.setX(artboardParams.position.x)
   newArtboardFrame.setY(artboardParams.position.y)
   context.document.currentPage().addLayers([newArtboard])
+
   return newArtboard
 }
 
@@ -85,16 +86,16 @@ function initImportIcons(context, params) {
   initArtboardsParams(context)
   let newArtboard;
   params.listIcon.forEach(function (icon, index) {
-    // try {
+    try {
       newArtboard = createArtboard(context, index, icon)
       svg.addSVG(context, newArtboard, params.iconPadding, icon)
-      if (params.withMask && params.color && params.colorLib) mask.addMask(context, newArtboard, params)
+      if (params.withMask) mask.addMask(context, newArtboard, params)
       if(params.convertSymbol)MSSymbolMaster.convertArtboardToSymbol(newArtboard)
-    // } catch (e) {
-    //   logger.log("Sorry, Error !!!")
-    //   logger.log(e)
-    //   logger.log(icon)
-    // }
+    } catch (e) {
+      logger.log("Sorry, Error !!!")
+      logger.log(e)
+      logger.log(icon)
+    }
   });
   utils.clearSelection(context)
 }

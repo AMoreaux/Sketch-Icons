@@ -8,7 +8,11 @@ export default {
   getSelectedArtboardsAndSymbols,
   flatten,
   getDocumentColors,
-  createWebview
+  createWebview,
+  createDivider,
+  runFramework,
+  getImageByColor,
+  isArtboardMasked
 }
 
 /**
@@ -108,23 +112,85 @@ function getDocumentColors(context) {
  * @param height
  * @return {WebUI}
  */
-function createWebview(context, view, size) {
+function createWebview(context, pickerButton, setColor) {
 
-  const webView = WebView.alloc().initWithFrame(NSMakeRect(0, 0, 300, 500));
+  const webView = WebView.alloc().initWithFrame(NSMakeRect(0, 0, 220, 300));
   const windowObject = webView.windowScriptObject();
   const delegate = new MochaJSDelegate({
     "webView:didFinishLoadForFrame:" : (function(webView, webFrame) {
 
       logger.log('loaded')
-      // var rgba = MSColorToRGBA(initColor);
-      windowObject.evaluateWebScript(
-        'window.test()'
-      );
+    }),
+    "webView:didChangeLocationWithinPageForFrame:" : (function(webView, webFrame) {
+      const query = windowObject.evaluateWebScript('window.location.hash')
+      const color = JSON.parse(decodeURIComponent(query).split('color=')[1])
+
+      newColor = MSImmutableColor.colorWithSVGString(`rgba(${color.r},${color.g},${color.b},${color.a})`).newMutableCounterpart()
+      pickerButton.setImage(getImageByColor(NSColor.colorWithRed_green_blue_alpha(
+        parseInt(color.r) / 255,
+        parseInt(color.g) / 255,
+        parseInt(color.b) / 255,
+        parseInt(color.a)), {width: 40, height: 30})
+      )
+      setColor(newColor)
     })
   })
 
   webView.setDrawsBackground(false)
   webView.setMainFrameURL_(context.plugin.urlForResourceNamed("webview.html").path());
   webView.setFrameLoadDelegate_(delegate.getClassInstance());
-  modal.view.addSubview(webView);
+  return webView
+  // view.addSubview(webView);
+}
+
+
+/**
+ * @name createDivider
+ * @param frame
+ * @return {*}
+ */
+function createDivider(frame) {
+  const divider = NSView.alloc().initWithFrame(frame);
+
+  divider.setWantsLayer(1);
+  divider.layer().setBackgroundColor(CGColorCreateGenericRGB(204/255,204/255,204/255,1.0));
+
+  return divider;
+}
+
+function runFramework(context){
+
+  const mocha = Mocha.sharedRuntime();
+
+  const frameworkName = "SketchIconsFramework";
+  const directory = context.scriptPath.stringByDeletingLastPathComponent();
+
+  if (mocha.valueForKey(frameworkName)) {
+    return true;
+  } else if (mocha.loadFrameworkWithName_inDirectory(frameworkName, directory)) {
+    mocha.setValue_forKey_(true, frameworkName);
+    return true;
+  } else {
+    log("❌ loadFramework: `" + frameworkName + "` failed!: " + directory + ". Please define SketchIcons_FrameworkPath if you're trying to @import in a custom plugin");
+    return false;
+  }
+}
+
+
+function getImageByColor(color, colorSize = {width: 14, height: 14}){
+    const size = CGSizeMake(colorSize.width, colorSize.height);
+    const image = NSImage.alloc().init()
+    image.size = size
+    image.lockFocus()
+    const colorCell = MSBackgroundColorView.alloc().init()
+    colorCell.backgroundColor = color
+    colorCell.drawRect(NSMakeRect(0, 0, colorSize.width, colorSize.height))
+    image.unlockFocus()
+
+    return image
+}
+
+function isArtboardMasked(artboard) {
+  const layers = artboard.layers()
+  if (layers.length > 1  && layers[1].isMasked())return true
 }

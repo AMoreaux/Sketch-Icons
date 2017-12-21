@@ -1,4 +1,6 @@
 import logger from "../utils/logger";
+import utils from "../utils/utils"
+import {setEnabledColorMenu} from "../modals/modals"
 
 export default {
   getLibs,
@@ -41,31 +43,10 @@ function getLibById(libraryId) {
 function loadColorFromSelectedLib(lib, colorMenu) {
   colorMenu.removeAllItems()
 
-  if (!lib.title().length()) {
-    return colorMenu.setEnabled(false)
-  }
-
   const libraryInstance = lib.representedObject()
   libraryInstance.loadSynchronously()
 
-  const colors = []
-
-  libraryInstance.document().localSymbols().forEach(function(symbol){
-    let hasStyle = symbol.layers()[0].style().hasEnabledFill()
-    if(hasStyle){
-      colors.push({
-        color: (hasStyle) ? symbol.layers()[0].style().fills().firstObject().color() : null,
-        symbol: symbol
-      })
-    }
-  })
-
-  if(colors.length > 0){
-    initColorSelectList(colorMenu, colors);
-    colorMenu.setEnabled(true)
-  }else {
-    colorMenu.setEnabled(false)
-  }
+  return getColorSymbolsFromDocument(libraryInstance.document())
 }
 
 /**
@@ -75,19 +56,19 @@ function loadColorFromSelectedLib(lib, colorMenu) {
  * @param colorMenu {Object} : NSPopUpButton
  * @returns {Object} : NSMenu
  */
-function initLibsSelectList(libs, colorMenu) {
+function initLibsSelectList(context, libs, colorMenu) {
 
   function addListener(item) {
     item.setCOSJSTargetFunction(function (lib) {
-      loadColorFromSelectedLib(lib, colorMenu)
+      updateColorMenu(context, lib, colorMenu)
     })
   }
 
   const colorLibsMenu = NSMenu.alloc().init()
-  const empty = NSMenuItem.alloc().init()
-  empty.title = ""
-  addListener(empty)
-  colorLibsMenu.addItem(empty)
+  const currentFile = NSMenuItem.alloc().init()
+  currentFile.title = 'Current file'
+  addListener(currentFile)
+  colorLibsMenu.addItem(currentFile)
   libs.forEach(function(lib){
     let item = NSMenuItem.alloc().init()
     item.title = lib.name()
@@ -96,7 +77,24 @@ function initLibsSelectList(libs, colorMenu) {
     addListener(item)
   })
 
+  updateColorMenu(context, currentFile, colorMenu)
+
   return colorLibsMenu
+}
+
+function updateColorMenu(context, lib, colorMenu){
+  let colors = []
+  if(String(lib.title()) === 'Current file'){
+    colors = getColorSymbolsFromDocument(context.document.documentData())
+  }else{
+    colors = loadColorFromSelectedLib(lib, colorMenu)
+  }
+  if(colors.length > 0){
+    initColorSelectList(colorMenu, colors);
+    setEnabledColorMenu(true)
+  }else {
+    setEnabledColorMenu(false)
+  }
 }
 
 /**
@@ -108,19 +106,6 @@ function initLibsSelectList(libs, colorMenu) {
  */
 function initColorSelectList(popColorMenu, colors) {
 
-  function swatch(color) {
-    const size = CGSizeMake(14, 14);
-    const image = NSImage.alloc().init()
-    image.size = size
-    image.lockFocus()
-    const colorCell = MSBackgroundColorView.alloc().init()
-    colorCell.backgroundColor = color
-    colorCell.drawRect(NSMakeRect(0, 0, 14, 14))
-    image.unlockFocus()
-
-    return image
-  }
-
   const menu = NSMenu.alloc().init()
 
   menu.cancelTracking()
@@ -130,7 +115,7 @@ function initColorSelectList(popColorMenu, colors) {
     item.title = (color.symbol) ? color.symbol.name() : ""
     let colorRGBA = (color.color) ? NSColor.colorWithRed_green_blue_alpha(color.color.red(), color.color.green(), color.color.blue(), color.color.alpha()) : NSColor.colorWithRed_green_blue_alpha(color.red(), color.green(), color.blue(), color.alpha())
     item.representedObject = (color.symbol)  ? color.symbol : colorRGBA
-    item.image = swatch(colorRGBA)
+    item.image = utils.getImageByColor(colorRGBA)
     menu.addItem(item)
   })
 
@@ -138,3 +123,24 @@ function initColorSelectList(popColorMenu, colors) {
   return popColorMenu
 }
 
+function getColorSymbolsFromDocument(document){
+  const result = []
+  let layers;
+  document.localSymbols().forEach(function(symbol){
+    layers = symbol.layers()
+    if(layers.length === 0 && symbol.backgroundColor()){
+      result.push({
+        color: symbol.backgroundColor(),
+        symbol: symbol
+      })
+    }
+    else if(layers.length === 1 && layers[0].style().hasEnabledFill()){
+      result.push({
+        color: layers[0].style().fills()[0].color(),
+        symbol: symbol
+      })
+    }
+  })
+
+  return result
+}

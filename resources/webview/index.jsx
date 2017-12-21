@@ -2,7 +2,12 @@ import { SketchPicker } from 'react-color'
 import React from 'react'
 import ReactDOM from 'react-dom'
 
-const handleColorChange = ({ hex }) => console.log(hex)
+// const handleColorChange = ({hex}) => console.log(hex)
+
+const handleColorChange =  ({rgb}) => {
+  const previousHash = (window.location.hash.split('?')[1] ? window.location.hash.split('?')[0] : window.location.hash)
+  window.location.hash = previousHash + '?color=' + encodeURIComponent(JSON.stringify(rgb))
+}
 
 ReactDOM.render(
   <SketchPicker
@@ -11,61 +16,3 @@ ReactDOM.render(
   />,
   document.getElementById('container')
 )
-
-// const ColorPicker = () => {
-//   const handleColorChange = ({hex}) => console.log(hex)
-//
-//   return (
-//     <div style={{position: 'relative'}}>
-//       <button>
-//         Pick Color
-//       </button>
-//
-//       <div
-//         style={{
-//           position: 'absolute',
-//           top: '100%',
-//           left: '50%',
-//           transform: 'translateX(-50%)',
-//           marginTop: 15,
-//         }}
-//       >
-//         <BlockPicker
-//           color="#333"
-//           onChangeComplete={handleColorChange}
-//         />
-//       </div>
-//     </div>
-//   )
-// }
-
-// export default class ColorPicker extends Component {
-//   handleColorChange({ hex }){
-//     console.log(hex)
-//   }
-//
-//   render({ url }) {
-//     return (
-//       <div style={{position: 'relative'}}>
-//         <button>
-//           Pick Color
-//         </button>
-//
-//         <div
-//           style={{
-//             position: 'absolute',
-//             top: '100%',
-//             left: '50%',
-//             transform: 'translateX(-50%)',
-//             marginTop: 15,
-//           }}
-//         >
-//           <BlockPicker
-//             color="#333"
-//             onChangeComplete={this.handleColorChange}
-//           />
-//         </div>
-//       </div>
-//     );
-//   }
-// }

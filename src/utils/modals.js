@@ -130,20 +130,11 @@ function createMaskFields(context, modal, checkboxFields) {
 
   const colorLibsMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(0, 0, 130, 20));
   const colorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(140, 0, 130, 20));
-  // const documentColorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(200, 0, 50, 20));
-  const pickerButton = NSButton.alloc().initWithFrame(NSMakeRect(140, 0, 40, 30));
-
-  pickerButton.setCOSJSTargetFunction(function () {
-    utils.createWebview(context, modal)
-  })
 
   colorLibsMenu.setEnabled(false)
   colorMenu.setEnabled(false)
-  // documentColorMenu.setEnabled(false)
 
   colorLibsMenu.menu = libraries.initLibsSelectList(libraries.getLibs(), colorMenu);
-  // libraries.initColorSelectList(documentColorMenu, utils.getDocumentColors(context))
-
 
   if (checkboxFields) {
     checkboxFields[1].item.setCOSJSTargetFunction(function (mask) {
@@ -177,15 +168,7 @@ function createMaskFields(context, modal, checkboxFields) {
       let currentItem = this.item.selectedItem()
       return (currentItem) ? currentItem.representedObject() : null
     }
-  }, {
-    item: pickerButton,
-    label: utils.createLabel('Color Picker', 200, 25, 130, 20),
-    name: 'colorPicker',
-    getter: function () {
-      return "frite"
-    }
   }
-
   ]
 }
 

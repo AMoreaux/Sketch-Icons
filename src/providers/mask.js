@@ -5,10 +5,9 @@ import librairiesProvider from './libraries'
 export default {
   initAddMaskOnSelectedArtboards,
   addMask,
-  createMask,
   formatSvg,
   dedupeLayers,
-  getMaskProperties
+  applyMask
 }
 
 /**
@@ -20,8 +19,13 @@ export default {
  */
 function initAddMaskOnSelectedArtboards(context, params, artboards) {
   artboards.forEach(function (artboard) {
+    if(utils.isArtboardMasked(artboard.object)){
+      MSMaskWithShape.toggleMaskForSingleShape(artboard.object.layers()[0])
+      artboard.object.layers()[1].removeFromParent()
+    }
     addMask(context, artboard.object, params)
   })
+  utils.clearSelection(context)
 }
 
 /**
@@ -32,9 +36,26 @@ function initAddMaskOnSelectedArtboards(context, params, artboards) {
  * @param params {Object}
  */
 function addMask(context, currentArtboard, params) {
+  let mask = (params.mask) ? params.mask : null
   formatSvg(currentArtboard)
   dedupeLayers(currentArtboard)
-  createMask(context, currentArtboard, params.color, params.colorLib)
+  if(params.color){
+    mask = getMaskSymbolFromLib(context, currentArtboard, params.color, params.colorLib)
+  }else if(params.colorPicker){
+    mask = createMaskFromNean(context, currentArtboard, params.colorPicker)
+  }
+  applyMask(currentArtboard, mask)
+}
+
+
+function createMaskFromNean(context, currentArtboard, color){
+  const currentArtboardSize = currentArtboard.rect()
+
+  const mask = MSShapeGroup.shapeWithRect({origin:{x:0, y:0}, size:{width:currentArtboardSize.size.width, height:currentArtboardSize.size.height}})
+  const fill = mask.style().addStylePartOfType(0);
+  fill.color = color;
+
+  return mask
 }
 
 /**
@@ -44,20 +65,27 @@ function addMask(context, currentArtboard, params) {
  * @param currentArtboard {Object} : MSArtboardGroup
  * @param colorSymbolMaster {Object}
  * @param colorLibrary {Object} : MSAssetLibrary
+ * @return symbol {Object} : MSSymbolInstance
  */
-function createMask(context, currentArtboard, colorSymbolMaster, colorLibrary) {
+function getMaskSymbolFromLib(context, currentArtboard, colorSymbolMaster, colorLibrary) {
   utils.clearSelection(context)
   const librairiesController = AppController.sharedInstance().librariesController()
   const symbolMaster = librairiesController.importForeignSymbol_fromLibrary_intoDocument(colorSymbolMaster, colorLibrary, context.document.documentData())
+  return symbolMaster.symbolMaster().newSymbolInstance();
+}
 
-  const symbolInstance = symbolMaster.symbolMaster().newSymbolInstance();
-
+/**
+ * @name applyMask
+ * @param currentArtboard
+ * @param symbolInstance
+ */
+function applyMask(currentArtboard, mask){
   const currentArtboardSize = currentArtboard.rect()
-  symbolInstance.setHeightRespectingProportions(currentArtboardSize.size.height)
-  symbolInstance.setWidthRespectingProportions(currentArtboardSize.size.width)
-  symbolInstance.setName('🎨 color')
-  currentArtboard.addLayer(symbolInstance);
-  currentArtboard.layers()[0].prepareAsMask()
+  mask.setHeightRespectingProportions(currentArtboardSize.size.height)
+  mask.setWidthRespectingProportions(currentArtboardSize.size.width)
+  mask.setName('🎨 color')
+  currentArtboard.addLayer(mask);
+  MSMaskWithShape.toggleMaskForSingleShape(currentArtboard.layers()[0])
 }
 
 /**
@@ -97,30 +125,7 @@ function dedupeLayers(currentArtboard) {
       layer.moveToLayer_beforeLayer(container, layer);
     }
   })
-  container.resizeToFitChildrenWithOption(0)
-}
 
-/**
- * @name getMaskProperties
- * @description get properties of mask by artboard
- * @param artboard {Object} : MSArtboardGroup
- * @returns {Object}
- */
-function getMaskProperties(artboard) {
-  const layers = artboard.layers()
-
-  if (layers.length <= 1 || !layers[1].isMasked()) {
-    return {
-      'color': null,
-      'colorLib': null
-    }
-  }
-
-  const color = layers[1].symbolMaster()
-  const colorLib = librairiesProvider.getLibById(color.foreignSymbol().libraryID())
-
-  return {
-    'color': color,
-    'colorLib': colorLib
-  }
+  container.setName("icon")
+  // container.resizeToFitChildrenWithOption(0)
 }

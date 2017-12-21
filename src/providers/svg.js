@@ -1,6 +1,7 @@
 import maskProvider from './mask'
 import artboardProvider from './artboard'
 import utils from '../utils/utils'
+import logger from '../utils/logger'
 
 export default {
   initUpdateIconsSelectedArtboards,
@@ -19,12 +20,20 @@ export default {
 function initUpdateIconsSelectedArtboards(context, artboards, listIcon) {
 
   artboards.forEach(function(artboard, index){
-    let params = Object.assign(artboardProvider.getPaddingAndSize(artboard.object), maskProvider.getMaskProperties(artboard.object), {iconPath : listIcon[index]})
-    artboard.object.removeAllLayers()
+    const layers = artboard.object.layers()
+    const isMasked = utils.isArtboardMasked(artboard.object)
+    let params = Object.assign(artboardProvider.getPaddingAndSize(artboard.object), {iconPath : listIcon[index]})
+    layers[0].removeFromParent()
     addSVG(context, artboard.object, params.iconPadding, params.iconPath)
-    if (params.color && params.colorLib) maskProvider.addMask(context, artboard.object, params)
+    if (isMasked) {
+      params.mask = layers[0].copy()
+      layers[0].removeFromParent()
+      maskProvider.addMask(context, artboard.object, params)
+    }
     artboard.object.setName(utils.getIconNameByNSUrl(params.iconPath))
   })
+
+  utils.clearSelection(context)
 }
 
 /**

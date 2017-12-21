@@ -131,7 +131,11 @@ exports['default'] = {
   getSelectedArtboardsAndSymbols: getSelectedArtboardsAndSymbols,
   flatten: flatten,
   getDocumentColors: getDocumentColors,
-  createWebview: createWebview
+  createWebview: createWebview,
+  createDivider: createDivider,
+  runFramework: runFramework,
+  getImageByColor: getImageByColor,
+  isArtboardMasked: isArtboardMasked
 
   /**
    * @name clearSelection
@@ -232,27 +236,90 @@ function getDocumentColors(context) {
  * @param height
  * @return {WebUI}
  */
-function createWebview(context, view, size) {
+function createWebview(context, pickerButton, setColor) {
 
-  var webView = WebView.alloc().initWithFrame(NSMakeRect(0, 0, 300, 500));
+  var webView = WebView.alloc().initWithFrame(NSMakeRect(0, 0, 220, 300));
   var windowObject = webView.windowScriptObject();
   var delegate = new _MochaJSDelegate2['default']({
     "webView:didFinishLoadForFrame:": function () {
       function webViewDidFinishLoadForFrame(webView, webFrame) {
 
         _logger2['default'].log('loaded');
-        // var rgba = MSColorToRGBA(initColor);
-        windowObject.evaluateWebScript('window.test()');
       }
 
       return webViewDidFinishLoadForFrame;
+    }(),
+    "webView:didChangeLocationWithinPageForFrame:": function () {
+      function webViewDidChangeLocationWithinPageForFrame(webView, webFrame) {
+        var query = windowObject.evaluateWebScript('window.location.hash');
+        var color = JSON.parse(decodeURIComponent(query).split('color=')[1]);
+
+        newColor = MSImmutableColor.colorWithSVGString('rgba(' + String(color.r) + ',' + String(color.g) + ',' + String(color.b) + ',' + String(color.a) + ')').newMutableCounterpart();
+        pickerButton.setImage(getImageByColor(NSColor.colorWithRed_green_blue_alpha(parseInt(color.r) / 255, parseInt(color.g) / 255, parseInt(color.b) / 255, parseInt(color.a)), { width: 40, height: 30 }));
+        setColor(newColor);
+      }
+
+      return webViewDidChangeLocationWithinPageForFrame;
     }()
   });
 
   webView.setDrawsBackground(false);
   webView.setMainFrameURL_(context.plugin.urlForResourceNamed("webview.html").path());
   webView.setFrameLoadDelegate_(delegate.getClassInstance());
-  modal.view.addSubview(webView);
+  return webView;
+  // view.addSubview(webView);
+}
+
+/**
+ * @name createDivider
+ * @param frame
+ * @return {*}
+ */
+function createDivider(frame) {
+  var divider = NSView.alloc().initWithFrame(frame);
+
+  divider.setWantsLayer(1);
+  divider.layer().setBackgroundColor(CGColorCreateGenericRGB(204 / 255, 204 / 255, 204 / 255, 1.0));
+
+  return divider;
+}
+
+function runFramework(context) {
+
+  var mocha = Mocha.sharedRuntime();
+
+  var frameworkName = "SketchIconsFramework";
+  var directory = context.scriptPath.stringByDeletingLastPathComponent();
+
+  if (mocha.valueForKey(frameworkName)) {
+    return true;
+  } else if (mocha.loadFrameworkWithName_inDirectory(frameworkName, directory)) {
+    mocha.setValue_forKey_(true, frameworkName);
+    return true;
+  } else {
+    log("❌ loadFramework: `" + frameworkName + "` failed!: " + directory + ". Please define SketchIcons_FrameworkPath if you're trying to @import in a custom plugin");
+    return false;
+  }
+}
+
+function getImageByColor(color) {
+  var colorSize = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { width: 14, height: 14 };
+
+  var size = CGSizeMake(colorSize.width, colorSize.height);
+  var image = NSImage.alloc().init();
+  image.size = size;
+  image.lockFocus();
+  var colorCell = MSBackgroundColorView.alloc().init();
+  colorCell.backgroundColor = color;
+  colorCell.drawRect(NSMakeRect(0, 0, colorSize.width, colorSize.height));
+  image.unlockFocus();
+
+  return image;
+}
+
+function isArtboardMasked(artboard) {
+  var layers = artboard.layers();
+  if (layers.length > 1 && layers[1].isMasked()) return true;
 }
 
 /***/ }),
@@ -263,9 +330,164 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+var _utils = __webpack_require__(1);
+
+var _utils2 = _interopRequireDefault(_utils);
+
 var _logger = __webpack_require__(0);
 
 var _logger2 = _interopRequireDefault(_logger);
+
+var _libraries = __webpack_require__(3);
+
+var _libraries2 = _interopRequireDefault(_libraries);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+exports['default'] = {
+  initAddMaskOnSelectedArtboards: initAddMaskOnSelectedArtboards,
+  addMask: addMask,
+  formatSvg: formatSvg,
+  dedupeLayers: dedupeLayers,
+  applyMask: applyMask
+
+  /**
+   * @name initAddMaskOnSelectedArtboards
+   * @description main function to add mask on selected artboards
+   * @param context {Object}
+   * @param params {Object}
+   * @param artboards {Array} : MSArtboardGroup
+   */
+};
+function initAddMaskOnSelectedArtboards(context, params, artboards) {
+  artboards.forEach(function (artboard) {
+    if (_utils2['default'].isArtboardMasked(artboard.object)) {
+      MSMaskWithShape.toggleMaskForSingleShape(artboard.object.layers()[0]);
+      artboard.object.layers()[1].removeFromParent();
+    }
+    addMask(context, artboard.object, params);
+  });
+  _utils2['default'].clearSelection(context);
+}
+
+/**
+ * @name addMask
+ * @description index function for all step to add mask and convert artboard to symbol at end
+ * @param context {Object}
+ * @param currentArtboard {Object} : MSArtboardGroup
+ * @param params {Object}
+ */
+function addMask(context, currentArtboard, params) {
+  var mask = params.mask ? params.mask : null;
+  formatSvg(currentArtboard);
+  dedupeLayers(currentArtboard);
+  if (params.color) {
+    mask = getMaskSymbolFromLib(context, currentArtboard, params.color, params.colorLib);
+  } else if (params.colorPicker) {
+    mask = createMaskFromNean(context, currentArtboard, params.colorPicker);
+  }
+  applyMask(currentArtboard, mask);
+}
+
+function createMaskFromNean(context, currentArtboard, color) {
+  var currentArtboardSize = currentArtboard.rect();
+
+  var mask = MSShapeGroup.shapeWithRect({ origin: { x: 0, y: 0 }, size: { width: currentArtboardSize.size.width, height: currentArtboardSize.size.height } });
+  var fill = mask.style().addStylePartOfType(0);
+  fill.color = color;
+
+  return mask;
+}
+
+/**
+ * @name createMask
+ * @description add mask from symbol master colors library to one artboard
+ * @param context {Object}
+ * @param currentArtboard {Object} : MSArtboardGroup
+ * @param colorSymbolMaster {Object}
+ * @param colorLibrary {Object} : MSAssetLibrary
+ * @return symbol {Object} : MSSymbolInstance
+ */
+function getMaskSymbolFromLib(context, currentArtboard, colorSymbolMaster, colorLibrary) {
+  _utils2['default'].clearSelection(context);
+  var librairiesController = AppController.sharedInstance().librariesController();
+  var symbolMaster = librairiesController.importForeignSymbol_fromLibrary_intoDocument(colorSymbolMaster, colorLibrary, context.document.documentData());
+  return symbolMaster.symbolMaster().newSymbolInstance();
+}
+
+/**
+ * @name applyMask
+ * @param currentArtboard
+ * @param symbolInstance
+ */
+function applyMask(currentArtboard, mask) {
+  var currentArtboardSize = currentArtboard.rect();
+  mask.setHeightRespectingProportions(currentArtboardSize.size.height);
+  mask.setWidthRespectingProportions(currentArtboardSize.size.width);
+  mask.setName('🎨 color');
+  currentArtboard.addLayer(mask);
+  MSMaskWithShape.toggleMaskForSingleShape(currentArtboard.layers()[0]);
+}
+
+/**
+ * @name formatSvg
+ * @description ungroup all layers in an artboard
+ * @param currentArtboard {Object} : MSArtboardGroup
+ */
+function formatSvg(currentArtboard) {
+  currentArtboard.children().forEach(function (layer) {
+    var layerClass = String(layer['class']());
+    if (layerClass === "MSLayerGroup" || layerClass === "MSShapeGroup") {
+      layer.ungroup();
+    }
+  });
+}
+
+/**
+ * @name dedupeLayers
+ * @description get all shapes and merge them in one shape group
+ * @param currentArtboard {Object} : MSArtboardGroup
+ */
+function dedupeLayers(currentArtboard) {
+  var container = MSShapeGroup.shapeWithRect(null);
+  container.setName('container-random-string-9246392');
+  currentArtboard.addLayer(container);
+  var reg = new RegExp("Shape");
+
+  currentArtboard.children().forEach(function (layer) {
+
+    var layerClass = String(layer['class']());
+
+    if (layerClass === 'MSRectangleShape' && String(layer.name()) === 'container-random-string-9246392') {
+      return layer.removeFromParent();
+    }
+
+    if (reg.test(layerClass) && layerClass !== 'MSShapeGroup') {
+      layer.moveToLayer_beforeLayer(container, layer);
+    }
+  });
+
+  container.setName("icon");
+  // container.resizeToFitChildrenWithOption(0)
+}
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _logger = __webpack_require__(0);
+
+var _logger2 = _interopRequireDefault(_logger);
+
+var _utils = __webpack_require__(1);
+
+var _utils2 = _interopRequireDefault(_utils);
+
+var _modals = __webpack_require__(5);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
@@ -310,31 +532,10 @@ function getLibById(libraryId) {
 function loadColorFromSelectedLib(lib, colorMenu) {
   colorMenu.removeAllItems();
 
-  if (!lib.title().length()) {
-    return colorMenu.setEnabled(false);
-  }
-
   var libraryInstance = lib.representedObject();
   libraryInstance.loadSynchronously();
 
-  var colors = [];
-
-  libraryInstance.document().localSymbols().forEach(function (symbol) {
-    var hasStyle = symbol.layers()[0].style().hasEnabledFill();
-    if (hasStyle) {
-      colors.push({
-        color: hasStyle ? symbol.layers()[0].style().fills().firstObject().color() : null,
-        symbol: symbol
-      });
-    }
-  });
-
-  if (colors.length > 0) {
-    initColorSelectList(colorMenu, colors);
-    colorMenu.setEnabled(true);
-  } else {
-    colorMenu.setEnabled(false);
-  }
+  return getColorSymbolsFromDocument(libraryInstance.document());
 }
 
 /**
@@ -344,19 +545,19 @@ function loadColorFromSelectedLib(lib, colorMenu) {
  * @param colorMenu {Object} : NSPopUpButton
  * @returns {Object} : NSMenu
  */
-function initLibsSelectList(libs, colorMenu) {
+function initLibsSelectList(context, libs, colorMenu) {
 
   function addListener(item) {
     item.setCOSJSTargetFunction(function (lib) {
-      loadColorFromSelectedLib(lib, colorMenu);
+      updateColorMenu(context, lib, colorMenu);
     });
   }
 
   var colorLibsMenu = NSMenu.alloc().init();
-  var empty = NSMenuItem.alloc().init();
-  empty.title = "";
-  addListener(empty);
-  colorLibsMenu.addItem(empty);
+  var currentFile = NSMenuItem.alloc().init();
+  currentFile.title = 'Current file';
+  addListener(currentFile);
+  colorLibsMenu.addItem(currentFile);
   libs.forEach(function (lib) {
     var item = NSMenuItem.alloc().init();
     item.title = lib.name();
@@ -365,7 +566,24 @@ function initLibsSelectList(libs, colorMenu) {
     addListener(item);
   });
 
+  updateColorMenu(context, currentFile, colorMenu);
+
   return colorLibsMenu;
+}
+
+function updateColorMenu(context, lib, colorMenu) {
+  var colors = [];
+  if (String(lib.title()) === 'Current file') {
+    colors = getColorSymbolsFromDocument(context.document.documentData());
+  } else {
+    colors = loadColorFromSelectedLib(lib, colorMenu);
+  }
+  if (colors.length > 0) {
+    initColorSelectList(colorMenu, colors);
+    (0, _modals.setEnabledColorMenu)(true);
+  } else {
+    (0, _modals.setEnabledColorMenu)(false);
+  }
 }
 
 /**
@@ -377,19 +595,6 @@ function initLibsSelectList(libs, colorMenu) {
  */
 function initColorSelectList(popColorMenu, colors) {
 
-  function swatch(color) {
-    var size = CGSizeMake(14, 14);
-    var image = NSImage.alloc().init();
-    image.size = size;
-    image.lockFocus();
-    var colorCell = MSBackgroundColorView.alloc().init();
-    colorCell.backgroundColor = color;
-    colorCell.drawRect(NSMakeRect(0, 0, 14, 14));
-    image.unlockFocus();
-
-    return image;
-  }
-
   var menu = NSMenu.alloc().init();
 
   menu.cancelTracking();
@@ -399,7 +604,7 @@ function initColorSelectList(popColorMenu, colors) {
     item.title = color.symbol ? color.symbol.name() : "";
     var colorRGBA = color.color ? NSColor.colorWithRed_green_blue_alpha(color.color.red(), color.color.green(), color.color.blue(), color.color.alpha()) : NSColor.colorWithRed_green_blue_alpha(color.red(), color.green(), color.blue(), color.alpha());
     item.representedObject = color.symbol ? color.symbol : colorRGBA;
-    item.image = swatch(colorRGBA);
+    item.image = _utils2["default"].getImageByColor(colorRGBA);
     menu.addItem(item);
   });
 
@@ -407,149 +612,25 @@ function initColorSelectList(popColorMenu, colors) {
   return popColorMenu;
 }
 
-/***/ }),
-/* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _utils = __webpack_require__(1);
-
-var _utils2 = _interopRequireDefault(_utils);
-
-var _logger = __webpack_require__(0);
-
-var _logger2 = _interopRequireDefault(_logger);
-
-var _libraries = __webpack_require__(2);
-
-var _libraries2 = _interopRequireDefault(_libraries);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-exports['default'] = {
-  initAddMaskOnSelectedArtboards: initAddMaskOnSelectedArtboards,
-  addMask: addMask,
-  createMask: createMask,
-  formatSvg: formatSvg,
-  dedupeLayers: dedupeLayers,
-  getMaskProperties: getMaskProperties
-
-  /**
-   * @name initAddMaskOnSelectedArtboards
-   * @description main function to add mask on selected artboards
-   * @param context {Object}
-   * @param params {Object}
-   * @param artboards {Array} : MSArtboardGroup
-   */
-};
-function initAddMaskOnSelectedArtboards(context, params, artboards) {
-  artboards.forEach(function (artboard) {
-    addMask(context, artboard.object, params);
-  });
-}
-
-/**
- * @name addMask
- * @description index function for all step to add mask and convert artboard to symbol at end
- * @param context {Object}
- * @param currentArtboard {Object} : MSArtboardGroup
- * @param params {Object}
- */
-function addMask(context, currentArtboard, params) {
-  formatSvg(currentArtboard);
-  dedupeLayers(currentArtboard);
-  createMask(context, currentArtboard, params.color, params.colorLib);
-}
-
-/**
- * @name createMask
- * @description add mask from symbol master colors library to one artboard
- * @param context {Object}
- * @param currentArtboard {Object} : MSArtboardGroup
- * @param colorSymbolMaster {Object}
- * @param colorLibrary {Object} : MSAssetLibrary
- */
-function createMask(context, currentArtboard, colorSymbolMaster, colorLibrary) {
-  _utils2['default'].clearSelection(context);
-  var librairiesController = AppController.sharedInstance().librariesController();
-  var symbolMaster = librairiesController.importForeignSymbol_fromLibrary_intoDocument(colorSymbolMaster, colorLibrary, context.document.documentData());
-
-  var symbolInstance = symbolMaster.symbolMaster().newSymbolInstance();
-
-  var currentArtboardSize = currentArtboard.rect();
-  symbolInstance.setHeightRespectingProportions(currentArtboardSize.size.height);
-  symbolInstance.setWidthRespectingProportions(currentArtboardSize.size.width);
-  symbolInstance.setName('🎨 color');
-  currentArtboard.addLayer(symbolInstance);
-  currentArtboard.layers()[0].prepareAsMask();
-}
-
-/**
- * @name formatSvg
- * @description ungroup all layers in an artboard
- * @param currentArtboard {Object} : MSArtboardGroup
- */
-function formatSvg(currentArtboard) {
-  currentArtboard.children().forEach(function (layer) {
-    var layerClass = String(layer['class']());
-    if (layerClass === "MSLayerGroup" || layerClass === "MSShapeGroup") {
-      layer.ungroup();
+function getColorSymbolsFromDocument(document) {
+  var result = [];
+  var layers = void 0;
+  document.localSymbols().forEach(function (symbol) {
+    layers = symbol.layers();
+    if (layers.length === 0 && symbol.backgroundColor()) {
+      result.push({
+        color: symbol.backgroundColor(),
+        symbol: symbol
+      });
+    } else if (layers.length === 1 && layers[0].style().hasEnabledFill()) {
+      result.push({
+        color: layers[0].style().fills()[0].color(),
+        symbol: symbol
+      });
     }
   });
-}
 
-/**
- * @name dedupeLayers
- * @description get all shapes and merge them in one shape group
- * @param currentArtboard {Object} : MSArtboardGroup
- */
-function dedupeLayers(currentArtboard) {
-  var container = MSShapeGroup.shapeWithRect(null);
-  container.setName('container-random-string-9246392');
-  currentArtboard.addLayer(container);
-  var reg = new RegExp("Shape");
-
-  currentArtboard.children().forEach(function (layer) {
-
-    var layerClass = String(layer['class']());
-
-    if (layerClass === 'MSRectangleShape' && String(layer.name()) === 'container-random-string-9246392') {
-      return layer.removeFromParent();
-    }
-
-    if (reg.test(layerClass) && layerClass !== 'MSShapeGroup') {
-      layer.moveToLayer_beforeLayer(container, layer);
-    }
-  });
-  container.resizeToFitChildrenWithOption(0);
-}
-
-/**
- * @name getMaskProperties
- * @description get properties of mask by artboard
- * @param artboard {Object} : MSArtboardGroup
- * @returns {Object}
- */
-function getMaskProperties(artboard) {
-  var layers = artboard.layers();
-
-  if (layers.length <= 1 || !layers[1].isMasked()) {
-    return {
-      'color': null,
-      'colorLib': null
-    };
-  }
-
-  var color = layers[1].symbolMaster();
-  var colorLib = _libraries2['default'].getLibById(color.foreignSymbol().libraryID());
-
-  return {
-    'color': color,
-    'colorLib': colorLib
-  };
+  return result;
 }
 
 /***/ }),
@@ -568,11 +649,11 @@ var _logger = __webpack_require__(0);
 
 var _logger2 = _interopRequireDefault(_logger);
 
-var _mask = __webpack_require__(3);
+var _mask = __webpack_require__(2);
 
 var _mask2 = _interopRequireDefault(_mask);
 
-var _svg = __webpack_require__(5);
+var _svg = __webpack_require__(6);
 
 var _svg2 = _interopRequireDefault(_svg);
 
@@ -623,6 +704,7 @@ var artboardParams = {
   newArtboardFrame.setX(artboardParams.position.x);
   newArtboardFrame.setY(artboardParams.position.y);
   context.document.currentPage().addLayers([newArtboard]);
+
   return newArtboard;
 }
 
@@ -660,16 +742,16 @@ function initImportIcons(context, params) {
   initArtboardsParams(context);
   var newArtboard = void 0;
   params.listIcon.forEach(function (icon, index) {
-    // try {
-    newArtboard = createArtboard(context, index, icon);
-    _svg2['default'].addSVG(context, newArtboard, params.iconPadding, icon);
-    if (params.withMask && params.color && params.colorLib) _mask2['default'].addMask(context, newArtboard, params);
-    if (params.convertSymbol) MSSymbolMaster.convertArtboardToSymbol(newArtboard);
-    // } catch (e) {
-    //   logger.log("Sorry, Error !!!")
-    //   logger.log(e)
-    //   logger.log(icon)
-    // }
+    try {
+      newArtboard = createArtboard(context, index, icon);
+      _svg2['default'].addSVG(context, newArtboard, params.iconPadding, icon);
+      if (params.withMask) _mask2['default'].addMask(context, newArtboard, params);
+      if (params.convertSymbol) MSSymbolMaster.convertArtboardToSymbol(newArtboard);
+    } catch (e) {
+      _logger2['default'].log("Sorry, Error !!!");
+      _logger2['default'].log(e);
+      _logger2['default'].log(icon);
+    }
   });
   _utils2['default'].clearSelection(context);
 }
@@ -694,8 +776,370 @@ function getPaddingAndSize(artboard) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.maskModal = exports.importModal = exports.setEnabledColorMenu = undefined;
 
-var _mask = __webpack_require__(3);
+var _utils = __webpack_require__(1);
+
+var _utils2 = _interopRequireDefault(_utils);
+
+var _logger = __webpack_require__(0);
+
+var _logger2 = _interopRequireDefault(_logger);
+
+var _libraries = __webpack_require__(3);
+
+var _libraries2 = _interopRequireDefault(_libraries);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var disabledColor = NSColor.colorWithCalibratedRed_green_blue_alpha(170 / 255, 170 / 255, 170 / 255, 1);
+
+exports.setEnabledColorMenu = setEnabledColorMenu;
+exports.importModal = importModal;
+exports.maskModal = maskModal;
+
+
+function maskModal(context) {
+
+  this.modalParams = {
+    messageText: 'Configure your color mask',
+    informativeText: 'Select your library and choose a color to apply as mask. Your layers will all be combined.',
+    height: 160,
+    width: 300,
+    lineHeight: 35
+  };
+
+  this.coeffCurrentHeight = 0;
+  this.isLibrarySource = true;
+
+  constructBase(this.modalParams);
+
+  makeMaskRadioButtonParams();
+  makeMaskLibraryParams(context);
+  makeMaskColorPickerParams(context);
+
+  var result = {
+    button: this.modal.runModal()
+  };
+
+  if (this.isLibrarySource) {
+    var colorMenu = this.colorsMenuParams.selectedItem();
+    result.color = colorMenu ? this.colorsMenuParams.representedObject() : null;
+
+    var colorLib = this.colorLibsMenuParams.selectedItem();
+    result.colorLib = colorLib ? this.colorLibsMenuParams.representedObject() : null;
+  } else {
+    result.colorPicker = this.colorPickerColor;
+  }
+
+  return result;
+}
+
+function importModal(context) {
+
+  this.modalParams = {
+    messageText: 'Configure your import',
+    informativeText: 'Your icons will be arranged in artboards. Set size and padding of your artboards.',
+    height: 300,
+    width: 300,
+    lineHeight: 35
+  };
+
+  this.coeffCurrentHeight = 0;
+  this.isLibrarySource = true;
+
+  constructBase(this.modalParams);
+  makeArtboardParams();
+  this.view.addSubview(_utils2['default'].createDivider(NSMakeRect(0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - 10, this.modalParams.width, 1)));
+  makeSymbolParams();
+  this.view.addSubview(_utils2['default'].createDivider(NSMakeRect(0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - 10, this.modalParams.width, 1)));
+  makeMaskCheckboxParams();
+  makeMaskRadioButtonParams();
+  this.radioParams.setEnabled(false);
+  makeMaskLibraryParams(context);
+  setEnabledColorLibraryMenu(false);
+  setEnabledColorMenu(false);
+  makeMaskColorPickerParams(context);
+  addListenerOnMaskCheckbox();
+
+  var result = {
+    button: this.modal.runModal(),
+    artboardSize: parseInt(this.artboardSize.stringValue()),
+    iconPadding: parseInt(this.artboardPadding.stringValue()),
+    convertSymbol: this.symbolParams.state(),
+    withMask: this.checkboxMaskParams.state()
+  };
+
+  if (result.withMask && this.isLibrarySource) {
+    var colorMenu = this.colorsMenuParams.selectedItem();
+    result.color = colorMenu ? this.colorsMenuParams.representedObject() : null;
+
+    var colorLib = this.colorLibsMenuParams.selectedItem();
+    result.colorLib = colorLib ? this.colorLibsMenuParams.representedObject() : null;
+  } else if (result.withMask) {
+    result.colorPicker = this.colorPickerColor;
+  }
+
+  return result;
+}
+
+function constructBase() {
+
+  this.modal = COSAlertWindow['new']();
+
+  this.view = NSView.alloc().initWithFrame(NSMakeRect(0, 0, this.modalParams.width, this.modalParams.height));
+
+  this.modal.addAccessoryView(this.view);
+  this.modal.setMessageText(this.modalParams.messageText);
+  this.modal.setInformativeText(this.modalParams.informativeText);
+  this.modal.addButtonWithTitle('Continue');
+  this.modal.addButtonWithTitle('Cancel');
+}
+
+function makeArtboardParams() {
+
+  this.coeffCurrentHeight++;
+
+  var textBoxLabel = _utils2['default'].createLabel('Artboard size', 0, this.modalParams.height - this.modalParams.lineHeight, 150, 20);
+  this.view.addSubview(textBoxLabel);
+  var textBox = NSTextField.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight, 50, 20));
+  textBox.setStringValue('24');
+  this.view.addSubview(textBox);
+  var textBoxUnit = _utils2['default'].createLabel('px', 205, this.modalParams.height - this.modalParams.lineHeight, 50, 20);
+  this.view.addSubview(textBoxUnit);
+
+  this.coeffCurrentHeight++;
+
+  var paddingBoxLabel = _utils2['default'].createLabel('Artboard Padding', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 150, 20);
+  this.view.addSubview(paddingBoxLabel);
+  var paddingBox = NSTextField.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 50, 20));
+  paddingBox.setStringValue('3');
+  this.view.addSubview(paddingBox);
+  var paddingBoxUnit = _utils2['default'].createLabel('px', 205, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 50, 20);
+  this.view.addSubview(paddingBoxUnit);
+
+  this.artboardPadding = paddingBox;
+  this.artboardSize = textBox;
+
+  return;
+}
+
+function makeSymbolParams() {
+
+  this.coeffCurrentHeight++;
+
+  var maskCheckboxLabel = _utils2['default'].createLabel('Symbols', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 150, 20);
+  this.view.addSubview(maskCheckboxLabel);
+
+  var symbolCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 200, 20));
+  symbolCheckBox.setButtonType(NSSwitchButton);
+  symbolCheckBox.setState(true);
+  symbolCheckBox.setFont(NSFont.systemFontOfSize_(13));
+  symbolCheckBox.setTitle('Convert to symbol');
+  this.view.addSubview(symbolCheckBox);
+
+  this.symbolParams = symbolCheckBox;
+}
+
+function makeMaskCheckboxParams() {
+
+  this.coeffCurrentHeight++;
+
+  var maskCheckboxLabel = _utils2['default'].createLabel('Mask', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 150, 20);
+  this.view.addSubview(maskCheckboxLabel);
+
+  var maskCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 200, 20));
+  maskCheckBox.setButtonType(NSSwitchButton);
+  maskCheckBox.setState(false);
+  maskCheckBox.setFont(NSFont.systemFontOfSize_(13));
+  maskCheckBox.setTitle('Add color mask');
+  this.view.addSubview(maskCheckBox);
+
+  this.checkboxMaskParams = maskCheckBox;
+}
+
+function makeMaskRadioButtonParams() {
+
+  this.coeffCurrentHeight++;
+  this.coeffCurrentHeight++;
+
+  var radioButtonLabel = _utils2['default'].createLabel('Color Source', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + 40, 150, 20);
+  this.view.addSubview(radioButtonLabel);
+
+  var buttonFormat = NSButtonCell.alloc().init();
+  buttonFormat.setButtonType(NSRadioButton);
+  var matrixFormat = NSMatrix.alloc().initWithFrame_mode_prototype_numberOfRows_numberOfColumns(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 300, 60), NSRadioModeMatrix, buttonFormat, 2, 1);
+  matrixFormat.setCellSize(CGSizeMake(300, 25));
+  var cells = matrixFormat.cells();
+  cells[0].setTitle("From symbols");
+  cells[0].setFont(NSFont.systemFontOfSize_(13));
+  cells[1].setTitle("From color picker");
+  cells[1].setFont(NSFont.systemFontOfSize_(13));
+
+  this.view.addSubview(matrixFormat);
+
+  setListenerRadioButon(cells);
+
+  this.radioParams = matrixFormat;
+}
+
+function makeMaskLibraryParams(context) {
+
+  this.coeffCurrentHeight++;
+
+  var colorLibsLabel = _utils2['default'].createLabel('Document Source', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 150, 25);
+  this.view.addSubview(colorLibsLabel);
+  var colorLibsMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 130, 30));
+
+  this.coeffCurrentHeight++;
+
+  var colorMenuLabel = _utils2['default'].createLabel('Color', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 150, 25);
+  this.view.addSubview(colorMenuLabel);
+  var colorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 130, 30));
+
+  this.view.addSubview(colorLibsMenu);
+  this.view.addSubview(colorMenu);
+
+  this.colorLibsMenuParams = colorLibsMenu;
+  this.colorsMenuParams = colorMenu;
+  this.colorLibsMenuParamsLabel = colorLibsLabel;
+  this.colorsMenuParamsLabel = colorMenuLabel;
+
+  colorLibsMenu.menu = _libraries2['default'].initLibsSelectList(context, _libraries2['default'].getLibs(), colorMenu);
+}
+
+function makeMaskColorPickerParams(context) {
+  var _this = this;
+
+  var colorPickerLabel = _utils2['default'].createLabel('Color picker', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + 20, 150, 20);
+
+  var pickerView = NSView.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 130, 60));
+  pickerView.setWantsLayer(true);
+  pickerView.layer().setBackgroundColor(CGColorCreateGenericRGB(1, 1, 1, 1.0));
+  pickerView.layer().setBorderColor(CGColorCreateGenericRGB(186 / 255, 186 / 255, 186 / 255, 1));
+  pickerView.layer().borderWidth = 1;
+  // pickerView.layer.backgroundColor = NSColor.colorWithCalibratedRed_green_blue_alpha(0.227, 0.251, 0.337, 1).CGColor
+
+  var hexLabel = _utils2['default'].createLabel('#000000', 60, 20, 100, 20);
+  pickerView.addSubview(hexLabel);
+
+  var pickerButton = NSButton.alloc().initWithFrame(NSMakeRect(5, 15, 50, 30));
+  pickerButton.setButtonType(NSMomentaryChangeButton);
+  pickerButton.setImage(_utils2['default'].getImageByColor(NSColor.colorWithRed_green_blue_alpha(0, 0, 0, 1), {
+    width: 40,
+    height: 30
+  }));
+
+  pickerButton.setBordered(false);
+
+  var main = AMOMain.alloc().init();
+
+  pickerButton.setCOSJSTargetFunction(function () {
+    main.openPopover_onView_withWebview(pickerButton, _this.view, _utils2['default'].createWebview(context, pickerButton, function (color) {
+      _this.colorPickerColor = color;
+      hexLabel.setStringValue_('#' + String(color.immutableModelObject().hexValue()));
+    }));
+  });
+
+  pickerView.addSubview(pickerButton);
+
+  this.pickerView = pickerView;
+  this.colorPickerParams = pickerButton;
+  this.colorPickerLabel = colorPickerLabel;
+}
+
+function addListenerOnMaskCheckbox() {
+  var _this2 = this;
+
+  this.checkboxMaskParams.setCOSJSTargetFunction(function (mask) {
+    if (mask.state()) {
+      setEnabledRadioButton(true);
+      setEnabledColorLibraryMenu(true);
+      if (_this2.colorsMenuParams.numberOfItems() > 0) setEnabledColorMenu(true);
+    } else {
+      setEnabledRadioButton(false);
+      setEnabledColorLibraryMenu(false);
+      setEnabledColorMenu(false);
+      addLibraryColorsFields();
+      removePickerButton();
+      _this2.radioParams.cells()[0].state = true;
+      _this2.radioParams.cells()[1].state = false;
+    }
+  });
+}
+
+function setListenerRadioButon(cells) {
+  function setState(item) {
+    if (String(item.selectedCells()[0].title()) === 'From symbols') {
+      addLibraryColorsFields();
+      removePickerButton();
+      this.isLibrarySource = true;
+    } else {
+      removeLibraryColorsFields();
+      addPickerButton();
+      this.isLibrarySource = false;
+    }
+  }
+
+  cells[0].setCOSJSTargetFunction(setState);
+  cells[1].setCOSJSTargetFunction(setState);
+}
+
+function setEnabledColorLibraryMenu(enabled) {
+  var color = enabled ? NSColor.controlTextColor() : disabledColor;
+  this.colorLibsMenuParamsLabel.setTextColor(color);
+  this.colorLibsMenuParams.setEnabled(enabled);
+}
+
+function setEnabledColorMenu(enabled) {
+  var color = void 0;
+  if (enabled) {
+    color = NSColor.controlTextColor();
+  } else {
+    color = disabledColor;
+    // this.colorsMenuParams.removeAllItems()
+  }
+  this.colorsMenuParamsLabel.setTextColor(color);
+  this.colorsMenuParams.setEnabled(enabled);
+}
+
+function setEnabledRadioButton(enabled) {
+  this.radioParams.setEnabled(enabled);
+}
+
+function removeLibraryColorsFields() {
+  this.colorLibsMenuParams.removeFromSuperview();
+  this.colorsMenuParams.removeFromSuperview();
+  this.colorLibsMenuParamsLabel.removeFromSuperview();
+  this.colorsMenuParamsLabel.removeFromSuperview();
+}
+
+function addLibraryColorsFields() {
+  this.view.addSubview(this.colorLibsMenuParams);
+  this.view.addSubview(this.colorsMenuParams);
+  this.view.addSubview(this.colorLibsMenuParamsLabel);
+  this.view.addSubview(this.colorsMenuParamsLabel);
+}
+
+function addPickerButton() {
+  this.view.addSubview(this.pickerView);
+  this.view.addSubview(this.colorPickerLabel);
+}
+
+function removePickerButton() {
+  this.pickerView.removeFromSuperview();
+  this.colorPickerLabel.removeFromSuperview();
+}
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _mask = __webpack_require__(2);
 
 var _mask2 = _interopRequireDefault(_mask);
 
@@ -706,6 +1150,10 @@ var _artboard2 = _interopRequireDefault(_artboard);
 var _utils = __webpack_require__(1);
 
 var _utils2 = _interopRequireDefault(_utils);
+
+var _logger = __webpack_require__(0);
+
+var _logger2 = _interopRequireDefault(_logger);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
@@ -726,12 +1174,20 @@ exports['default'] = {
 function initUpdateIconsSelectedArtboards(context, artboards, listIcon) {
 
   artboards.forEach(function (artboard, index) {
-    var params = Object.assign(_artboard2['default'].getPaddingAndSize(artboard.object), _mask2['default'].getMaskProperties(artboard.object), { iconPath: listIcon[index] });
-    artboard.object.removeAllLayers();
+    var layers = artboard.object.layers();
+    var isMasked = _utils2['default'].isArtboardMasked(artboard.object);
+    var params = Object.assign(_artboard2['default'].getPaddingAndSize(artboard.object), { iconPath: listIcon[index] });
+    layers[0].removeFromParent();
     addSVG(context, artboard.object, params.iconPadding, params.iconPath);
-    if (params.color && params.colorLib) _mask2['default'].addMask(context, artboard.object, params);
+    if (isMasked) {
+      params.mask = layers[0].copy();
+      layers[0].removeFromParent();
+      _mask2['default'].addMask(context, artboard.object, params);
+    }
     artboard.object.setName(_utils2['default'].getIconNameByNSUrl(params.iconPath));
   });
+
+  _utils2['default'].clearSelection(context);
 }
 
 /**
@@ -820,14 +1276,206 @@ function removeTxt(svgLayer) {
 }
 
 /***/ }),
-/* 6 */
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.importIcons = importIcons;
+exports.updateIconsOnSelectedArtboards = updateIconsOnSelectedArtboards;
+exports.addMaskOnSelectedArtboards = addMaskOnSelectedArtboards;
+exports.updateMaskOnSelectedArtboards = updateMaskOnSelectedArtboards;
+
+var _logger = __webpack_require__(0);
+
+var _logger2 = _interopRequireDefault(_logger);
+
+var _utils = __webpack_require__(1);
+
+var _utils2 = _interopRequireDefault(_utils);
+
+var _artboard = __webpack_require__(4);
+
+var _artboard2 = _interopRequireDefault(_artboard);
+
+var _mask = __webpack_require__(2);
+
+var _mask2 = _interopRequireDefault(_mask);
+
+var _modals = __webpack_require__(9);
+
+var _modals2 = _interopRequireDefault(_modals);
+
+var _files = __webpack_require__(10);
+
+var _files2 = _interopRequireDefault(_files);
+
+var _svg = __webpack_require__(6);
+
+var _svg2 = _interopRequireDefault(_svg);
+
+var _modals3 = __webpack_require__(5);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+/**
+ * @name importIcons
+ * @description trigger to start feature to import icons
+ * @param context
+ */
+function importIcons(context) {
+  _utils2['default'].runFramework(context);
+  var params = (0, _modals3.importModal)(context);
+  if (params.button !== 1000) return;
+  params.listIcon = _files2['default'].selectIconsFiles();
+  if (!params.listIcon.length) return;
+  _artboard2['default'].initImportIcons(context, params);
+}
+
+/**
+ * @name updateIconsOnSelectedArtboards
+ * @description trigger to start feature to update icon
+ * @param context
+ */
+function updateIconsOnSelectedArtboards(context) {
+  var selectedArtboardsAndSymbols = _utils2['default'].getSelectedArtboardsAndSymbols(context);
+  if (selectedArtboardsAndSymbols.length === 0) return _modals2['default'].newErrorModal('No artboards selected', 'Please select one or more artboards to replace icons.');
+  var listIcon = _files2['default'].selectIconsFiles();
+  if (!listIcon.length) return;
+  if (selectedArtboardsAndSymbols.length > listIcon.length) return _modals2['default'].newErrorModal('Too much artboards selected', 'Please select as many artboards as icons.');
+  if (selectedArtboardsAndSymbols.length < listIcon.length) return _modals2['default'].newErrorModal('Too much icons selected', 'Please select as many icons as artboards.');
+  _svg2['default'].initUpdateIconsSelectedArtboards(context, selectedArtboardsAndSymbols, listIcon);
+}
+
+/**
+ * @name addMaskOnSelectedArtboards
+ * @description trigger to start feature to add mask
+ * @param context
+ */
+function addMaskOnSelectedArtboards(context) {
+  var selectedArtboardsAndSymbols = _utils2['default'].getSelectedArtboardsAndSymbols(context);
+  if (selectedArtboardsAndSymbols.length === 0) return _modals2['default'].newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.');
+  var params = (0, _modals3.maskModal)(context);
+  if (params.button !== 1000) return;
+  _mask2['default'].initAddMaskOnSelectedArtboards(context, params, selectedArtboardsAndSymbols);
+}
+
+/**
+ * @name updateMaskOnSelectedArtboards
+ * @description trigger to start feature to update mask
+ * @param context
+ */
+function updateMaskOnSelectedArtboards(context) {
+  var selectedArtboardsAndSymbols = _utils2['default'].getSelectedArtboardsAndSymbols(context);
+  if (selectedArtboardsAndSymbols.length === 0) return _modals2['default'].newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.');
+  var params = (0, _modals3.maskModal)(context);
+  if (params.button !== 1000) return;
+  _mask2['default'].initAddMaskOnSelectedArtboards(context, params, selectedArtboardsAndSymbols);
+}
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports) {
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+//
+//  MochaJSDelegate.js
+//  MochaJSDelegate
+//
+//  Created by Matt Curtis
+//  Copyright (c) 2015. All rights reserved.
+//
+exports["default"] = MochaJSDelegate;
+
+
+function MochaJSDelegate(selectorHandlerDict) {
+  var uniqueClassName = "MochaJSDelegate_DynamicClass_" + NSUUID.UUID().UUIDString();
+
+  var delegateClassDesc = MOClassDescription.allocateDescriptionForClassWithName_superclass_(uniqueClassName, NSObject);
+
+  delegateClassDesc.registerClass();
+
+  //	Handler storage
+
+  var handlers = {};
+
+  //	Define interface
+
+  this.setHandlerForSelector = function (selectorString, func) {
+    var handlerHasBeenSet = selectorString in handlers;
+    var selector = NSSelectorFromString(selectorString);
+
+    handlers[selectorString] = func;
+
+    if (!handlerHasBeenSet) {
+      /*
+        For some reason, Mocha acts weird about arguments:
+        https://github.com/logancollins/Mocha/issues/28
+        We have to basically create a dynamic handler with a likewise dynamic number of predefined arguments.
+      */
+
+      var dynamicHandler = function dynamicHandler() {
+        var functionToCall = handlers[selectorString];
+
+        if (!functionToCall) return;
+
+        return functionToCall.apply(delegateClassDesc, arguments);
+      };
+
+      var args = [],
+          regex = /:/g;
+      while (match = regex.exec(selectorString)) {
+        args.push("arg" + args.length);
+      }dynamicFunction = eval("(function(" + args.join(",") + "){ return dynamicHandler.apply(this, arguments); })");
+
+      delegateClassDesc.addInstanceMethodWithSelector_function_(selector, dynamicFunction);
+    }
+  };
+
+  this.removeHandlerForSelector = function (selectorString) {
+    delete handlers[selectorString];
+  };
+
+  this.getHandlerForSelector = function (selectorString) {
+    return handlers[selectorString];
+  };
+
+  this.getAllHandlers = function () {
+    return handlers;
+  };
+
+  this.getClass = function () {
+    return NSClassFromString(uniqueClassName);
+  };
+
+  this.getClassInstance = function () {
+    return NSClassFromString(uniqueClassName)["new"]();
+  };
+
+  //	Conveience
+
+  if ((typeof selectorHandlerDict === "undefined" ? "undefined" : _typeof(selectorHandlerDict)) == "object") {
+    for (var selectorString in selectorHandlerDict) {
+      this.setHandlerForSelector(selectorString, selectorHandlerDict[selectorString]);
+    }
+  }
+}
+
+/***/ }),
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _libraries = __webpack_require__(2);
+var _libraries = __webpack_require__(3);
 
 var _libraries2 = _interopRequireDefault(_libraries);
 
@@ -979,20 +1627,11 @@ function createMaskFields(context, modal, checkboxFields) {
 
   var colorLibsMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(0, 0, 130, 20));
   var colorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(140, 0, 130, 20));
-  // const documentColorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(200, 0, 50, 20));
-  var pickerButton = NSButton.alloc().initWithFrame(NSMakeRect(140, 0, 40, 30));
-
-  pickerButton.setCOSJSTargetFunction(function () {
-    _utils2['default'].createWebview(context, modal);
-  });
 
   colorLibsMenu.setEnabled(false);
   colorMenu.setEnabled(false);
-  // documentColorMenu.setEnabled(false)
 
   colorLibsMenu.menu = _libraries2['default'].initLibsSelectList(_libraries2['default'].getLibs(), colorMenu);
-  // libraries.initColorSelectList(documentColorMenu, utils.getDocumentColors(context))
-
 
   if (checkboxFields) {
     checkboxFields[1].item.setCOSJSTargetFunction(function (mask) {
@@ -1030,17 +1669,6 @@ function createMaskFields(context, modal, checkboxFields) {
       function getter() {
         var currentItem = this.item.selectedItem();
         return currentItem ? currentItem.representedObject() : null;
-      }
-
-      return getter;
-    }()
-  }, {
-    item: pickerButton,
-    label: _utils2['default'].createLabel('Color Picker', 200, 25, 130, 20),
-    name: 'colorPicker',
-    getter: function () {
-      function getter() {
-        return "frite";
       }
 
       return getter;
@@ -1112,190 +1740,7 @@ function newErrorModal(message, informativeText) {
 }
 
 /***/ }),
-/* 7 */
-/***/ (function(module, exports, __webpack_require__) {
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.importIcons = importIcons;
-exports.updateIconsOnSelectedArtboards = updateIconsOnSelectedArtboards;
-exports.addMaskOnSelectedArtboards = addMaskOnSelectedArtboards;
-
-var _logger = __webpack_require__(0);
-
-var _logger2 = _interopRequireDefault(_logger);
-
-var _utils = __webpack_require__(1);
-
-var _utils2 = _interopRequireDefault(_utils);
-
-var _libraries = __webpack_require__(2);
-
-var _libraries2 = _interopRequireDefault(_libraries);
-
-var _artboard = __webpack_require__(4);
-
-var _artboard2 = _interopRequireDefault(_artboard);
-
-var _mask = __webpack_require__(3);
-
-var _mask2 = _interopRequireDefault(_mask);
-
-var _modals = __webpack_require__(6);
-
-var _modals2 = _interopRequireDefault(_modals);
-
-var _files = __webpack_require__(9);
-
-var _files2 = _interopRequireDefault(_files);
-
-var _svg = __webpack_require__(5);
-
-var _svg2 = _interopRequireDefault(_svg);
-
-var _importIcons = __webpack_require__(10);
-
-var _importIcons2 = _interopRequireDefault(_importIcons);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-/**
- * @name importIcons
- * @description trigger to start feature to import icons
- * @param context
- */
-function importIcons(context) {
-  var params = _importIcons2['default'].getImportIconsParams(context);
-  // if (params.button !== 1000) return
-  // params.listIcon = files.selectIconsFiles()
-  // if(!params.listIcon.length) return
-  // artboardProvider.initImportIcons(context, params)
-}
-
-/**
- * @name updateIconsOnSelectedArtboards
- * @description trigger to start feature to update icon
- * @param context
- */
-function updateIconsOnSelectedArtboards(context) {
-  var selectedArtboardsAndSymbols = _utils2['default'].getSelectedArtboardsAndSymbols(context);
-  if (selectedArtboardsAndSymbols.length === 0) return _modals2['default'].newErrorModal('No artboards selected', 'Please select one or more artboards to replace icons.');
-  var listIcon = _files2['default'].selectIconsFiles();
-  if (!listIcon.length) return;
-  if (selectedArtboardsAndSymbols.length > listIcon.length) return _modals2['default'].newErrorModal('Too much artboards selected', 'Please select as many artboards as icons.');
-  if (selectedArtboardsAndSymbols.length < listIcon.length) return _modals2['default'].newErrorModal('Too much icons selected', 'Please select as many icons as artboards.');
-  _svg2['default'].initUpdateIconsSelectedArtboards(context, selectedArtboardsAndSymbols, listIcon);
-}
-
-/**
- * @name addMaskOnSelectedArtboards
- * @description trigger to start feature to add mask
- * @param context
- */
-function addMaskOnSelectedArtboards(context) {
-  var selectedArtboardsAndSymbols = _utils2['default'].getSelectedArtboardsAndSymbols(context);
-  if (selectedArtboardsAndSymbols.length === 0) return _modals2['default'].newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.');
-  var params = _importIcons2['default'].getAddMaskOnSelectedArtboardsParams(context);
-  if (params.button !== 1000) return;
-  _mask2['default'].initAddMaskOnSelectedArtboards(context, params, selectedArtboardsAndSymbols);
-}
-
-/***/ }),
-/* 8 */
-/***/ (function(module, exports) {
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-//
-//  MochaJSDelegate.js
-//  MochaJSDelegate
-//
-//  Created by Matt Curtis
-//  Copyright (c) 2015. All rights reserved.
-//
-exports["default"] = MochaJSDelegate;
-
-
-function MochaJSDelegate(selectorHandlerDict) {
-  var uniqueClassName = "MochaJSDelegate_DynamicClass_" + NSUUID.UUID().UUIDString();
-
-  var delegateClassDesc = MOClassDescription.allocateDescriptionForClassWithName_superclass_(uniqueClassName, NSObject);
-
-  delegateClassDesc.registerClass();
-
-  //	Handler storage
-
-  var handlers = {};
-
-  //	Define interface
-
-  this.setHandlerForSelector = function (selectorString, func) {
-    var handlerHasBeenSet = selectorString in handlers;
-    var selector = NSSelectorFromString(selectorString);
-
-    handlers[selectorString] = func;
-
-    if (!handlerHasBeenSet) {
-      /*
-        For some reason, Mocha acts weird about arguments:
-        https://github.com/logancollins/Mocha/issues/28
-        We have to basically create a dynamic handler with a likewise dynamic number of predefined arguments.
-      */
-
-      var dynamicHandler = function dynamicHandler() {
-        var functionToCall = handlers[selectorString];
-
-        if (!functionToCall) return;
-
-        return functionToCall.apply(delegateClassDesc, arguments);
-      };
-
-      var args = [],
-          regex = /:/g;
-      while (match = regex.exec(selectorString)) {
-        args.push("arg" + args.length);
-      }dynamicFunction = eval("(function(" + args.join(",") + "){ return dynamicHandler.apply(this, arguments); })");
-
-      delegateClassDesc.addInstanceMethodWithSelector_function_(selector, dynamicFunction);
-    }
-  };
-
-  this.removeHandlerForSelector = function (selectorString) {
-    delete handlers[selectorString];
-  };
-
-  this.getHandlerForSelector = function (selectorString) {
-    return handlers[selectorString];
-  };
-
-  this.getAllHandlers = function () {
-    return handlers;
-  };
-
-  this.getClass = function () {
-    return NSClassFromString(uniqueClassName);
-  };
-
-  this.getClassInstance = function () {
-    return NSClassFromString(uniqueClassName)["new"]();
-  };
-
-  //	Conveience
-
-  if ((typeof selectorHandlerDict === "undefined" ? "undefined" : _typeof(selectorHandlerDict)) == "object") {
-    for (var selectorString in selectorHandlerDict) {
-      this.setHandlerForSelector(selectorString, selectorHandlerDict[selectorString]);
-    }
-  }
-}
-
-/***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 Object.defineProperty(exports, "__esModule", {
@@ -1356,91 +1801,6 @@ function getFilesByUrls(urls) {
   })));
 }
 
-/***/ }),
-/* 10 */
-/***/ (function(module, exports, __webpack_require__) {
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _modals = __webpack_require__(6);
-
-var _modals2 = _interopRequireDefault(_modals);
-
-var _utils = __webpack_require__(1);
-
-var _utils2 = _interopRequireDefault(_utils);
-
-var _logger = __webpack_require__(0);
-
-var _logger2 = _interopRequireDefault(_logger);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-exports['default'] = {
-  getImportIconsParams: getImportIconsParams,
-  getAddMaskOnSelectedArtboardsParams: getAddMaskOnSelectedArtboardsParams
-
-  /**
-   * @name getImportIconsSelectedArtboardsParams
-   * @description get params for the "getImportIconsParams" feature
-   * @returns {Object}
-   */
-};
-function getImportIconsParams(context) {
-
-  var viewSize = {
-    width: 500,
-    height: 375
-  };
-
-  var modalParams = {
-    messageText: 'Configure your import',
-    informativeText: 'Your icons will be arranged in artboards. Set size and padding of your artboards.'
-  };
-
-  var modal = _modals2['default'].newModal(context, viewSize, modalParams);
-  var checkboxFields = _modals2['default'].createCheckBoxes();
-  var maskFields = _modals2['default'].createMaskFields(context, modal, checkboxFields);
-  var artboardFields = _modals2['default'].createArtboardFields();
-
-  var allFields = [artboardFields, checkboxFields, maskFields];
-  _modals2['default'].appendsFields(modal, allFields, true);
-  _modals2['default'].setNextKey(_utils2['default'].flatten(allFields));
-
-  var viewCell = NSView.alloc().initWithFrame(NSMakeRect(0, 0, viewSize.width, 25));
-  viewCell.addSubview(_utils2['default'].createLabel('Works only with color symbols.', 0, 0, 300, 20, 11));
-  modal.view.addSubview(viewCell);
-
-  return Object.assign(_modals2['default'].getMainButtonParam(_modals2['default'].runModal(modal)), _modals2['default'].getParams(allFields));
-}
-
-/**
- * @name getAddMaskOnSelectedArtboardsParams
- * @description get params for the "AddMaskOnSelectedArtboards" feature
- * @returns {Object}
- */
-function getAddMaskOnSelectedArtboardsParams(context) {
-  var viewSize = {
-    width: 300,
-    height: 43
-  };
-
-  var modalParams = {
-    informativeText: 'Select your library and choose a color to apply as mask. Your layers will all be combined.',
-    messageText: 'Configure your color mask'
-  };
-
-  var modal = _modals2['default'].newModal(context, viewSize, modalParams);
-  var maskFields = _modals2['default'].createMaskFields();
-  var allFields = [maskFields];
-  _modals2['default'].appendsFields(modal, allFields);
-  _modals2['default'].setNextKey(_utils2['default'].flatten(allFields));
-
-  return Object.assign(_modals2['default'].getMainButtonParam(_modals2['default'].runModal(modal)), _modals2['default'].getParams(allFields));
-}
-
 /***/ })
 /******/ ]);
   if (key === 'default' && typeof exports === 'function') {
@@ -1452,4 +1812,5 @@ function getAddMaskOnSelectedArtboardsParams(context) {
 that['importIcons'] = __skpm_run.bind(this, 'importIcons');
 that['onRun'] = __skpm_run.bind(this, 'default');
 that['updateIconsOnSelectedArtboards'] = __skpm_run.bind(this, 'updateIconsOnSelectedArtboards');
-that['addMaskOnSelectedArtboards'] = __skpm_run.bind(this, 'addMaskOnSelectedArtboards')
+that['addMaskOnSelectedArtboards'] = __skpm_run.bind(this, 'addMaskOnSelectedArtboards');
+that['updateMaskOnSelectedArtboards'] = __skpm_run.bind(this, 'updateMaskOnSelectedArtboards')

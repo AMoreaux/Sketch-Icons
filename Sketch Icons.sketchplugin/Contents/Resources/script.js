@@ -3143,73 +3143,19 @@ var _reactDom2 = _interopRequireDefault(_reactDom);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
+// const handleColorChange = ({hex}) => console.log(hex)
+
 var handleColorChange = function handleColorChange(_ref) {
-  var hex = _ref.hex;
-  return console.log(hex);
+  var rgb = _ref.rgb;
+
+  var previousHash = window.location.hash.split('?')[1] ? window.location.hash.split('?')[0] : window.location.hash;
+  window.location.hash = previousHash + '?color=' + encodeURIComponent(JSON.stringify(rgb));
 };
 
 _reactDom2['default'].render(_react2['default'].createElement(_reactColor.SketchPicker, {
   color: '#333',
   onChangeComplete: handleColorChange
 }), document.getElementById('container'));
-
-// const ColorPicker = () => {
-//   const handleColorChange = ({hex}) => console.log(hex)
-//
-//   return (
-//     <div style={{position: 'relative'}}>
-//       <button>
-//         Pick Color
-//       </button>
-//
-//       <div
-//         style={{
-//           position: 'absolute',
-//           top: '100%',
-//           left: '50%',
-//           transform: 'translateX(-50%)',
-//           marginTop: 15,
-//         }}
-//       >
-//         <BlockPicker
-//           color="#333"
-//           onChangeComplete={handleColorChange}
-//         />
-//       </div>
-//     </div>
-//   )
-// }
-
-// export default class ColorPicker extends Component {
-//   handleColorChange({ hex }){
-//     console.log(hex)
-//   }
-//
-//   render({ url }) {
-//     return (
-//       <div style={{position: 'relative'}}>
-//         <button>
-//           Pick Color
-//         </button>
-//
-//         <div
-//           style={{
-//             position: 'absolute',
-//             top: '100%',
-//             left: '50%',
-//             transform: 'translateX(-50%)',
-//             marginTop: 15,
-//           }}
-//         >
-//           <BlockPicker
-//             color="#333"
-//             onChangeComplete={this.handleColorChange}
-//           />
-//         </div>
-//       </div>
-//     );
-//   }
-// }
 
 /***/ }),
 /* 81 */
