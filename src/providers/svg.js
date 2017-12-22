@@ -23,9 +23,8 @@ function initUpdateIconsSelectedArtboards(context, artboards, listIcon) {
     const layers = artboard.object.layers()
     const isMasked = utils.isArtboardMasked(artboard.object)
     let params = Object.assign(artboardProvider.getPaddingAndSize(artboard.object), {iconPath : listIcon[index]})
-    logger.log(params)
     layers[0].removeFromParent()
-    addSVG(context, artboard.object, params.iconPadding, params.iconPath)
+    addSVG(context, artboard.object, params.iconPadding, params.artboardSize, params.iconPath)
     if (isMasked) {
       params.mask = layers[0].copy()
       layers[0].removeFromParent()
@@ -45,17 +44,30 @@ function initUpdateIconsSelectedArtboards(context, artboards, listIcon) {
  * @param iconPadding {Number}
  * @param iconPath {Object} : NSUrl
  */
-function addSVG(context, artboard, iconPadding, iconPath) {
+function addSVG(context, artboard, iconPadding, artboardSize, iconPath) {
   utils.clearSelection(context)
   const svgImporter = MSSVGImporter.svgImporter();
-  const svgURL = NSURL.fileURLWithPath(iconPath.path());
-  svgImporter.prepareToImportFromURL(svgURL);
+  svgImporter.prepareToImportFromData(readFile(iconPath, iconPadding, artboardSize));
   const svgLayer = svgImporter.importAsLayer();
   removeTxt(svgLayer)
   artboard.addLayer(svgLayer)
   const svgLayerFrame = svgLayer.frame()
   resizeSVG(svgLayerFrame, artboard, iconPadding)
 }
+
+function readFile(url, iconPadding, artboardSize){
+  let content = NSString.alloc().initWithContentsOfURL(url)
+
+  const sizeWrapper = artboardSize - iconPadding * 2
+  const match = content.match(/<svg(.*?)>/gi)[0]
+  const addrect = `${match}<rect width=${sizeWrapper} height=${sizeWrapper} id="delete-me"/>`
+  content = NSString.stringWithString(content.replace(/<svg(.*?)>/gi, addrect))
+
+  return content.dataUsingEncoding(NSUTF8StringEncoding);
+
+}
+
+
 
 /**
  * @name resizeSVG
@@ -111,8 +123,10 @@ function resizeSVG(svgLayerFrame, artboard, iconPadding) {
 function removeTxt(svgLayer) {
 
   const scope = svgLayer.children(),
-    predicate = NSPredicate.predicateWithFormat("(className == %@)", "MSTextLayer"),
-    layers = scope.filteredArrayUsingPredicate(predicate);
+    predicateTextLayers = NSPredicate.predicateWithFormat("(className == %@)", "MSTextLayer"),
+    predicateId = NSPredicate.predicateWithFormat("(name == %@)", "delete-me"),
+
+    layers = scope.filteredArrayUsingPredicate(predicateTextLayers).arrayByAddingObjectsFromArray(scope.filteredArrayUsingPredicate(predicateId))
 
   const loop = layers.objectEnumerator();
   let layer;

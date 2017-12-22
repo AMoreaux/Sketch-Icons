@@ -88,7 +88,7 @@ function initImportIcons(context, params) {
   params.listIcon.forEach(function (icon, index) {
     try {
       newArtboard = createArtboard(context, index, icon)
-      svg.addSVG(context, newArtboard, params.iconPadding, icon)
+      svg.addSVG(context, newArtboard, params.iconPadding, params.artboardSize, icon)
       if (params.withMask) mask.addMask(context, newArtboard, params)
       if(params.convertSymbol)MSSymbolMaster.convertArtboardToSymbol(newArtboard)
     } catch (e) {

@@ -198,11 +198,21 @@ function getSelectedArtboardsAndSymbols(context) {
       className = String(layer['class']());
     }
 
-    selectedArtboardsAndSymbols.push({
-      'object': layer,
-      'type': className
+    if (selectedArtboardsAndSymbols.indexOf(String(layer.objectID())) === -1) {
+      selectedArtboardsAndSymbols.push({
+        'object': layer,
+        'type': className,
+        'id': layer.objectID()
+      });
+    }
+  });
+
+  selectedArtboardsAndSymbols = selectedArtboardsAndSymbols.filter(function (rootElement, index, self) {
+    return index === self.findIndex(function (compareElement) {
+      return compareElement.id === rootElement.id;
     });
   });
+  _logger2['default'].log(selectedArtboardsAndSymbols);
 
   return selectedArtboardsAndSymbols;
 }
@@ -221,6 +231,7 @@ function flatten(list) {
 
 /**
  * @name getDocumentColors
+ * @description return list of document colors
  * @param context
  * @return {Array}
  */
@@ -231,10 +242,9 @@ function getDocumentColors(context) {
 /**
  * @name createWebview
  * @param context
- * @param handlers
- * @param title
- * @param height
- * @return {WebUI}
+ * @param pickerButton
+ * @param setColor {function}
+ * @return {Object} : WebView
  */
 function createWebview(context, pickerButton, setColor) {
 
@@ -267,7 +277,6 @@ function createWebview(context, pickerButton, setColor) {
   webView.setMainFrameURL_(context.plugin.urlForResourceNamed("webview.html").path());
   webView.setFrameLoadDelegate_(delegate.getClassInstance());
   return webView;
-  // view.addSubview(webView);
 }
 
 /**
@@ -284,6 +293,11 @@ function createDivider(frame) {
   return divider;
 }
 
+/**
+ * @name runFramework
+ * @param context
+ * @return {boolean}
+ */
 function runFramework(context) {
 
   var mocha = Mocha.sharedRuntime();
@@ -302,6 +316,12 @@ function runFramework(context) {
   }
 }
 
+/**
+ * @name getImageByColor
+ * @param color
+ * @param colorSize
+ * @return {Object} : NSImage
+ */
 function getImageByColor(color) {
   var colorSize = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { width: 14, height: 14 };
 
@@ -317,6 +337,11 @@ function getImageByColor(color) {
   return image;
 }
 
+/**
+ * @name isArtboardMasked
+ * @param artboard
+ * @return {boolean}
+ */
 function isArtboardMasked(artboard) {
   var layers = artboard.layers();
   if (layers.length > 1 && layers[1].isMasked()) return true;
@@ -389,6 +414,13 @@ function addMask(context, currentArtboard, params) {
   applyMask(currentArtboard, mask);
 }
 
+/**
+ * @name createMaskFromNean
+ * @param context
+ * @param currentArtboard
+ * @param color
+ * @return {Object} : MSShapeGroup
+ */
 function createMaskFromNean(context, currentArtboard, color) {
   var currentArtboardSize = currentArtboard.rect();
 
@@ -574,7 +606,7 @@ function initLibsSelectList(context, libs, colorMenu) {
 function updateColorMenu(context, lib, colorMenu) {
   var colors = [];
   if (String(lib.title()) === 'Current file') {
-    colors = getColorSymbolsFromDocument(context.document.documentData());
+    colors = getColorSymbolsFromCurrentDocument(context.document.documentData());
   } else {
     colors = loadColorFromSelectedLib(lib, colorMenu);
   }
@@ -612,7 +644,12 @@ function initColorSelectList(popColorMenu, colors) {
   return popColorMenu;
 }
 
-function getColorSymbolsFromDocument(document) {
+/**
+ * @name getColorSymbolsFromCurrentDocument
+ * @param document
+ * @return {Array}
+ */
+function getColorSymbolsFromCurrentDocument(document) {
   var result = [];
   var layers = void 0;
   document.localSymbols().forEach(function (symbol) {
@@ -744,7 +781,7 @@ function initImportIcons(context, params) {
   params.listIcon.forEach(function (icon, index) {
     try {
       newArtboard = createArtboard(context, index, icon);
-      _svg2['default'].addSVG(context, newArtboard, params.iconPadding, icon);
+      _svg2['default'].addSVG(context, newArtboard, params.iconPadding, params.artboardSize, icon);
       if (params.withMask) _mask2['default'].addMask(context, newArtboard, params);
       if (params.convertSymbol) MSSymbolMaster.convertArtboardToSymbol(newArtboard);
     } catch (e) {
@@ -1178,9 +1215,8 @@ function initUpdateIconsSelectedArtboards(context, artboards, listIcon) {
     var layers = artboard.object.layers();
     var isMasked = _utils2['default'].isArtboardMasked(artboard.object);
     var params = Object.assign(_artboard2['default'].getPaddingAndSize(artboard.object), { iconPath: listIcon[index] });
-    _logger2['default'].log(params);
     layers[0].removeFromParent();
-    addSVG(context, artboard.object, params.iconPadding, params.iconPath);
+    addSVG(context, artboard.object, params.iconPadding, params.artboardSize, params.iconPath);
     if (isMasked) {
       params.mask = layers[0].copy();
       layers[0].removeFromParent();
@@ -1200,16 +1236,26 @@ function initUpdateIconsSelectedArtboards(context, artboards, listIcon) {
  * @param iconPadding {Number}
  * @param iconPath {Object} : NSUrl
  */
-function addSVG(context, artboard, iconPadding, iconPath) {
+function addSVG(context, artboard, iconPadding, artboardSize, iconPath) {
   _utils2['default'].clearSelection(context);
   var svgImporter = MSSVGImporter.svgImporter();
-  var svgURL = NSURL.fileURLWithPath(iconPath.path());
-  svgImporter.prepareToImportFromURL(svgURL);
+  svgImporter.prepareToImportFromData(readFile(iconPath, iconPadding, artboardSize));
   var svgLayer = svgImporter.importAsLayer();
   removeTxt(svgLayer);
   artboard.addLayer(svgLayer);
   var svgLayerFrame = svgLayer.frame();
   resizeSVG(svgLayerFrame, artboard, iconPadding);
+}
+
+function readFile(url, iconPadding, artboardSize) {
+  var content = NSString.alloc().initWithContentsOfURL(url);
+
+  var sizeWrapper = artboardSize - iconPadding * 2;
+  var match = content.match(/<svg(.*?)>/gi)[0];
+  var addrect = String(match) + '<rect width=' + sizeWrapper + ' height=' + sizeWrapper + ' id="delete-me"/>';
+  content = NSString.stringWithString(content.replace(/<svg(.*?)>/gi, addrect));
+
+  return content.dataUsingEncoding(NSUTF8StringEncoding);
 }
 
 /**
@@ -1267,8 +1313,9 @@ function resizeSVG(svgLayerFrame, artboard, iconPadding) {
 function removeTxt(svgLayer) {
 
   var scope = svgLayer.children(),
-      predicate = NSPredicate.predicateWithFormat("(className == %@)", "MSTextLayer"),
-      layers = scope.filteredArrayUsingPredicate(predicate);
+      predicateTextLayers = NSPredicate.predicateWithFormat("(className == %@)", "MSTextLayer"),
+      predicateId = NSPredicate.predicateWithFormat("(name == %@)", "delete-me"),
+      layers = scope.filteredArrayUsingPredicate(predicateTextLayers).arrayByAddingObjectsFromArray(scope.filteredArrayUsingPredicate(predicateId));
 
   var loop = layers.objectEnumerator();
   var layer = void 0;

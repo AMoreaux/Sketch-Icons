@@ -48,6 +48,13 @@ function addMask(context, currentArtboard, params) {
 }
 
 
+/**
+ * @name createMaskFromNean
+ * @param context
+ * @param currentArtboard
+ * @param color
+ * @return {Object} : MSShapeGroup
+ */
 function createMaskFromNean(context, currentArtboard, color){
   const currentArtboardSize = currentArtboard.rect()
 

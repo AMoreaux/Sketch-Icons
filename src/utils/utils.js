@@ -64,7 +64,7 @@ function createLabel(name, x, y, w, h, fontSize = 13) {
  * @returns {Array} : MSArtboardGroup
  */
 function getSelectedArtboardsAndSymbols(context) {
-  const selectedArtboardsAndSymbols = []
+  let selectedArtboardsAndSymbols = []
 
   context.selection.forEach(function (layer) {
     let className = String(layer.class())
@@ -73,12 +73,21 @@ function getSelectedArtboardsAndSymbols(context) {
       className = String(layer.class())
     }
 
-    selectedArtboardsAndSymbols.push({
-      'object': layer,
-      'type': className
-    })
-
+    if(selectedArtboardsAndSymbols.indexOf(String(layer.objectID())) === -1){
+      selectedArtboardsAndSymbols.push({
+        'object': layer,
+        'type': className,
+        'id': layer.objectID()
+      })
+    }
   })
+
+  selectedArtboardsAndSymbols = selectedArtboardsAndSymbols.filter((rootElement, index, self) =>
+    index === self.findIndex((compareElement) => (
+      compareElement.id === rootElement.id
+    ))
+  )
+  logger.log(selectedArtboardsAndSymbols)
 
   return selectedArtboardsAndSymbols
 }
@@ -97,6 +106,7 @@ function flatten(list) {
 
 /**
  * @name getDocumentColors
+ * @description return list of document colors
  * @param context
  * @return {Array}
  */
@@ -107,10 +117,9 @@ function getDocumentColors(context) {
 /**
  * @name createWebview
  * @param context
- * @param handlers
- * @param title
- * @param height
- * @return {WebUI}
+ * @param pickerButton
+ * @param setColor {function}
+ * @return {Object} : WebView
  */
 function createWebview(context, pickerButton, setColor) {
 
@@ -140,7 +149,6 @@ function createWebview(context, pickerButton, setColor) {
   webView.setMainFrameURL_(context.plugin.urlForResourceNamed("webview.html").path());
   webView.setFrameLoadDelegate_(delegate.getClassInstance());
   return webView
-  // view.addSubview(webView);
 }
 
 
@@ -158,6 +166,11 @@ function createDivider(frame) {
   return divider;
 }
 
+/**
+ * @name runFramework
+ * @param context
+ * @return {boolean}
+ */
 function runFramework(context){
 
   const mocha = Mocha.sharedRuntime();
@@ -177,6 +190,12 @@ function runFramework(context){
 }
 
 
+/**
+ * @name getImageByColor
+ * @param color
+ * @param colorSize
+ * @return {Object} : NSImage
+ */
 function getImageByColor(color, colorSize = {width: 14, height: 14}){
     const size = CGSizeMake(colorSize.width, colorSize.height);
     const image = NSImage.alloc().init()
@@ -190,6 +209,11 @@ function getImageByColor(color, colorSize = {width: 14, height: 14}){
     return image
 }
 
+/**
+ * @name isArtboardMasked
+ * @param artboard
+ * @return {boolean}
+ */
 function isArtboardMasked(artboard) {
   const layers = artboard.layers()
   if (layers.length > 1  && layers[1].isMasked())return true
