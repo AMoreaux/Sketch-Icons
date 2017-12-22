@@ -85,7 +85,7 @@ function initLibsSelectList(context, libs, colorMenu) {
 function updateColorMenu(context, lib, colorMenu){
   let colors = []
   if(String(lib.title()) === 'Current file'){
-    colors = getColorSymbolsFromCurrentDocument(context.document.documentData())
+    colors = getColorSymbolsFromDocument(context.document.documentData())
   }else{
     colors = loadColorFromSelectedLib(lib, colorMenu)
   }
@@ -128,11 +128,16 @@ function initColorSelectList(popColorMenu, colors) {
  * @param document
  * @return {Array}
  */
-function getColorSymbolsFromCurrentDocument(document){
+function getColorSymbolsFromDocument(document){
   const result = []
   let layers;
   document.localSymbols().forEach(function(symbol){
     layers = symbol.layers()
+
+    if(symbol.children().length > 3) {
+      return
+    }
+
     if(layers.length === 0 && symbol.backgroundColor()){
       result.push({
         color: symbol.backgroundColor(),

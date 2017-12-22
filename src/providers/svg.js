@@ -24,12 +24,14 @@ function initUpdateIconsSelectedArtboards(context, artboards, listIcon) {
     const isMasked = utils.isArtboardMasked(artboard.object)
     let params = Object.assign(artboardProvider.getPaddingAndSize(artboard.object), {iconPath : listIcon[index]})
     layers[0].removeFromParent()
-    addSVG(context, artboard.object, params.iconPadding, params.artboardSize, params.iconPath)
     if (isMasked) {
       params.mask = layers[0].copy()
       layers[0].removeFromParent()
-      maskProvider.addMask(context, artboard.object, params)
+      // maskProvider.addMask(context, artboard.object, params)
     }
+    addSVG(context, artboard.object, params.iconPadding, params.artboardSize, params.iconPath)
+    if(isMasked)maskProvider.applyMask(artboard.object, params.mask)
+
     artboard.object.setName(utils.getIconNameByNSUrl(params.iconPath))
   })
 
@@ -53,18 +55,28 @@ function addSVG(context, artboard, iconPadding, artboardSize, iconPath) {
   artboard.addLayer(svgLayer)
   const svgLayerFrame = svgLayer.frame()
   resizeSVG(svgLayerFrame, artboard, iconPadding)
+  maskProvider.formatSvg(artboard, true)
+  maskProvider.dedupeLayers(artboard)
+  center(artboardSize, artboard.layers()[0].frame())
+}
+
+function center(artboardSize, svgLayerFrame){
+
+  const shapeGroupWidth = svgLayerFrame.width()
+  const shapeGroupHeight = svgLayerFrame.height()
+  svgLayerFrame.setX((artboardSize - shapeGroupWidth) / 2)
+  svgLayerFrame.setY((artboardSize - shapeGroupHeight) / 2)
+
 }
 
 function readFile(url, iconPadding, artboardSize){
   let content = NSString.alloc().initWithContentsOfURL(url)
 
   const sizeWrapper = artboardSize - iconPadding * 2
-  const match = content.match(/<svg(.*?)>/gi)[0]
-  const addrect = `${match}<rect width=${sizeWrapper} height=${sizeWrapper} id="delete-me"/>`
-  content = NSString.stringWithString(content.replace(/<svg(.*?)>/gi, addrect))
+  const addrect = `<rect width=${sizeWrapper} height=${sizeWrapper} id="delete-me"/></svg>`
+  content = NSString.stringWithString(content.replace('</svg>', addrect))
 
   return content.dataUsingEncoding(NSUTF8StringEncoding);
-
 }
 
 
@@ -90,28 +102,28 @@ function resizeSVG(svgLayerFrame, artboard, iconPadding) {
   if (width === height) {
     svgLayerFrame.setWidth(currentArtboardSize.width - 2 * iconPadding)
     svgLayerFrame.setHeight(currentArtboardSize.height - 2 * iconPadding)
-    svgLayerFrame.setX(iconPadding)
-    svgLayerFrame.setY(iconPadding)
+    // svgLayerFrame.setX(iconPadding)
+    // svgLayerFrame.setY(iconPadding)
   } else if (width >= height) {
     svgLayerFrame.setWidth(currentArtboardSize.width - 2 * iconPadding)
-    svgLayerFrame.setX(iconPadding)
+    // svgLayerFrame.setX(iconPadding)
     newHeight = height * (currentArtboardSize.height - 2 * iconPadding) / width
     newHeight = (newHeight < 1) ? 1 : newHeight
-    newPadding = (currentArtboardSize.width - 2 * iconPadding) / 2 + iconPadding - newHeight / 2
+    // newPadding = (currentArtboardSize.width - 2 * iconPadding) / 2 + iconPadding - newHeight / 2
 
     svgLayerFrame.setHeight(newHeight)
-    svgLayerFrame.setY(newPadding)
+    // svgLayerFrame.setY(newPadding)
 
   } else {
     svgLayerFrame.setHeight(currentArtboardSize.height - 2 * iconPadding)
-    svgLayerFrame.setY(iconPadding)
+    // svgLayerFrame.setY(iconPadding)
 
     newWidth = width * (currentArtboardSize.width - 2 * iconPadding) / height
     newWidth = (newWidth < 1) ? 1 : newWidth
-    newPadding = (currentArtboardSize.height - 2 * iconPadding) / 2 + iconPadding - newWidth / 2
+    // newPadding = (currentArtboardSize.height - 2 * iconPadding) / 2 + iconPadding - newWidth / 2
 
     svgLayerFrame.setWidth(newWidth)
-    svgLayerFrame.setX(newPadding)
+    // svgLayerFrame.setX(newPadding)
   }
 }
 
@@ -125,8 +137,11 @@ function removeTxt(svgLayer) {
   const scope = svgLayer.children(),
     predicateTextLayers = NSPredicate.predicateWithFormat("(className == %@)", "MSTextLayer"),
     predicateId = NSPredicate.predicateWithFormat("(name == %@)", "delete-me"),
+    // predicateRectangle = NSPredicate.predicateWithFormat("(name == %@)", "Rectangle-path"),
 
-    layers = scope.filteredArrayUsingPredicate(predicateTextLayers).arrayByAddingObjectsFromArray(scope.filteredArrayUsingPredicate(predicateId))
+    layers = scope.filteredArrayUsingPredicate(predicateTextLayers)
+      .arrayByAddingObjectsFromArray(scope.filteredArrayUsingPredicate(predicateId))
+      // .arrayByAddingObjectsFromArray(scope.filteredArrayUsingPredicate(predicateRectangle))
 
   const loop = layers.objectEnumerator();
   let layer;

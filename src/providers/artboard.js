@@ -86,16 +86,16 @@ function initImportIcons(context, params) {
   initArtboardsParams(context)
   let newArtboard;
   params.listIcon.forEach(function (icon, index) {
-    try {
+    // try {
       newArtboard = createArtboard(context, index, icon)
       svg.addSVG(context, newArtboard, params.iconPadding, params.artboardSize, icon)
       if (params.withMask) mask.addMask(context, newArtboard, params)
       if(params.convertSymbol)MSSymbolMaster.convertArtboardToSymbol(newArtboard)
-    } catch (e) {
-      logger.log("Sorry, Error !!!")
-      logger.log(e)
-      logger.log(icon)
-    }
+    // } catch (e) {
+    //   logger.log("Sorry, Error !!!")
+    //   logger.log(e)
+    //   logger.log(icon)
+    // }
   });
   utils.clearSelection(context)
 }
@@ -110,6 +110,6 @@ function getPaddingAndSize(artboard){
   const icon = artboard.layers()[0].rect()
   return {
     iconPadding: parseInt(Math.min(icon.origin.x, icon.origin.y)),
-    artboardSize: parseInt(icon.size.width)
+    artboardSize: parseInt(artboard.rect().size.width)
   }
 }

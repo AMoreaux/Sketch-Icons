@@ -91,6 +91,8 @@ function importModal(context) {
     result.colorPicker = this.colorPickerColor
   }
 
+  logger.log(result)
+
   return result
 }
 

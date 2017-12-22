@@ -212,7 +212,6 @@ function getSelectedArtboardsAndSymbols(context) {
       return compareElement.id === rootElement.id;
     });
   });
-  _logger2['default'].log(selectedArtboardsAndSymbols);
 
   return selectedArtboardsAndSymbols;
 }
@@ -443,8 +442,9 @@ function createMaskFromNean(context, currentArtboard, color) {
 function getMaskSymbolFromLib(context, currentArtboard, colorSymbolMaster, colorLibrary) {
   _utils2['default'].clearSelection(context);
   var librairiesController = AppController.sharedInstance().librariesController();
-  var symbolMaster = librairiesController.importForeignSymbol_fromLibrary_intoDocument(colorSymbolMaster, colorLibrary, context.document.documentData());
-  return symbolMaster.symbolMaster().newSymbolInstance();
+
+  var symbolMaster = colorLibrary ? librairiesController.importForeignSymbol_fromLibrary_intoDocument(colorSymbolMaster, colorLibrary, context.document.documentData()).symbolMaster() : colorSymbolMaster;
+  return symbolMaster.newSymbolInstance();
 }
 
 /**
@@ -467,9 +467,11 @@ function applyMask(currentArtboard, mask) {
  * @param currentArtboard {Object} : MSArtboardGroup
  */
 function formatSvg(currentArtboard) {
+  var onlyLayer = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
   currentArtboard.children().forEach(function (layer) {
     var layerClass = String(layer['class']());
-    if (layerClass === "MSLayerGroup" || layerClass === "MSShapeGroup") {
+    if (layerClass === "MSLayerGroup" || layerClass === "MSShapeGroup" && !onlyLayer) {
       layer.ungroup();
     }
   });
@@ -499,6 +501,9 @@ function dedupeLayers(currentArtboard) {
     }
   });
 
+  var fill = container.style().addStylePartOfType(0);
+  fill.color = MSColor.blackColor();
+  // container.style.fills = [MSColor.blackColor()]
   container.setName("icon");
   container.resizeToFitChildrenWithOption(0);
 }
@@ -606,7 +611,7 @@ function initLibsSelectList(context, libs, colorMenu) {
 function updateColorMenu(context, lib, colorMenu) {
   var colors = [];
   if (String(lib.title()) === 'Current file') {
-    colors = getColorSymbolsFromCurrentDocument(context.document.documentData());
+    colors = getColorSymbolsFromDocument(context.document.documentData());
   } else {
     colors = loadColorFromSelectedLib(lib, colorMenu);
   }
@@ -649,11 +654,16 @@ function initColorSelectList(popColorMenu, colors) {
  * @param document
  * @return {Array}
  */
-function getColorSymbolsFromCurrentDocument(document) {
+function getColorSymbolsFromDocument(document) {
   var result = [];
   var layers = void 0;
   document.localSymbols().forEach(function (symbol) {
     layers = symbol.layers();
+
+    if (symbol.children().length > 3) {
+      return;
+    }
+
     if (layers.length === 0 && symbol.backgroundColor()) {
       result.push({
         color: symbol.backgroundColor(),
@@ -779,16 +789,16 @@ function initImportIcons(context, params) {
   initArtboardsParams(context);
   var newArtboard = void 0;
   params.listIcon.forEach(function (icon, index) {
-    try {
-      newArtboard = createArtboard(context, index, icon);
-      _svg2['default'].addSVG(context, newArtboard, params.iconPadding, params.artboardSize, icon);
-      if (params.withMask) _mask2['default'].addMask(context, newArtboard, params);
-      if (params.convertSymbol) MSSymbolMaster.convertArtboardToSymbol(newArtboard);
-    } catch (e) {
-      _logger2['default'].log("Sorry, Error !!!");
-      _logger2['default'].log(e);
-      _logger2['default'].log(icon);
-    }
+    // try {
+    newArtboard = createArtboard(context, index, icon);
+    _svg2['default'].addSVG(context, newArtboard, params.iconPadding, params.artboardSize, icon);
+    if (params.withMask) _mask2['default'].addMask(context, newArtboard, params);
+    if (params.convertSymbol) MSSymbolMaster.convertArtboardToSymbol(newArtboard);
+    // } catch (e) {
+    //   logger.log("Sorry, Error !!!")
+    //   logger.log(e)
+    //   logger.log(icon)
+    // }
   });
   _utils2['default'].clearSelection(context);
 }
@@ -803,7 +813,7 @@ function getPaddingAndSize(artboard) {
   var icon = artboard.layers()[0].rect();
   return {
     iconPadding: parseInt(Math.min(icon.origin.x, icon.origin.y)),
-    artboardSize: parseInt(icon.size.width)
+    artboardSize: parseInt(artboard.rect().size.width)
   };
 }
 
@@ -917,6 +927,8 @@ function importModal(context) {
   } else if (result.withMask) {
     result.colorPicker = this.colorPickerColor;
   }
+
+  _logger2['default'].log(result);
 
   return result;
 }
@@ -1216,12 +1228,14 @@ function initUpdateIconsSelectedArtboards(context, artboards, listIcon) {
     var isMasked = _utils2['default'].isArtboardMasked(artboard.object);
     var params = Object.assign(_artboard2['default'].getPaddingAndSize(artboard.object), { iconPath: listIcon[index] });
     layers[0].removeFromParent();
-    addSVG(context, artboard.object, params.iconPadding, params.artboardSize, params.iconPath);
     if (isMasked) {
       params.mask = layers[0].copy();
       layers[0].removeFromParent();
-      _mask2['default'].addMask(context, artboard.object, params);
+      // maskProvider.addMask(context, artboard.object, params)
     }
+    addSVG(context, artboard.object, params.iconPadding, params.artboardSize, params.iconPath);
+    if (isMasked) _mask2['default'].applyMask(artboard.object, params.mask);
+
     artboard.object.setName(_utils2['default'].getIconNameByNSUrl(params.iconPath));
   });
 
@@ -1245,15 +1259,25 @@ function addSVG(context, artboard, iconPadding, artboardSize, iconPath) {
   artboard.addLayer(svgLayer);
   var svgLayerFrame = svgLayer.frame();
   resizeSVG(svgLayerFrame, artboard, iconPadding);
+  _mask2['default'].formatSvg(artboard, true);
+  _mask2['default'].dedupeLayers(artboard);
+  center(artboardSize, artboard.layers()[0].frame());
+}
+
+function center(artboardSize, svgLayerFrame) {
+
+  var shapeGroupWidth = svgLayerFrame.width();
+  var shapeGroupHeight = svgLayerFrame.height();
+  svgLayerFrame.setX((artboardSize - shapeGroupWidth) / 2);
+  svgLayerFrame.setY((artboardSize - shapeGroupHeight) / 2);
 }
 
 function readFile(url, iconPadding, artboardSize) {
   var content = NSString.alloc().initWithContentsOfURL(url);
 
   var sizeWrapper = artboardSize - iconPadding * 2;
-  var match = content.match(/<svg(.*?)>/gi)[0];
-  var addrect = String(match) + '<rect width=' + sizeWrapper + ' height=' + sizeWrapper + ' id="delete-me"/>';
-  content = NSString.stringWithString(content.replace(/<svg(.*?)>/gi, addrect));
+  var addrect = '<rect width=' + sizeWrapper + ' height=' + sizeWrapper + ' id="delete-me"/></svg>';
+  content = NSString.stringWithString(content.replace('</svg>', addrect));
 
   return content.dataUsingEncoding(NSUTF8StringEncoding);
 }
@@ -1281,27 +1305,27 @@ function resizeSVG(svgLayerFrame, artboard, iconPadding) {
   if (width === height) {
     svgLayerFrame.setWidth(currentArtboardSize.width - 2 * iconPadding);
     svgLayerFrame.setHeight(currentArtboardSize.height - 2 * iconPadding);
-    svgLayerFrame.setX(iconPadding);
-    svgLayerFrame.setY(iconPadding);
+    // svgLayerFrame.setX(iconPadding)
+    // svgLayerFrame.setY(iconPadding)
   } else if (width >= height) {
     svgLayerFrame.setWidth(currentArtboardSize.width - 2 * iconPadding);
-    svgLayerFrame.setX(iconPadding);
+    // svgLayerFrame.setX(iconPadding)
     newHeight = height * (currentArtboardSize.height - 2 * iconPadding) / width;
     newHeight = newHeight < 1 ? 1 : newHeight;
-    newPadding = (currentArtboardSize.width - 2 * iconPadding) / 2 + iconPadding - newHeight / 2;
+    // newPadding = (currentArtboardSize.width - 2 * iconPadding) / 2 + iconPadding - newHeight / 2
 
     svgLayerFrame.setHeight(newHeight);
-    svgLayerFrame.setY(newPadding);
+    // svgLayerFrame.setY(newPadding)
   } else {
     svgLayerFrame.setHeight(currentArtboardSize.height - 2 * iconPadding);
-    svgLayerFrame.setY(iconPadding);
+    // svgLayerFrame.setY(iconPadding)
 
     newWidth = width * (currentArtboardSize.width - 2 * iconPadding) / height;
     newWidth = newWidth < 1 ? 1 : newWidth;
-    newPadding = (currentArtboardSize.height - 2 * iconPadding) / 2 + iconPadding - newWidth / 2;
+    // newPadding = (currentArtboardSize.height - 2 * iconPadding) / 2 + iconPadding - newWidth / 2
 
     svgLayerFrame.setWidth(newWidth);
-    svgLayerFrame.setX(newPadding);
+    // svgLayerFrame.setX(newPadding)
   }
 }
 
@@ -1315,7 +1339,11 @@ function removeTxt(svgLayer) {
   var scope = svgLayer.children(),
       predicateTextLayers = NSPredicate.predicateWithFormat("(className == %@)", "MSTextLayer"),
       predicateId = NSPredicate.predicateWithFormat("(name == %@)", "delete-me"),
-      layers = scope.filteredArrayUsingPredicate(predicateTextLayers).arrayByAddingObjectsFromArray(scope.filteredArrayUsingPredicate(predicateId));
+
+  // predicateRectangle = NSPredicate.predicateWithFormat("(name == %@)", "Rectangle-path"),
+
+  layers = scope.filteredArrayUsingPredicate(predicateTextLayers).arrayByAddingObjectsFromArray(scope.filteredArrayUsingPredicate(predicateId));
+  // .arrayByAddingObjectsFromArray(scope.filteredArrayUsingPredicate(predicateRectangle))
 
   var loop = layers.objectEnumerator();
   var layer = void 0;

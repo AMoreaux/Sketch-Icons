@@ -77,8 +77,9 @@ function createMaskFromNean(context, currentArtboard, color){
 function getMaskSymbolFromLib(context, currentArtboard, colorSymbolMaster, colorLibrary) {
   utils.clearSelection(context)
   const librairiesController = AppController.sharedInstance().librariesController()
-  const symbolMaster = librairiesController.importForeignSymbol_fromLibrary_intoDocument(colorSymbolMaster, colorLibrary, context.document.documentData())
-  return symbolMaster.symbolMaster().newSymbolInstance();
+
+  const symbolMaster = (colorLibrary) ? librairiesController.importForeignSymbol_fromLibrary_intoDocument(colorSymbolMaster, colorLibrary, context.document.documentData()).symbolMaster() : colorSymbolMaster
+  return symbolMaster.newSymbolInstance();
 }
 
 /**
@@ -100,10 +101,10 @@ function applyMask(currentArtboard, mask){
  * @description ungroup all layers in an artboard
  * @param currentArtboard {Object} : MSArtboardGroup
  */
-function formatSvg(currentArtboard) {
+function formatSvg(currentArtboard, onlyLayer = false) {
   currentArtboard.children().forEach(function (layer) {
     const layerClass = String(layer.class())
-    if (layerClass === "MSLayerGroup" || layerClass === "MSShapeGroup") {
+    if (layerClass === "MSLayerGroup" || (layerClass === "MSShapeGroup" && !onlyLayer)) {
       layer.ungroup()
     }
   })
@@ -133,6 +134,10 @@ function dedupeLayers(currentArtboard) {
     }
   })
 
+
+  const fill = container.style().addStylePartOfType(0);
+  fill.color = MSColor.blackColor();
+  // container.style.fills = [MSColor.blackColor()]
   container.setName("icon")
   container.resizeToFitChildrenWithOption(0)
 }

@@ -87,7 +87,6 @@ function getSelectedArtboardsAndSymbols(context) {
       compareElement.id === rootElement.id
     ))
   )
-  logger.log(selectedArtboardsAndSymbols)
 
   return selectedArtboardsAndSymbols
 }
