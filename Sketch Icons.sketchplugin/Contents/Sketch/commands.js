@@ -928,8 +928,6 @@ function importModal(context) {
     result.colorPicker = this.colorPickerColor;
   }
 
-  _logger2['default'].log(result);
-
   return result;
 }
 
