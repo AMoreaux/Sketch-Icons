@@ -43,6 +43,7 @@ export function updateIconsOnSelectedArtboards(context) {
  * @param context
  */
 export function addMaskOnSelectedArtboards(context) {
+    utils.runFramework(context)
     const selectedArtboardsAndSymbols = utils.getSelectedArtboardsAndSymbols(context);
     if(selectedArtboardsAndSymbols.length === 0)return modals.newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.')
     const params = maskModal(context)
@@ -56,6 +57,7 @@ export function addMaskOnSelectedArtboards(context) {
  * @param context
  */
 export function updateMaskOnSelectedArtboards(context) {
+    utils.runFramework(context)
     const selectedArtboardsAndSymbols = utils.getSelectedArtboardsAndSymbols(context);
     if(selectedArtboardsAndSymbols.length === 0)return modals.newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.')
     const params = maskModal(context)

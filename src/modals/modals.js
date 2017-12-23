@@ -22,6 +22,7 @@ function maskModal(context){
 
   this.coeffCurrentHeight = 0
   this.isLibrarySource = true
+  this.adjustHeight = 0
 
   constructBase(this.modalParams)
 
@@ -58,18 +59,21 @@ function importModal(context) {
 
   this.coeffCurrentHeight = 0
   this.isLibrarySource = true
+  this.adjustHeight = 0
 
   constructBase(this.modalParams)
   makeArtboardParams()
   this.view.addSubview(utils.createDivider(NSMakeRect(0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - 10, this.modalParams.width, 1)));
+  this.adjustHeight = 5
   makeSymbolParams()
-  this.view.addSubview(utils.createDivider(NSMakeRect(0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - 10, this.modalParams.width, 1)));
+  this.view.addSubview(utils.createDivider(NSMakeRect(0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - 15, this.modalParams.width, 1)));
+  this.adjustHeight = 8
   makeMaskCheckboxParams()
   makeMaskRadioButtonParams()
-  this.radioParams.setEnabled(false)
   makeMaskLibraryParams(context)
   setEnabledColorLibraryMenu(false)
   setEnabledColorMenu(false)
+  setEnabledRadioButton(false)
   makeMaskColorPickerParams(context)
   addListenerOnMaskCheckbox()
 
@@ -132,6 +136,8 @@ function makeArtboardParams() {
   this.artboardPadding = paddingBox
   this.artboardSize = textBox
 
+  this.artboardSize.setNextKeyView(this.artboardPadding)
+
   return
 }
 
@@ -139,10 +145,10 @@ function makeSymbolParams() {
 
   this.coeffCurrentHeight++
 
-  const maskCheckboxLabel = utils.createLabel('Symbols', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 150, 20)
+  const maskCheckboxLabel = utils.createLabel('Symbols', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight , 150, 20)
   this.view.addSubview(maskCheckboxLabel)
 
-  const symbolCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 200, 20));
+  const symbolCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 200, 20));
   symbolCheckBox.setButtonType(NSSwitchButton);
   symbolCheckBox.setState(true);
   symbolCheckBox.setFont(NSFont.systemFontOfSize_(13));
@@ -156,10 +162,10 @@ function makeMaskCheckboxParams() {
 
   this.coeffCurrentHeight++
 
-  const maskCheckboxLabel = utils.createLabel('Mask', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 150, 20)
+  const maskCheckboxLabel = utils.createLabel('Mask', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 150, 20)
   this.view.addSubview(maskCheckboxLabel)
 
-  const maskCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 200, 20));
+  const maskCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 200, 20));
   maskCheckBox.setButtonType(NSSwitchButton);
   maskCheckBox.setState(false);
   maskCheckBox.setFont(NSFont.systemFontOfSize_(13));
@@ -174,13 +180,13 @@ function makeMaskRadioButtonParams() {
   this.coeffCurrentHeight++
   this.coeffCurrentHeight++
 
-  const radioButtonLabel = utils.createLabel('Color Source', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + 40, 150, 20)
+  const radioButtonLabel = utils.createLabel('Color Source', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight + 40, 150, 20)
   this.view.addSubview(radioButtonLabel)
 
   const buttonFormat = NSButtonCell.alloc().init();
   buttonFormat.setButtonType(NSRadioButton);
   var matrixFormat = NSMatrix.alloc().initWithFrame_mode_prototype_numberOfRows_numberOfColumns(
-    NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 300, 60),
+    NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 300, 60),
     NSRadioModeMatrix,
     buttonFormat,
     2,
@@ -188,9 +194,9 @@ function makeMaskRadioButtonParams() {
   );
   matrixFormat.setCellSize(CGSizeMake(300, 25));
   var cells = matrixFormat.cells();
-  cells[0].setTitle("From symbols");
+  cells[0].setTitle("From Symbols");
   cells[0].setFont(NSFont.systemFontOfSize_(13));
-  cells[1].setTitle("From color picker");
+  cells[1].setTitle("From Color picker");
   cells[1].setFont(NSFont.systemFontOfSize_(13));
 
   this.view.addSubview(matrixFormat);
@@ -198,21 +204,22 @@ function makeMaskRadioButtonParams() {
   setListenerRadioButon(cells)
 
   this.radioParams = matrixFormat
+  this.radioButtonLabel = radioButtonLabel
 }
 
 function makeMaskLibraryParams(context) {
 
   this.coeffCurrentHeight++
 
-  const colorLibsLabel = utils.createLabel('Document Source', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 150, 25)
+  const colorLibsLabel = utils.createLabel('Document Source', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 150, 25)
   this.view.addSubview(colorLibsLabel)
-  const colorLibsMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 130, 30));
+  const colorLibsMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 130, 30));
 
   this.coeffCurrentHeight++
 
-  const colorMenuLabel = utils.createLabel('Color', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 150, 25)
+  const colorMenuLabel = utils.createLabel('Color', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 150, 25)
   this.view.addSubview(colorMenuLabel)
-  const colorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 130, 30));
+  const colorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 130, 30));
 
   this.view.addSubview(colorLibsMenu);
   this.view.addSubview(colorMenu);
@@ -227,14 +234,13 @@ function makeMaskLibraryParams(context) {
 
 function makeMaskColorPickerParams(context) {
 
-  const colorPickerLabel = utils.createLabel('Color picker', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + 20, 150, 20)
+  const colorPickerLabel = utils.createLabel('Color picker', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight + 20, 150, 20)
 
-  const pickerView = NSView.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 130, 60));
+  const pickerView = NSView.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 130, 60));
   pickerView.setWantsLayer(true)
   pickerView.layer().setBackgroundColor(CGColorCreateGenericRGB(1, 1, 1, 1.0))
   pickerView.layer().setBorderColor(CGColorCreateGenericRGB(186 / 255, 186 / 255, 186 / 255, 1))
   pickerView.layer().borderWidth = 1
-  // pickerView.layer.backgroundColor = NSColor.colorWithCalibratedRed_green_blue_alpha(0.227, 0.251, 0.337, 1).CGColor
 
   const hexLabel = utils.createLabel('#000000', 60, 20, 100, 20)
   pickerView.addSubview(hexLabel)
@@ -260,7 +266,6 @@ function makeMaskColorPickerParams(context) {
   pickerView.addSubview(pickerButton)
 
   this.pickerView = pickerView
-  this.colorPickerParams = pickerButton
   this.colorPickerLabel = colorPickerLabel
 }
 
@@ -286,7 +291,7 @@ function addListenerOnMaskCheckbox() {
 
 function setListenerRadioButon(cells) {
   function setState(item) {
-    if (String(item.selectedCells()[0].title()) === 'From symbols') {
+    if (String(item.selectedCells()[0].title()) === 'From Symbols') {
       addLibraryColorsFields()
       removePickerButton()
       this.isLibrarySource = true
@@ -309,19 +314,13 @@ function setEnabledColorLibraryMenu(enabled) {
 }
 
 function setEnabledColorMenu(enabled) {
-  let color
-  if (enabled) {
-    color = NSColor.controlTextColor()
-  } else {
-    color = disabledColor
-    // this.colorsMenuParams.removeAllItems()
-  }
-  this.colorsMenuParamsLabel.setTextColor(color)
+  this.colorsMenuParamsLabel.setTextColor(getStateColor(enabled))
   this.colorsMenuParams.setEnabled(enabled)
 }
 
 function setEnabledRadioButton(enabled) {
   this.radioParams.setEnabled(enabled)
+  this.radioButtonLabel.setTextColor(getStateColor(enabled))
 }
 
 function removeLibraryColorsFields() {
@@ -349,3 +348,12 @@ function removePickerButton() {
   this.colorPickerLabel.removeFromSuperview()
 }
 
+function getStateColor(enabled){
+  if (enabled) {
+    color = NSColor.controlTextColor()
+  } else {
+    color = disabledColor
+    // this.colorsMenuParams.removeAllItems()
+  }
+  return color
+}

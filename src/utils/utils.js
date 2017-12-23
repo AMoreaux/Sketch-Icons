@@ -66,14 +66,14 @@ function createLabel(name, x, y, w, h, fontSize = 13) {
 function getSelectedArtboardsAndSymbols(context) {
   let selectedArtboardsAndSymbols = []
 
-  context.selection.forEach(function (layer) {
+  context.selection.some(function (layer) {
     let className = String(layer.class())
     if (className !== 'MSArtboardGroup' || className !== 'MSSymbolMaster') {
       layer = layer.parentRoot()
       className = String(layer.class())
     }
 
-    if(selectedArtboardsAndSymbols.indexOf(String(layer.objectID())) === -1){
+    if (selectedArtboardsAndSymbols.indexOf(String(layer.objectID())) === -1) {
       selectedArtboardsAndSymbols.push({
         'object': layer,
         'type': className,
@@ -99,8 +99,8 @@ function getSelectedArtboardsAndSymbols(context) {
  */
 function flatten(list) {
   return list.reduce((a, b) => a.concat(Array.isArray(b) ? flatten(b) : b), []
-)
-  ;
+  )
+    ;
 }
 
 /**
@@ -125,11 +125,11 @@ function createWebview(context, pickerButton, setColor) {
   const webView = WebView.alloc().initWithFrame(NSMakeRect(0, 0, 220, 300));
   const windowObject = webView.windowScriptObject();
   const delegate = new MochaJSDelegate({
-    "webView:didFinishLoadForFrame:" : (function(webView, webFrame) {
+    "webView:didFinishLoadForFrame:": (function (webView, webFrame) {
 
       logger.log('loaded')
     }),
-    "webView:didChangeLocationWithinPageForFrame:" : (function(webView, webFrame) {
+    "webView:didChangeLocationWithinPageForFrame:": (function (webView, webFrame) {
       const query = windowObject.evaluateWebScript('window.location.hash')
       const color = JSON.parse(decodeURIComponent(query).split('color=')[1])
 
@@ -138,7 +138,7 @@ function createWebview(context, pickerButton, setColor) {
         parseInt(color.r) / 255,
         parseInt(color.g) / 255,
         parseInt(color.b) / 255,
-        parseInt(color.a)), {width: 40, height: 30})
+        parseFloat(color.a)), {width: 40, height: 30})
       )
       setColor(newColor)
     })
@@ -160,7 +160,7 @@ function createDivider(frame) {
   const divider = NSView.alloc().initWithFrame(frame);
 
   divider.setWantsLayer(1);
-  divider.layer().setBackgroundColor(CGColorCreateGenericRGB(204/255,204/255,204/255,1.0));
+  divider.layer().setBackgroundColor(CGColorCreateGenericRGB(204 / 255, 204 / 255, 204 / 255, 1.0));
 
   return divider;
 }
@@ -170,7 +170,7 @@ function createDivider(frame) {
  * @param context
  * @return {boolean}
  */
-function runFramework(context){
+function runFramework(context) {
 
   const mocha = Mocha.sharedRuntime();
 
@@ -195,17 +195,17 @@ function runFramework(context){
  * @param colorSize
  * @return {Object} : NSImage
  */
-function getImageByColor(color, colorSize = {width: 14, height: 14}){
-    const size = CGSizeMake(colorSize.width, colorSize.height);
-    const image = NSImage.alloc().init()
-    image.size = size
-    image.lockFocus()
-    const colorCell = MSBackgroundColorView.alloc().init()
-    colorCell.backgroundColor = color
-    colorCell.drawRect(NSMakeRect(0, 0, colorSize.width, colorSize.height))
-    image.unlockFocus()
+function getImageByColor(color, colorSize = {width: 14, height: 14}) {
+  const size = CGSizeMake(colorSize.width, colorSize.height);
+  const image = NSImage.alloc().init()
+  image.size = size
+  image.lockFocus()
+  const colorCell = MSBackgroundColorView.alloc().init()
+  colorCell.backgroundColor = color
+  colorCell.drawRect(NSMakeRect(0, 0, colorSize.width, colorSize.height))
+  image.unlockFocus()
 
-    return image
+  return image
 }
 
 /**
@@ -215,5 +215,5 @@ function getImageByColor(color, colorSize = {width: 14, height: 14}){
  */
 function isArtboardMasked(artboard) {
   const layers = artboard.layers()
-  if (layers.length > 1  && layers[1].isMasked())return true
+  if (layers.length > 1 && layers[1].isMasked()) return true
 }

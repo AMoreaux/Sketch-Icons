@@ -63,11 +63,8 @@ function initArtboardsParams(context) {
     artboardParams.position.x = artboardParams.position.y = artboardParams.size.width * 2
   } else {
     const Y = []
-    currentPage.iterateWithFilter('isArtboard', function (layer) {
-      Y.push(layer.sketchObject.origin().y)
-    })
-    currentPage.sketchObject.symbols().forEach(function(symbols){
-      Y.push(symbols.origin().y)
+    currentPage.sketchObject.layers().some(function(layer){
+      Y.push(layer.origin().y)
     })
     artboardParams.position.x = artboardParams.size.width * 2
     artboardParams.position.y = Math.max(...Y)
@@ -81,22 +78,23 @@ function initArtboardsParams(context) {
  * @param params: {Object}
  */
 function initImportIcons(context, params) {
+
+
   utils.clearSelection(context)
   artboardParams.size.height = artboardParams.size.width = params.artboardSize
   initArtboardsParams(context)
-  let newArtboard;
-  params.listIcon.forEach(function (icon, index) {
-    // try {
-      newArtboard = createArtboard(context, index, icon)
+
+  params.listIcon.some((icon, index) => {
+    try{
+      const newArtboard = createArtboard(context, index, icon)
       svg.addSVG(context, newArtboard, params.iconPadding, params.artboardSize, icon)
       if (params.withMask) mask.addMask(context, newArtboard, params)
       if(params.convertSymbol)MSSymbolMaster.convertArtboardToSymbol(newArtboard)
-    // } catch (e) {
-    //   logger.log("Sorry, Error !!!")
-    //   logger.log(e)
-    //   logger.log(icon)
-    // }
-  });
+    }catch (e){
+      logger.error(e)
+    }
+  })
+  context.document.showMessage(`🎉 Tadaaa! 🎉 ${params.listIcon.length} icon${(params.listIcon.length > 1) ? 's' : ''} imported`)
   utils.clearSelection(context)
 }
 

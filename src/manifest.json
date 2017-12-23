@@ -1,7 +1,7 @@
 {
   "compatibleVersion": 3,
   "bundleVersion": 1,
-  "version": "1.0.21",
+  "version": "2.0.0",
   "name": "Sketch Icons",
   "identifier": "com.amoreaux.sketch-icons",
   "description": "Import your icons, apply a color mask and create a dynamic icons library.",
@@ -13,7 +13,7 @@
     {
       "script": "./commands.js",
       "handler": "importIcons",
-      "shortcut": "command shift y",
+      "shortcut": "command shift i",
       "name": "Import icons...",
       "identifier": "import.icons",
       "description" : "Import your icons library",
@@ -22,7 +22,7 @@
     {
       "script": "./commands.js",
       "handler": "updateIconsOnSelectedArtboards",
-      "name": "Replace icons on selected artboards...",
+      "name": "Replace icons...",
       "identifier": "update.icons.selected.artboard",
       "icon": "icons/icon-square-1.jpg",
       "description" : "Replace icons on selected artboards"
@@ -30,7 +30,8 @@
     {
       "script": "./commands.js",
       "handler": "addMaskOnSelectedArtboards",
-      "name": "Apply color mask on selected artboards...",
+      "shortcut": "command shift m",
+      "name": "Apply color mask...",
       "identifier": "mask.selected.artboard",
       "icon": "icons/icon-square-1.jpg",
       "description" : "Apply mask on selected artboards"
@@ -38,7 +39,7 @@
     {
       "script": "./commands.js",
       "handler": "updateMaskOnSelectedArtboards",
-      "name": "Replace color mask on selected artboards...",
+      "name": "Replace color mask...",
       "identifier": "update.mask.selected.artboard",
       "icon": "icons/icon-square-1.jpg",
       "description" : "Replace mask on selected artboard"

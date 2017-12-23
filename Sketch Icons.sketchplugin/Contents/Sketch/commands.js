@@ -191,7 +191,7 @@ function createLabel(name, x, y, w, h) {
 function getSelectedArtboardsAndSymbols(context) {
   var selectedArtboardsAndSymbols = [];
 
-  context.selection.forEach(function (layer) {
+  context.selection.some(function (layer) {
     var className = String(layer['class']());
     if (className !== 'MSArtboardGroup' || className !== 'MSSymbolMaster') {
       layer = layer.parentRoot();
@@ -264,7 +264,7 @@ function createWebview(context, pickerButton, setColor) {
         var color = JSON.parse(decodeURIComponent(query).split('color=')[1]);
 
         newColor = MSImmutableColor.colorWithSVGString('rgba(' + String(color.r) + ',' + String(color.g) + ',' + String(color.b) + ',' + String(color.a) + ')').newMutableCounterpart();
-        pickerButton.setImage(getImageByColor(NSColor.colorWithRed_green_blue_alpha(parseInt(color.r) / 255, parseInt(color.g) / 255, parseInt(color.b) / 255, parseInt(color.a)), { width: 40, height: 30 }));
+        pickerButton.setImage(getImageByColor(NSColor.colorWithRed_green_blue_alpha(parseInt(color.r) / 255, parseInt(color.g) / 255, parseInt(color.b) / 255, parseFloat(color.a)), { width: 40, height: 30 }));
         setColor(newColor);
       }
 
@@ -371,8 +371,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'd
 exports['default'] = {
   initAddMaskOnSelectedArtboards: initAddMaskOnSelectedArtboards,
   addMask: addMask,
-  formatSvg: formatSvg,
-  dedupeLayers: dedupeLayers,
   applyMask: applyMask
 
   /**
@@ -384,7 +382,7 @@ exports['default'] = {
    */
 };
 function initAddMaskOnSelectedArtboards(context, params, artboards) {
-  artboards.forEach(function (artboard) {
+  artboards.some(function (artboard) {
     if (_utils2['default'].isArtboardMasked(artboard.object)) {
       MSMaskWithShape.toggleMaskForSingleShape(artboard.object.layers()[0]);
       artboard.object.layers()[1].removeFromParent();
@@ -403,8 +401,6 @@ function initAddMaskOnSelectedArtboards(context, params, artboards) {
  */
 function addMask(context, currentArtboard, params) {
   var mask = params.mask ? params.mask : null;
-  formatSvg(currentArtboard);
-  dedupeLayers(currentArtboard);
   if (params.color) {
     mask = getMaskSymbolFromLib(context, currentArtboard, params.color, params.colorLib);
   } else if (params.colorPicker) {
@@ -459,53 +455,6 @@ function applyMask(currentArtboard, mask) {
   mask.setName('🎨 color');
   currentArtboard.addLayer(mask);
   MSMaskWithShape.toggleMaskForSingleShape(currentArtboard.layers()[0]);
-}
-
-/**
- * @name formatSvg
- * @description ungroup all layers in an artboard
- * @param currentArtboard {Object} : MSArtboardGroup
- */
-function formatSvg(currentArtboard) {
-  var onlyLayer = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
-  currentArtboard.children().forEach(function (layer) {
-    var layerClass = String(layer['class']());
-    if (layerClass === "MSLayerGroup" || layerClass === "MSShapeGroup" && !onlyLayer) {
-      layer.ungroup();
-    }
-  });
-}
-
-/**
- * @name dedupeLayers
- * @description get all shapes and merge them in one shape group
- * @param currentArtboard {Object} : MSArtboardGroup
- */
-function dedupeLayers(currentArtboard) {
-  var container = MSShapeGroup.shapeWithRect(null);
-  container.setName('container-random-string-9246392');
-  currentArtboard.addLayer(container);
-  var reg = new RegExp("Shape");
-
-  currentArtboard.children().forEach(function (layer) {
-
-    var layerClass = String(layer['class']());
-
-    if (layerClass === 'MSRectangleShape' && String(layer.name()) === 'container-random-string-9246392') {
-      return layer.removeFromParent();
-    }
-
-    if (reg.test(layerClass) && layerClass !== 'MSShapeGroup') {
-      layer.moveToLayer_beforeLayer(container, layer);
-    }
-  });
-
-  var fill = container.style().addStylePartOfType(0);
-  fill.color = MSColor.blackColor();
-  // container.style.fills = [MSColor.blackColor()]
-  container.setName("icon");
-  container.resizeToFitChildrenWithOption(0);
 }
 
 /***/ }),
@@ -595,7 +544,7 @@ function initLibsSelectList(context, libs, colorMenu) {
   currentFile.title = 'Current file';
   addListener(currentFile);
   colorLibsMenu.addItem(currentFile);
-  libs.forEach(function (lib) {
+  libs.some(function (lib) {
     var item = NSMenuItem.alloc().init();
     item.title = lib.name();
     item.representedObject = lib;
@@ -657,7 +606,7 @@ function initColorSelectList(popColorMenu, colors) {
 function getColorSymbolsFromDocument(document) {
   var result = [];
   var layers = void 0;
-  document.localSymbols().forEach(function (symbol) {
+  document.localSymbols().some(function (symbol) {
     layers = symbol.layers();
 
     if (symbol.children().length > 3) {
@@ -766,11 +715,8 @@ function initArtboardsParams(context) {
     artboardParams.position.x = artboardParams.position.y = artboardParams.size.width * 2;
   } else {
     var Y = [];
-    currentPage.iterateWithFilter('isArtboard', function (layer) {
-      Y.push(layer.sketchObject.origin().y);
-    });
-    currentPage.sketchObject.symbols().forEach(function (symbols) {
-      Y.push(symbols.origin().y);
+    currentPage.sketchObject.layers().some(function (layer) {
+      Y.push(layer.origin().y);
     });
     artboardParams.position.x = artboardParams.size.width * 2;
     artboardParams.position.y = Math.max.apply(Math, Y);
@@ -784,22 +730,22 @@ function initArtboardsParams(context) {
  * @param params: {Object}
  */
 function initImportIcons(context, params) {
+
   _utils2['default'].clearSelection(context);
   artboardParams.size.height = artboardParams.size.width = params.artboardSize;
   initArtboardsParams(context);
-  var newArtboard = void 0;
-  params.listIcon.forEach(function (icon, index) {
-    // try {
-    newArtboard = createArtboard(context, index, icon);
-    _svg2['default'].addSVG(context, newArtboard, params.iconPadding, params.artboardSize, icon);
-    if (params.withMask) _mask2['default'].addMask(context, newArtboard, params);
-    if (params.convertSymbol) MSSymbolMaster.convertArtboardToSymbol(newArtboard);
-    // } catch (e) {
-    //   logger.log("Sorry, Error !!!")
-    //   logger.log(e)
-    //   logger.log(icon)
-    // }
+
+  params.listIcon.some(function (icon, index) {
+    try {
+      var newArtboard = createArtboard(context, index, icon);
+      _svg2['default'].addSVG(context, newArtboard, params.iconPadding, params.artboardSize, icon);
+      if (params.withMask) _mask2['default'].addMask(context, newArtboard, params);
+      if (params.convertSymbol) MSSymbolMaster.convertArtboardToSymbol(newArtboard);
+    } catch (e) {
+      _logger2['default'].error(e);
+    }
   });
+  context.document.showMessage('\uD83C\uDF89 Tadaaa! \uD83C\uDF89 ' + String(params.listIcon.length) + ' icon' + (params.listIcon.length > 1 ? 's' : '') + ' imported');
   _utils2['default'].clearSelection(context);
 }
 
@@ -859,6 +805,7 @@ function maskModal(context) {
 
   this.coeffCurrentHeight = 0;
   this.isLibrarySource = true;
+  this.adjustHeight = 0;
 
   constructBase(this.modalParams);
 
@@ -895,18 +842,21 @@ function importModal(context) {
 
   this.coeffCurrentHeight = 0;
   this.isLibrarySource = true;
+  this.adjustHeight = 0;
 
   constructBase(this.modalParams);
   makeArtboardParams();
   this.view.addSubview(_utils2['default'].createDivider(NSMakeRect(0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - 10, this.modalParams.width, 1)));
+  this.adjustHeight = 5;
   makeSymbolParams();
-  this.view.addSubview(_utils2['default'].createDivider(NSMakeRect(0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - 10, this.modalParams.width, 1)));
+  this.view.addSubview(_utils2['default'].createDivider(NSMakeRect(0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - 15, this.modalParams.width, 1)));
+  this.adjustHeight = 8;
   makeMaskCheckboxParams();
   makeMaskRadioButtonParams();
-  this.radioParams.setEnabled(false);
   makeMaskLibraryParams(context);
   setEnabledColorLibraryMenu(false);
   setEnabledColorMenu(false);
+  setEnabledRadioButton(false);
   makeMaskColorPickerParams(context);
   addListenerOnMaskCheckbox();
 
@@ -969,6 +919,8 @@ function makeArtboardParams() {
   this.artboardPadding = paddingBox;
   this.artboardSize = textBox;
 
+  this.artboardSize.setNextKeyView(this.artboardPadding);
+
   return;
 }
 
@@ -976,10 +928,10 @@ function makeSymbolParams() {
 
   this.coeffCurrentHeight++;
 
-  var maskCheckboxLabel = _utils2['default'].createLabel('Symbols', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 150, 20);
+  var maskCheckboxLabel = _utils2['default'].createLabel('Symbols', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 150, 20);
   this.view.addSubview(maskCheckboxLabel);
 
-  var symbolCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 200, 20));
+  var symbolCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 200, 20));
   symbolCheckBox.setButtonType(NSSwitchButton);
   symbolCheckBox.setState(true);
   symbolCheckBox.setFont(NSFont.systemFontOfSize_(13));
@@ -993,10 +945,10 @@ function makeMaskCheckboxParams() {
 
   this.coeffCurrentHeight++;
 
-  var maskCheckboxLabel = _utils2['default'].createLabel('Mask', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 150, 20);
+  var maskCheckboxLabel = _utils2['default'].createLabel('Mask', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 150, 20);
   this.view.addSubview(maskCheckboxLabel);
 
-  var maskCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 200, 20));
+  var maskCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 200, 20));
   maskCheckBox.setButtonType(NSSwitchButton);
   maskCheckBox.setState(false);
   maskCheckBox.setFont(NSFont.systemFontOfSize_(13));
@@ -1011,17 +963,17 @@ function makeMaskRadioButtonParams() {
   this.coeffCurrentHeight++;
   this.coeffCurrentHeight++;
 
-  var radioButtonLabel = _utils2['default'].createLabel('Color Source', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + 40, 150, 20);
+  var radioButtonLabel = _utils2['default'].createLabel('Color Source', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight + 40, 150, 20);
   this.view.addSubview(radioButtonLabel);
 
   var buttonFormat = NSButtonCell.alloc().init();
   buttonFormat.setButtonType(NSRadioButton);
-  var matrixFormat = NSMatrix.alloc().initWithFrame_mode_prototype_numberOfRows_numberOfColumns(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 300, 60), NSRadioModeMatrix, buttonFormat, 2, 1);
+  var matrixFormat = NSMatrix.alloc().initWithFrame_mode_prototype_numberOfRows_numberOfColumns(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 300, 60), NSRadioModeMatrix, buttonFormat, 2, 1);
   matrixFormat.setCellSize(CGSizeMake(300, 25));
   var cells = matrixFormat.cells();
-  cells[0].setTitle("From symbols");
+  cells[0].setTitle("From Symbols");
   cells[0].setFont(NSFont.systemFontOfSize_(13));
-  cells[1].setTitle("From color picker");
+  cells[1].setTitle("From Color picker");
   cells[1].setFont(NSFont.systemFontOfSize_(13));
 
   this.view.addSubview(matrixFormat);
@@ -1029,21 +981,22 @@ function makeMaskRadioButtonParams() {
   setListenerRadioButon(cells);
 
   this.radioParams = matrixFormat;
+  this.radioButtonLabel = radioButtonLabel;
 }
 
 function makeMaskLibraryParams(context) {
 
   this.coeffCurrentHeight++;
 
-  var colorLibsLabel = _utils2['default'].createLabel('Document Source', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 150, 25);
+  var colorLibsLabel = _utils2['default'].createLabel('Document Source', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 150, 25);
   this.view.addSubview(colorLibsLabel);
-  var colorLibsMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 130, 30));
+  var colorLibsMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 130, 30));
 
   this.coeffCurrentHeight++;
 
-  var colorMenuLabel = _utils2['default'].createLabel('Color', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 150, 25);
+  var colorMenuLabel = _utils2['default'].createLabel('Color', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 150, 25);
   this.view.addSubview(colorMenuLabel);
-  var colorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 130, 30));
+  var colorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 130, 30));
 
   this.view.addSubview(colorLibsMenu);
   this.view.addSubview(colorMenu);
@@ -1059,14 +1012,13 @@ function makeMaskLibraryParams(context) {
 function makeMaskColorPickerParams(context) {
   var _this = this;
 
-  var colorPickerLabel = _utils2['default'].createLabel('Color picker', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + 20, 150, 20);
+  var colorPickerLabel = _utils2['default'].createLabel('Color picker', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight + 20, 150, 20);
 
-  var pickerView = NSView.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 130, 60));
+  var pickerView = NSView.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 130, 60));
   pickerView.setWantsLayer(true);
   pickerView.layer().setBackgroundColor(CGColorCreateGenericRGB(1, 1, 1, 1.0));
   pickerView.layer().setBorderColor(CGColorCreateGenericRGB(186 / 255, 186 / 255, 186 / 255, 1));
   pickerView.layer().borderWidth = 1;
-  // pickerView.layer.backgroundColor = NSColor.colorWithCalibratedRed_green_blue_alpha(0.227, 0.251, 0.337, 1).CGColor
 
   var hexLabel = _utils2['default'].createLabel('#000000', 60, 20, 100, 20);
   pickerView.addSubview(hexLabel);
@@ -1092,7 +1044,6 @@ function makeMaskColorPickerParams(context) {
   pickerView.addSubview(pickerButton);
 
   this.pickerView = pickerView;
-  this.colorPickerParams = pickerButton;
   this.colorPickerLabel = colorPickerLabel;
 }
 
@@ -1118,7 +1069,7 @@ function addListenerOnMaskCheckbox() {
 
 function setListenerRadioButon(cells) {
   function setState(item) {
-    if (String(item.selectedCells()[0].title()) === 'From symbols') {
+    if (String(item.selectedCells()[0].title()) === 'From Symbols') {
       addLibraryColorsFields();
       removePickerButton();
       this.isLibrarySource = true;
@@ -1140,19 +1091,13 @@ function setEnabledColorLibraryMenu(enabled) {
 }
 
 function setEnabledColorMenu(enabled) {
-  var color = void 0;
-  if (enabled) {
-    color = NSColor.controlTextColor();
-  } else {
-    color = disabledColor;
-    // this.colorsMenuParams.removeAllItems()
-  }
-  this.colorsMenuParamsLabel.setTextColor(color);
+  this.colorsMenuParamsLabel.setTextColor(getStateColor(enabled));
   this.colorsMenuParams.setEnabled(enabled);
 }
 
 function setEnabledRadioButton(enabled) {
   this.radioParams.setEnabled(enabled);
+  this.radioButtonLabel.setTextColor(getStateColor(enabled));
 }
 
 function removeLibraryColorsFields() {
@@ -1177,6 +1122,16 @@ function addPickerButton() {
 function removePickerButton() {
   this.pickerView.removeFromSuperview();
   this.colorPickerLabel.removeFromSuperview();
+}
+
+function getStateColor(enabled) {
+  if (enabled) {
+    color = NSColor.controlTextColor();
+  } else {
+    color = disabledColor;
+    // this.colorsMenuParams.removeAllItems()
+  }
+  return color;
 }
 
 /***/ }),
@@ -1221,7 +1176,7 @@ exports['default'] = {
 };
 function initUpdateIconsSelectedArtboards(context, artboards, listIcon) {
 
-  artboards.forEach(function (artboard, index) {
+  artboards.some(function (artboard, index) {
     var layers = artboard.object.layers();
     var isMasked = _utils2['default'].isArtboardMasked(artboard.object);
     var params = Object.assign(_artboard2['default'].getPaddingAndSize(artboard.object), { iconPath: listIcon[index] });
@@ -1229,7 +1184,6 @@ function initUpdateIconsSelectedArtboards(context, artboards, listIcon) {
     if (isMasked) {
       params.mask = layers[0].copy();
       layers[0].removeFromParent();
-      // maskProvider.addMask(context, artboard.object, params)
     }
     addSVG(context, artboard.object, params.iconPadding, params.artboardSize, params.iconPath);
     if (isMasked) _mask2['default'].applyMask(artboard.object, params.mask);
@@ -1257,9 +1211,34 @@ function addSVG(context, artboard, iconPadding, artboardSize, iconPath) {
   artboard.addLayer(svgLayer);
   var svgLayerFrame = svgLayer.frame();
   resizeSVG(svgLayerFrame, artboard, iconPadding);
-  _mask2['default'].formatSvg(artboard, true);
-  _mask2['default'].dedupeLayers(artboard);
+  formatSvg(artboard);
   center(artboardSize, artboard.layers()[0].frame());
+}
+
+/**
+ * @name formatSvg
+ * @description ungroup all layers in an artboard
+ * @param currentArtboard {Object} : MSArtboardGroup
+ */
+function formatSvg(currentArtboard) {
+
+  var container = MSShapeGroup.shapeWithRect(null);
+  container.setName('container-random-string-9246392');
+  currentArtboard.addLayer(container);
+
+  currentArtboard.children().some(function (layer) {
+    var layerClass = String(layer['class']());
+    if (layerClass === "MSLayerGroup" || layerClass === 'MSRectangleShape' && String(layer.name()) === 'container-random-string-9246392') {
+      layer.removeFromParent();
+    } else if (layerClass.includes("Shape") && layerClass !== 'MSShapeGroup') {
+      layer.moveToLayer_beforeLayer(container, layer);
+    }
+  });
+
+  var fill = container.style().addStylePartOfType(0);
+  fill.color = MSColor.blackColor();
+  container.setName("icon");
+  container.resizeToFitChildrenWithOption(0);
 }
 
 function center(artboardSize, svgLayerFrame) {
@@ -1294,37 +1273,9 @@ function resizeSVG(svgLayerFrame, artboard, iconPadding) {
     width: parseInt(currentArtboardRect.size.width),
     height: parseInt(currentArtboardRect.size.height)
   };
-  var width = svgLayerFrame.width();
-  var height = svgLayerFrame.height();
-  var newPadding = void 0,
-      newHeight = void 0,
-      newWidth = void 0;
 
-  if (width === height) {
-    svgLayerFrame.setWidth(currentArtboardSize.width - 2 * iconPadding);
-    svgLayerFrame.setHeight(currentArtboardSize.height - 2 * iconPadding);
-    // svgLayerFrame.setX(iconPadding)
-    // svgLayerFrame.setY(iconPadding)
-  } else if (width >= height) {
-    svgLayerFrame.setWidth(currentArtboardSize.width - 2 * iconPadding);
-    // svgLayerFrame.setX(iconPadding)
-    newHeight = height * (currentArtboardSize.height - 2 * iconPadding) / width;
-    newHeight = newHeight < 1 ? 1 : newHeight;
-    // newPadding = (currentArtboardSize.width - 2 * iconPadding) / 2 + iconPadding - newHeight / 2
-
-    svgLayerFrame.setHeight(newHeight);
-    // svgLayerFrame.setY(newPadding)
-  } else {
-    svgLayerFrame.setHeight(currentArtboardSize.height - 2 * iconPadding);
-    // svgLayerFrame.setY(iconPadding)
-
-    newWidth = width * (currentArtboardSize.width - 2 * iconPadding) / height;
-    newWidth = newWidth < 1 ? 1 : newWidth;
-    // newPadding = (currentArtboardSize.height - 2 * iconPadding) / 2 + iconPadding - newWidth / 2
-
-    svgLayerFrame.setWidth(newWidth);
-    // svgLayerFrame.setX(newPadding)
-  }
+  svgLayerFrame.setWidth(currentArtboardSize.width - 2 * iconPadding);
+  svgLayerFrame.setHeight(currentArtboardSize.height - 2 * iconPadding);
 }
 
 /**
@@ -1429,6 +1380,7 @@ function updateIconsOnSelectedArtboards(context) {
  * @param context
  */
 function addMaskOnSelectedArtboards(context) {
+  _utils2['default'].runFramework(context);
   var selectedArtboardsAndSymbols = _utils2['default'].getSelectedArtboardsAndSymbols(context);
   if (selectedArtboardsAndSymbols.length === 0) return _modals2['default'].newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.');
   var params = (0, _modals3.maskModal)(context);
@@ -1442,6 +1394,7 @@ function addMaskOnSelectedArtboards(context) {
  * @param context
  */
 function updateMaskOnSelectedArtboards(context) {
+  _utils2['default'].runFramework(context);
   var selectedArtboardsAndSymbols = _utils2['default'].getSelectedArtboardsAndSymbols(context);
   if (selectedArtboardsAndSymbols.length === 0) return _modals2['default'].newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.');
   var params = (0, _modals3.maskModal)(context);

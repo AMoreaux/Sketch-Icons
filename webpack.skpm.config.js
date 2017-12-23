@@ -18,6 +18,10 @@ const ressourcesConfig = {
       {
         from: path.resolve('./resources/SketchIconsFramework.framework'),
         to: path.resolve(`${pluginSketchPath}/SketchIconsFramework.framework/[name].[ext]`)
+      },
+      {
+        from: path.resolve('./resources/icons'),
+        to: path.resolve(`${pluginResourcesPath}/icons`)
       }
     ])
   ]

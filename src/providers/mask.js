@@ -5,8 +5,6 @@ import librairiesProvider from './libraries'
 export default {
   initAddMaskOnSelectedArtboards,
   addMask,
-  formatSvg,
-  dedupeLayers,
   applyMask
 }
 
@@ -18,7 +16,7 @@ export default {
  * @param artboards {Array} : MSArtboardGroup
  */
 function initAddMaskOnSelectedArtboards(context, params, artboards) {
-  artboards.forEach(function (artboard) {
+  artboards.some(function (artboard) {
     if(utils.isArtboardMasked(artboard.object)){
       MSMaskWithShape.toggleMaskForSingleShape(artboard.object.layers()[0])
       artboard.object.layers()[1].removeFromParent()
@@ -37,8 +35,6 @@ function initAddMaskOnSelectedArtboards(context, params, artboards) {
  */
 function addMask(context, currentArtboard, params) {
   let mask = (params.mask) ? params.mask : null
-  formatSvg(currentArtboard)
-  dedupeLayers(currentArtboard)
   if(params.color){
     mask = getMaskSymbolFromLib(context, currentArtboard, params.color, params.colorLib)
   }else if(params.colorPicker){
@@ -94,50 +90,4 @@ function applyMask(currentArtboard, mask){
   mask.setName('🎨 color')
   currentArtboard.addLayer(mask);
   MSMaskWithShape.toggleMaskForSingleShape(currentArtboard.layers()[0])
-}
-
-/**
- * @name formatSvg
- * @description ungroup all layers in an artboard
- * @param currentArtboard {Object} : MSArtboardGroup
- */
-function formatSvg(currentArtboard, onlyLayer = false) {
-  currentArtboard.children().forEach(function (layer) {
-    const layerClass = String(layer.class())
-    if (layerClass === "MSLayerGroup" || (layerClass === "MSShapeGroup" && !onlyLayer)) {
-      layer.ungroup()
-    }
-  })
-}
-
-/**
- * @name dedupeLayers
- * @description get all shapes and merge them in one shape group
- * @param currentArtboard {Object} : MSArtboardGroup
- */
-function dedupeLayers(currentArtboard) {
-  const container = MSShapeGroup.shapeWithRect(null)
-  container.setName('container-random-string-9246392')
-  currentArtboard.addLayer(container)
-  const reg = new RegExp("Shape");
-
-  currentArtboard.children().forEach(function (layer) {
-
-    const layerClass = String(layer.class())
-
-    if (layerClass === 'MSRectangleShape' && String(layer.name()) === 'container-random-string-9246392') {
-      return layer.removeFromParent()
-    }
-
-    if (reg.test(layerClass) && layerClass !== 'MSShapeGroup') {
-      layer.moveToLayer_beforeLayer(container, layer);
-    }
-  })
-
-
-  const fill = container.style().addStylePartOfType(0);
-  fill.color = MSColor.blackColor();
-  // container.style.fills = [MSColor.blackColor()]
-  container.setName("icon")
-  container.resizeToFitChildrenWithOption(0)
 }

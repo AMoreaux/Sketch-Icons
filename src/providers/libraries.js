@@ -69,7 +69,7 @@ function initLibsSelectList(context, libs, colorMenu) {
   currentFile.title = 'Current file'
   addListener(currentFile)
   colorLibsMenu.addItem(currentFile)
-  libs.forEach(function(lib){
+  libs.some(function(lib){
     let item = NSMenuItem.alloc().init()
     item.title = lib.name()
     item.representedObject = lib
@@ -131,7 +131,7 @@ function initColorSelectList(popColorMenu, colors) {
 function getColorSymbolsFromDocument(document){
   const result = []
   let layers;
-  document.localSymbols().forEach(function(symbol){
+  document.localSymbols().some(function(symbol){
     layers = symbol.layers()
 
     if(symbol.children().length > 3) {
