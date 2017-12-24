@@ -97,6 +97,7 @@ function readFile(url, iconPadding, artboardSize) {
   let content = NSString.alloc().initWithContentsOfURL(url)
 
   const sizeWrapper = artboardSize - iconPadding * 2
+
   const addrect = `<rect width=${sizeWrapper} height=${sizeWrapper} id="delete-me"/></svg>`
   content = NSString.stringWithString(content.replace('</svg>', addrect))
 
@@ -118,9 +119,29 @@ function resizeSVG(svgLayerFrame, artboard, iconPadding) {
     width: parseInt(currentArtboardRect.size.width),
     height: parseInt(currentArtboardRect.size.height)
   }
+  const width = svgLayerFrame.width()
+  const height = svgLayerFrame.height()
+  let newHeight, newWidth;
 
-  svgLayerFrame.setWidth(currentArtboardSize.width - 2 * iconPadding)
-  svgLayerFrame.setHeight(currentArtboardSize.height - 2 * iconPadding)
+  if (width === height) {
+    svgLayerFrame.setWidth(currentArtboardSize.width - 2 * iconPadding)
+    svgLayerFrame.setHeight(currentArtboardSize.height - 2 * iconPadding)
+
+  } else if (width >= height) {
+    svgLayerFrame.setWidth(currentArtboardSize.width - 2 * iconPadding)
+
+    newHeight = height * (currentArtboardSize.height - 2 * iconPadding) / width
+    newHeight = (newHeight < 1) ? 1 : newHeight
+
+    svgLayerFrame.setHeight(newHeight)
+  } else {
+    svgLayerFrame.setHeight(currentArtboardSize.height - 2 * iconPadding)
+
+    newWidth = width * (currentArtboardSize.width - 2 * iconPadding) / height
+    newWidth = (newWidth < 1) ? 1 : newWidth
+
+    svgLayerFrame.setWidth(newWidth)
+  }
 }
 
 /**
