@@ -1,7 +1,5 @@
 import utils from '../utils/utils'
 import logger from '../utils/logger'
-import librairiesProvider from './libraries'
-
 export default {
   initAddMaskOnSelectedArtboards,
   addMask,
@@ -17,13 +15,26 @@ export default {
  */
 function initAddMaskOnSelectedArtboards(context, params, artboards) {
   artboards.some(function (artboard) {
-    if(utils.isArtboardMasked(artboard.object)){
-      MSMaskWithShape.toggleMaskForSingleShape(artboard.object.layers()[0])
-      artboard.object.layers()[1].removeFromParent()
-    }
+    if (utils.isArtboardMasked(artboard.object)) removeMask(artboard.object)
     addMask(context, artboard.object, params)
   })
   utils.clearSelection(context)
+}
+
+/**
+ * @name removeMask
+ * @description remove all mask from artboard
+ * @param artboard {Object} : MSArtboardGroup
+ */
+function removeMask(artboard) {
+  group = artboard.firstLayer()
+  indexes = NSMutableIndexSet.indexSet()
+  group.layers().forEach((layer, index) => {
+    if (index % 2) {
+      indexes.addIndex(index)
+    }
+  })
+  group.removeLayersAtIndexes(indexes)
 }
 
 /**
@@ -34,12 +45,13 @@ function initAddMaskOnSelectedArtboards(context, params, artboards) {
  * @param params {Object}
  */
 function addMask(context, currentArtboard, params) {
-  let mask = (params.mask) ? params.mask : null
-  if(params.color){
+  let mask
+  if (params.color) {
     mask = getMaskSymbolFromLib(context, currentArtboard, params.color, params.colorLib)
-  }else if(params.colorPicker){
+  } else if (params.colorPicker) {
     mask = createMaskFromNean(context, currentArtboard, params.colorPicker)
   }
+  // if(!utils.isArtboardMasked(currentArtboard)) formatSvg(currentArtboard)
   applyMask(currentArtboard, mask)
 }
 
@@ -51,10 +63,13 @@ function addMask(context, currentArtboard, params) {
  * @param color
  * @return {Object} : MSShapeGroup
  */
-function createMaskFromNean(context, currentArtboard, color){
+function createMaskFromNean(context, currentArtboard, color) {
   const currentArtboardSize = currentArtboard.rect()
 
-  const mask = MSShapeGroup.shapeWithRect({origin:{x:0, y:0}, size:{width:currentArtboardSize.size.width, height:currentArtboardSize.size.height}})
+  const mask = MSShapeGroup.shapeWithRect({
+    origin: {x: 0, y: 0},
+    size: {width: currentArtboardSize.size.width, height: currentArtboardSize.size.height}
+  })
   const fill = mask.style().addStylePartOfType(0);
   fill.color = color;
 
@@ -83,11 +98,30 @@ function getMaskSymbolFromLib(context, currentArtboard, colorSymbolMaster, color
  * @param currentArtboard
  * @param symbolInstance
  */
-function applyMask(currentArtboard, mask){
+function applyMask(currentArtboard, mask) {
   const currentArtboardSize = currentArtboard.rect()
   mask.setHeightRespectingProportions(currentArtboardSize.size.height)
   mask.setWidthRespectingProportions(currentArtboardSize.size.width)
   mask.setName('🎨 color')
-  currentArtboard.addLayer(mask);
-  MSMaskWithShape.toggleMaskForSingleShape(currentArtboard.layers()[0])
+  const wrapperGroup = currentArtboard.firstLayer()
+  wrapperGroupFrame = wrapperGroup.frame()
+  const size = {
+    width: wrapperGroupFrame.width(),
+    height:wrapperGroupFrame.height()
+  }
+  const newContent = []
+  wrapperGroup.layers().some((layer) => {
+    duplicateMask = mask.duplicate()
+    duplicateMaskFrame = duplicateMask.frame()
+    duplicateMaskFrame.setWidth(size.width + 2)
+    duplicateMaskFrame.setHeight(size.height + 2)
+    duplicateMaskFrame.setX(-1)
+    duplicateMaskFrame.setY(-1)
+    newContent.push(duplicateMask, layer)
+  })
+  wrapperGroup.removeAllLayers()
+  newContent.reverse().forEach((layer, index) => {
+    wrapperGroup.addLayer(layer)
+    if (!index % 2 && !layer.hasClippingMask()) MSMaskWithShape.toggleMaskForSingleShape(layer)
+  })
 }

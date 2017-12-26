@@ -2,6 +2,7 @@ import maskProvider from './mask'
 import artboardProvider from './artboard'
 import utils from '../utils/utils'
 import logger from '../utils/logger'
+import * as xmljs from "xml-js";
 
 export default {
   initUpdateIconsSelectedArtboards,
@@ -20,17 +21,18 @@ export default {
 function initUpdateIconsSelectedArtboards(context, artboards, listIcon) {
 
   artboards.some(function (artboard, index) {
-    const layers = artboard.object.layers()
+    const layers = artboard.object.firstLayer().layers()
     const isMasked = utils.isArtboardMasked(artboard.object)
     let params = Object.assign(artboardProvider.getPaddingAndSize(artboard.object), {iconPath: listIcon[index]})
-    layers[0].removeFromParent()
     if (isMasked) {
-      params.mask = layers[0].copy()
-      layers[0].removeFromParent()
+      params.mask = layers[1].copy()
+      // artboard.removeAllLayers()
+      artboard.object.firstLayer().removeFromParent()
     }
     addSVG(context, artboard.object, params.iconPadding, params.artboardSize, params.iconPath)
-    if (isMasked) maskProvider.applyMask(artboard.object, params.mask)
-
+    if (isMasked) {
+      maskProvider.applyMask(artboard.object, params.mask)
+    }
     artboard.object.setName(utils.getIconNameByNSUrl(params.iconPath))
   })
 
@@ -51,37 +53,14 @@ function addSVG(context, artboard, iconPadding, artboardSize, iconPath) {
   svgImporter.prepareToImportFromData(readFile(iconPath, iconPadding, artboardSize));
   const svgLayer = svgImporter.importAsLayer();
   removeTxt(svgLayer)
-  artboard.addLayer(svgLayer)
-  const svgLayerFrame = svgLayer.frame()
-  resizeSVG(svgLayerFrame, artboard, iconPadding)
-  formatSvg(artboard)
-  center(artboardSize, artboard.layers()[0].frame())
-}
-
-/**
- * @name formatSvg
- * @description ungroup all layers in an artboard
- * @param currentArtboard {Object} : MSArtboardGroup
- */
-function formatSvg(currentArtboard) {
-
-  const container = MSShapeGroup.shapeWithRect(null)
-  container.setName('container-random-string-9246392')
-  currentArtboard.addLayer(container)
-
-  currentArtboard.children().some(function (layer) {
-    const layerClass = String(layer.class())
-    if (layerClass === "MSLayerGroup" || (layerClass === 'MSRectangleShape' && String(layer.name()) === 'container-random-string-9246392')) {
-      layer.removeFromParent()
-    } else if (layerClass.includes("Shape") && layerClass !== 'MSShapeGroup') {
-      layer.moveToLayer_beforeLayer(container, layer);
-    }
-  })
-
-  const fill = container.style().addStylePartOfType(0);
-  fill.color = MSColor.blackColor();
-  container.setName("icon")
-  container.resizeToFitChildrenWithOption(0)
+  const group = MSLayerGroup.new();
+  artboard.addLayer(group)
+  group.addLayer(svgLayer)
+  group.setName('icon')
+  resizeSVG(svgLayer.frame(), artboard, iconPadding)
+  removeUnecessaryGroup(svgLayer)
+  group.resizeToFitChildrenWithOption(1)
+  center(artboardSize, group.frame())
 }
 
 function center(artboardSize, svgLayerFrame) {
@@ -95,13 +74,24 @@ function center(artboardSize, svgLayerFrame) {
 
 function readFile(url, iconPadding, artboardSize) {
   let content = NSString.alloc().initWithContentsOfURL(url)
-
   const sizeWrapper = artboardSize - iconPadding * 2
+  const wrapper = {_attributes: {width: sizeWrapper, height: sizeWrapper, id: 'delete-me'}}
+  const contentJson = xmljs.xml2js(String(content), {compact: true, ignoreComment: true});
 
-  const addrect = `<rect width=${sizeWrapper} height=${sizeWrapper} id="delete-me"/></svg>`
-  content = NSString.stringWithString(content.replace('</svg>', addrect))
+  removeTransparentRect(contentJson.svg)
 
-  return content.dataUsingEncoding(NSUTF8StringEncoding);
+  if (Array.isArray(contentJson.svg.rect)) contentJson.svg.rect.push(wrapper)
+  else contentJson.svg.rect = wrapper
+
+  const options = {
+    spaces: 0,
+    compact: true,
+    fullTagEmptyElement: true
+  };
+
+  content = xmljs.js2xml(contentJson, options)
+
+  return NSString.alloc().initWithString(content).dataUsingEncoding(NSUTF8StringEncoding);
 }
 
 
@@ -126,20 +116,15 @@ function resizeSVG(svgLayerFrame, artboard, iconPadding) {
   if (width === height) {
     svgLayerFrame.setWidth(currentArtboardSize.width - 2 * iconPadding)
     svgLayerFrame.setHeight(currentArtboardSize.height - 2 * iconPadding)
-
   } else if (width >= height) {
     svgLayerFrame.setWidth(currentArtboardSize.width - 2 * iconPadding)
-
     newHeight = height * (currentArtboardSize.height - 2 * iconPadding) / width
     newHeight = (newHeight < 1) ? 1 : newHeight
-
     svgLayerFrame.setHeight(newHeight)
   } else {
     svgLayerFrame.setHeight(currentArtboardSize.height - 2 * iconPadding)
-
     newWidth = width * (currentArtboardSize.width - 2 * iconPadding) / height
     newWidth = (newWidth < 1) ? 1 : newWidth
-
     svgLayerFrame.setWidth(newWidth)
   }
 }
@@ -154,15 +139,39 @@ function removeTxt(svgLayer) {
   const scope = svgLayer.children(),
     predicateTextLayers = NSPredicate.predicateWithFormat("(className == %@)", "MSTextLayer"),
     predicateId = NSPredicate.predicateWithFormat("(name == %@)", "delete-me"),
-    // predicateRectangle = NSPredicate.predicateWithFormat("(name == %@)", "Rectangle-path"),
 
     layers = scope.filteredArrayUsingPredicate(predicateTextLayers)
       .arrayByAddingObjectsFromArray(scope.filteredArrayUsingPredicate(predicateId))
-  // .arrayByAddingObjectsFromArray(scope.filteredArrayUsingPredicate(predicateRectangle))
 
   const loop = layers.objectEnumerator();
   let layer;
   while (layer = loop.nextObject()) {
     layer.removeFromParent()
+  }
+}
+
+function removeTransparentRect(object) {
+
+  for (var property in object) {
+    if (property === 'g') removeTransparentRect(object[property])
+
+    if (property === 'rect') {
+      const style = (object[property]._attributes && object[property]._attributes.style) ? object[property]._attributes.style : ''
+      if (style.includes('opacity:0') || style.includes('fill:none')) {
+        delete object[property]
+      }
+    }
+  }
+}
+
+function removeUnecessaryGroup(svgLayer) {
+  const scope = svgLayer.children(),
+    predicateTextLayers = NSPredicate.predicateWithFormat("(className == %@)", "MSLayerGroup");
+  layers = scope.filteredArrayUsingPredicate(predicateTextLayers)
+
+  const loop = layers.objectEnumerator();
+  let layer;
+  while (layer = loop.nextObject()) {
+    layer.ungroup()
   }
 }

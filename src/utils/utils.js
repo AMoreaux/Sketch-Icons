@@ -98,9 +98,7 @@ function getSelectedArtboardsAndSymbols(context) {
  * @return {Array}
  */
 function flatten(list) {
-  return list.reduce((a, b) => a.concat(Array.isArray(b) ? flatten(b) : b), []
-  )
-    ;
+  return list.reduce((a, b) => a.concat(Array.isArray(b) ? flatten(b) : b), [])
 }
 
 /**
@@ -214,6 +212,12 @@ function getImageByColor(color, colorSize = {width: 14, height: 14}) {
  * @return {boolean}
  */
 function isArtboardMasked(artboard) {
-  const layers = artboard.layers()
-  if (layers.length > 1 && layers[1].isMasked()) return true
+  const layers = artboard.firstLayer().layers()
+  if (layers.length <= 1)return false
+  const maskedLayer = layers.slice().filter((layer, index) => {
+    if(!index%2 && layer.hasClippingMask()){
+      return true
+    }
+  })
+  return maskedLayer.length !== 0;
 }
