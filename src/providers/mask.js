@@ -3,7 +3,8 @@ import logger from '../utils/logger'
 export default {
   initAddMaskOnSelectedArtboards,
   addMask,
-  applyMask
+  applyMask,
+  removeMask
 }
 
 /**
@@ -26,12 +27,15 @@ function initAddMaskOnSelectedArtboards(context, params, artboards) {
  * @description remove all mask from artboard
  * @param artboard {Object} : MSArtboardGroup
  */
-function removeMask(artboard) {
-  group = artboard.firstLayer()
-  indexes = NSMutableIndexSet.indexSet()
+function removeMask(artboard, unMaskOtherLayers) {
+  const group = artboard.firstLayer()
+  const indexes = NSMutableIndexSet.indexSet()
   group.layers().forEach((layer, index) => {
     if (index % 2) {
       indexes.addIndex(index)
+    }else if(unMaskOtherLayers){
+      layer.hasClippingMask = false;
+      layer.clippingMaskMode = 1
     }
   })
   group.removeLayersAtIndexes(indexes)
@@ -51,8 +55,7 @@ function addMask(context, currentArtboard, params) {
   } else if (params.colorPicker) {
     mask = createMaskFromNean(context, currentArtboard, params.colorPicker)
   }
-  // if(!utils.isArtboardMasked(currentArtboard)) formatSvg(currentArtboard)
-  applyMask(currentArtboard, mask)
+  applyMask(currentArtboard, mask, context)
 }
 
 
@@ -98,7 +101,7 @@ function getMaskSymbolFromLib(context, currentArtboard, colorSymbolMaster, color
  * @param currentArtboard
  * @param symbolInstance
  */
-function applyMask(currentArtboard, mask) {
+function applyMask(currentArtboard, mask, context) {
   const currentArtboardSize = currentArtboard.rect()
   mask.setHeightRespectingProportions(currentArtboardSize.size.height)
   mask.setWidthRespectingProportions(currentArtboardSize.size.width)
@@ -120,8 +123,11 @@ function applyMask(currentArtboard, mask) {
     newContent.push(duplicateMask, layer)
   })
   wrapperGroup.removeAllLayers()
-  newContent.reverse().forEach((layer, index) => {
-    wrapperGroup.addLayer(layer)
-    if (!index % 2 && !layer.hasClippingMask()) MSMaskWithShape.toggleMaskForSingleShape(layer)
+  wrapperGroup.addLayers(newContent.reverse())
+  newContent.forEach((layer, index) => {
+    if (!(index % 2)){
+      layer.hasClippingMask = true;
+      layer.clippingMaskMode = 0
+    }
   })
 }

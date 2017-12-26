@@ -24,15 +24,10 @@ function initUpdateIconsSelectedArtboards(context, artboards, listIcon) {
     const layers = artboard.object.firstLayer().layers()
     const isMasked = utils.isArtboardMasked(artboard.object)
     let params = Object.assign(artboardProvider.getPaddingAndSize(artboard.object), {iconPath: listIcon[index]})
-    if (isMasked) {
-      params.mask = layers[1].copy()
-      // artboard.removeAllLayers()
-      artboard.object.firstLayer().removeFromParent()
-    }
+    if (isMasked) params.mask = layers[1].copy()
+    artboard.object.firstLayer().removeFromParent()
     addSVG(context, artboard.object, params.iconPadding, params.artboardSize, params.iconPath)
-    if (isMasked) {
-      maskProvider.applyMask(artboard.object, params.mask)
-    }
+    if (isMasked) maskProvider.applyMask(artboard.object, params.mask)
     artboard.object.setName(utils.getIconNameByNSUrl(params.iconPath))
   })
 
