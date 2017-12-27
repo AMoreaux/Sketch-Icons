@@ -212,7 +212,7 @@ function getImageByColor(color, colorSize = {width: 14, height: 14}) {
  * @return {boolean}
  */
 function isArtboardMasked(artboard) {
-  const layers = artboard.firstLayer().layers()
+  const layers = artboard.layers()
   if (layers.length <= 1)return false
   const maskedLayer = layers.slice().filter((layer, index) => {
     if(!index%2 && layer.hasClippingMask()){

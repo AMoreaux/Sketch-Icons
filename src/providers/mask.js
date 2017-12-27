@@ -28,9 +28,8 @@ function initAddMaskOnSelectedArtboards(context, params, artboards) {
  * @param artboard {Object} : MSArtboardGroup
  */
 function removeMask(artboard, unMaskOtherLayers) {
-  const group = artboard.firstLayer()
   const indexes = NSMutableIndexSet.indexSet()
-  group.layers().forEach((layer, index) => {
+  artboard.layers().forEach((layer, index) => {
     if (index % 2) {
       indexes.addIndex(index)
     }else if(unMaskOtherLayers){
@@ -38,7 +37,7 @@ function removeMask(artboard, unMaskOtherLayers) {
       layer.clippingMaskMode = 1
     }
   })
-  group.removeLayersAtIndexes(indexes)
+  artboard.removeLayersAtIndexes(indexes)
 }
 
 /**
@@ -106,14 +105,13 @@ function applyMask(currentArtboard, mask, context) {
   mask.setHeightRespectingProportions(currentArtboardSize.size.height)
   mask.setWidthRespectingProportions(currentArtboardSize.size.width)
   mask.setName('🎨 color')
-  const wrapperGroup = currentArtboard.firstLayer()
-  wrapperGroupFrame = wrapperGroup.frame()
+  currentArtboardFrame = currentArtboard.frame()
   const size = {
-    width: wrapperGroupFrame.width(),
-    height:wrapperGroupFrame.height()
+    width: currentArtboardFrame.width(),
+    height:currentArtboardFrame.height()
   }
   const newContent = []
-  wrapperGroup.layers().some((layer) => {
+  currentArtboard.layers().reverse().some((layer) => {
     duplicateMask = mask.duplicate()
     duplicateMaskFrame = duplicateMask.frame()
     duplicateMaskFrame.setWidth(size.width + 2)
@@ -122,8 +120,8 @@ function applyMask(currentArtboard, mask, context) {
     duplicateMaskFrame.setY(-1)
     newContent.push(duplicateMask, layer)
   })
-  wrapperGroup.removeAllLayers()
-  wrapperGroup.addLayers(newContent.reverse())
+  currentArtboard.removeAllLayers()
+  currentArtboard.addLayers(newContent.reverse())
   newContent.forEach((layer, index) => {
     if (!(index % 2)){
       layer.hasClippingMask = true;
