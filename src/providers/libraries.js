@@ -134,17 +134,14 @@ function getColorSymbolsFromDocument(document){
   document.localSymbols().some(function(symbol){
     layers = symbol.layers()
 
-    if(symbol.children().length > 3) {
-      return
-    }
-
     if(layers.length === 0 && symbol.backgroundColor()){
       result.push({
         color: symbol.backgroundColor(),
         symbol: symbol
       })
     }
-    else if(layers.length === 1 && layers[0].style().hasEnabledFill()){
+    else if(layers.length === 1 && layers[0].children().length === 2 && String(layers[0].children()[0].class()) === 'MSRectangleShape' && layers[0].style().hasEnabledFill()){
+
       result.push({
         color: layers[0].style().fills()[0].color(),
         symbol: symbol
