@@ -105,20 +105,9 @@ function applyMask(currentArtboard, mask, context) {
   mask.setHeightRespectingProportions(currentArtboardSize.size.height)
   mask.setWidthRespectingProportions(currentArtboardSize.size.width)
   mask.setName('🎨 color')
-  currentArtboardFrame = currentArtboard.frame()
-  const size = {
-    width: currentArtboardFrame.width(),
-    height:currentArtboardFrame.height()
-  }
   const newContent = []
-  currentArtboard.layers().reverse().some((layer) => {
-    duplicateMask = mask.duplicate()
-    duplicateMaskFrame = duplicateMask.frame()
-    duplicateMaskFrame.setWidth(size.width + 2)
-    duplicateMaskFrame.setHeight(size.height + 2)
-    duplicateMaskFrame.setX(-1)
-    duplicateMaskFrame.setY(-1)
-    newContent.push(duplicateMask, layer)
+  currentArtboard.layers().reverse().forEach((layer) => {
+    newContent.push(mask.duplicate(), layer)
   })
   currentArtboard.removeAllLayers()
   currentArtboard.addLayers(newContent.reverse())
