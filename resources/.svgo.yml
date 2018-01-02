@@ -49,6 +49,7 @@ plugins:
   - removeEmptyAttrs: true
   - removeEmptyContainers: true
   - mergePathsOverride: true
+  - mergePaths: true
   - removeUnusedNS
   - sortAttrs
   - removeTitle
