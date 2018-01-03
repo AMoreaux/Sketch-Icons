@@ -1,8 +1,8 @@
 {
   "compatibleVersion": 47,
   "bundleVersion": 1,
-  "version": "3.0.7",
-  "name": "Sketch Icons",
+  "version": "3.0.8",
+  "name": "Sketch-Icons",
   "identifier": "com.amoreaux.sketch-icons",
   "description": "Import your icons, apply a color mask and create a dynamic icons library.",
   "authorEmail": "moreaux.antoine@gmail.com",
