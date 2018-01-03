@@ -11,51 +11,51 @@
   "icon": "icons/icon-square-1.jpg",
   "commands": [
     {
-      "script": "./commands.js",
+      "script": "commands.js",
       "handler": "importIcons",
       "shortcut": "command shift i",
       "name": "Import icons...",
       "identifier": "import.icons",
-      "description" : "Import your icons library",
+      "description": "Import your icons library",
       "icon": "icons/icon-square-1.jpg"
     },
     {
-      "script": "./commands.js",
+      "script": "commands.js",
       "handler": "updateIconsOnSelectedArtboards",
       "name": "Replace icons...",
       "identifier": "update.icons.selected.artboard",
       "icon": "icons/icon-square-1.jpg",
-      "description" : "Replace icons on selected artboards"
+      "description": "Replace icons on selected artboards"
     },
     {
-      "script": "./commands.js",
+      "script": "commands.js",
       "handler": "addMaskOnSelectedArtboards",
       "shortcut": "command shift m",
       "name": "Apply color mask...",
       "identifier": "mask.selected.artboard",
       "icon": "icons/icon-square-1.jpg",
-      "description" : "Apply mask on selected artboards"
+      "description": "Apply mask on selected artboards"
     },
     {
-      "script": "./commands.js",
+      "script": "commands.js",
       "handler": "updateMaskOnSelectedArtboards",
       "name": "Replace color mask...",
       "identifier": "update.mask.selected.artboard",
       "icon": "icons/icon-square-1.jpg",
-      "description" : "Replace mask on selected artboard"
+      "description": "Replace mask on selected artboard"
     },
     {
-      "script": "./commands.js",
+      "script": "commands.js",
       "handler": "removeMaskOnSelectedArtboards",
       "name": "Remove color mask",
       "identifier": "remove.mask.selected.artboard",
       "icon": "icons/icon-square-1.jpg",
-      "description" : "Remove mask on selected artboard"
+      "description": "Remove mask on selected artboard"
     }
   ],
-  "menu" : {
-    "title" : "Sketch Icons",
-    "items" : [
+  "menu": {
+    "title": "Sketch Icons",
+    "items": [
       "import.icons",
       "update.icons.selected.artboard",
       "-",
@@ -63,5 +63,6 @@
       "update.mask.selected.artboard",
       "remove.mask.selected.artboard"
     ]
-  }
+  },
+  "disableCocoaScriptPreprocessor": true
 }
