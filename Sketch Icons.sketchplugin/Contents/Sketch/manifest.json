@@ -1,0 +1,68 @@
+{
+  "compatibleVersion": 47,
+  "bundleVersion": 1,
+  "version": "3.0.11",
+  "name": "Sketch-Icons",
+  "identifier": "com.amoreaux.sketch-icons",
+  "description": "Import your icons, apply a color mask and create a dynamic icons library.",
+  "authorEmail": "moreaux.antoine@gmail.com",
+  "author": "Valentin Chrétien, Antoine Moreaux",
+  "appcast": "https://raw.githubusercontent.com/AMoreaux/Sketch-Icons/master/.appcast.xml",
+  "icon": "icons/icon-square-1.jpg",
+  "commands": [
+    {
+      "script": "commands.js",
+      "handler": "importIcons",
+      "shortcut": "command shift i",
+      "name": "Import icons...",
+      "identifier": "import.icons",
+      "description": "Import your icons library",
+      "icon": "icons/icon-square-1.jpg"
+    },
+    {
+      "script": "commands.js",
+      "handler": "updateIconsOnSelectedArtboards",
+      "name": "Replace icons...",
+      "identifier": "update.icons.selected.artboard",
+      "icon": "icons/icon-square-1.jpg",
+      "description": "Replace icons on selected artboards"
+    },
+    {
+      "script": "commands.js",
+      "handler": "addMaskOnSelectedArtboards",
+      "shortcut": "command shift m",
+      "name": "Apply color mask...",
+      "identifier": "mask.selected.artboard",
+      "icon": "icons/icon-square-1.jpg",
+      "description": "Apply mask on selected artboards"
+    },
+    {
+      "script": "commands.js",
+      "handler": "updateMaskOnSelectedArtboards",
+      "name": "Replace color mask...",
+      "identifier": "update.mask.selected.artboard",
+      "icon": "icons/icon-square-1.jpg",
+      "description": "Replace mask on selected artboard"
+    },
+    {
+      "script": "commands.js",
+      "handler": "removeMaskOnSelectedArtboards",
+      "name": "Remove color mask",
+      "identifier": "remove.mask.selected.artboard",
+      "icon": "icons/icon-square-1.jpg",
+      "description": "Remove mask on selected artboard"
+    }
+  ],
+  "menu": {
+    "title": "Sketch Icons",
+    "items": [
+      "import.icons",
+      "update.icons.selected.artboard",
+      "-",
+      "mask.selected.artboard",
+      "update.mask.selected.artboard",
+      "remove.mask.selected.artboard"
+    ]
+  },
+  "disableCocoaScriptPreprocessor": true
+}
