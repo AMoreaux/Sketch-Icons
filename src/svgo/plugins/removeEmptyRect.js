@@ -11,7 +11,6 @@ exports.fn = function(item) {
   // abort if current item is no an element
   if (!item.isElem()) return;
 
-
   if(item.isElem('svg') && item.hasAttr('viewBox')){
     var viewBox = item.attr('viewBox').value.split(' ')
     this.width =  viewBox[2]

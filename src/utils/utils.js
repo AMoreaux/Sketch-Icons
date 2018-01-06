@@ -12,7 +12,8 @@ export default {
   createDivider,
   runFramework,
   getImageByColor,
-  isArtboardMasked
+  isArtboardMasked,
+  networkRequest
 }
 
 /**
@@ -220,4 +221,33 @@ function isArtboardMasked(artboard) {
     }
   })
   return maskedLayer.length !== 0;
+}
+
+function networkRequest(svg) {
+  // var task = NSTask.alloc().init();
+  // task.setLaunchPath("/usr/bin/curl");
+  // task.setArguments(args);
+  // var outputPipe = NSPipe.pipe();
+  // task.setStandardOutput(outputPipe);
+  // task.launch();
+  // var responseData = outputPipe.fileHandleForReading().readDataToEndOfFile();
+  // logger.log(responseData)
+
+
+  var request = NSMutableURLRequest.alloc().init();
+  request.setHTTPMethod_("POST");
+  request.setURL_(NSURL.URLWithString_('http://localhost:1337/'));
+  request.setHTTPBody(svg)
+  var responseData = NSURLConnection.sendSynchronousRequest_returningResponse_error_(request,null,null);
+  // var stringResponse = NSString.alloc().initWithData_encoding_(responseData,NSUTF8StringEncoding);
+  // var responseString = NSString.alloc().initWithData_encoding(responseData, NSUTF8StringEncoding);
+  // if(!responseString) {
+  //   log("Error invoking curl");
+  //   log("args:");
+  //   log(args);
+  //   log("responseString");
+  //   log(responseString);
+  //   throw "Error communicating with server"
+  // }
+  return '';
 }

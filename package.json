@@ -32,12 +32,8 @@
     "lodash.merge": "^4.6.0"
   },
   "dependencies": {
-    "lodash.get": "^4.4.2",
     "react": "^16.2.0",
     "react-color": "^2.13.8",
-    "react-dom": "^16.2.0",
-    "svgo": "^1.0.3",
-    "xml-js": "^1.6.1",
-    "xml2json": "^0.11.0"
+    "react-dom": "^16.2.0"
   }
 }
