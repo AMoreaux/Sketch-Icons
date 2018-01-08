@@ -1,4 +1,3 @@
-
 import logger from './utils/logger';
 import utils from './utils/utils';
 import artboardProvider from './providers/artboard';
@@ -18,7 +17,7 @@ export function importIcons(context) {
   const params = importModal(context)
   if (params.button !== 1000) return
   params.listIcon = files.selectIconsFiles()
-  if(!params.listIcon.length) return
+  if (!params.listIcon.length) return
   artboardProvider.initImportIcons(context, params)
 }
 
@@ -28,13 +27,17 @@ export function importIcons(context) {
  * @param context
  */
 export function updateIconsOnSelectedArtboards(context) {
-  const selectedArtboardsAndSymbols = utils.getSelectedArtboardsAndSymbols(context);
-    if(selectedArtboardsAndSymbols.length === 0)return modals.newErrorModal('No artboards selected', 'Please select one or more artboards to replace icons.')
+  try {
+    const selectedArtboardsAndSymbols = utils.getSelectedArtboardsAndSymbols(context);
+    if (selectedArtboardsAndSymbols.length === 0) return modals.newErrorModal('No artboards selected', 'Please select one or more artboards to replace icons.')
     const listIcon = files.selectIconsFiles()
-    if(!listIcon.length) return
-    if(selectedArtboardsAndSymbols.length > listIcon.length)return modals.newErrorModal('Too much artboards selected', 'Please select as many artboards as icons.')
-    if(selectedArtboardsAndSymbols.length < listIcon.length)return modals.newErrorModal('Too much icons selected', 'Please select as many icons as artboards.')
+    if (!listIcon.length) return
+    if (selectedArtboardsAndSymbols.length > listIcon.length) return modals.newErrorModal('Too much artboards selected', 'Please select as many artboards as icons.')
+    if (selectedArtboardsAndSymbols.length < listIcon.length) return modals.newErrorModal('Too much icons selected', 'Please select as many icons as artboards.')
     svg.initUpdateIconsSelectedArtboards(context, selectedArtboardsAndSymbols, listIcon)
+  } catch (e) {
+    console.log('>>>>>>>>>>>', e);
+  }
 }
 
 /**
@@ -43,12 +46,12 @@ export function updateIconsOnSelectedArtboards(context) {
  * @param context
  */
 export function addMaskOnSelectedArtboards(context) {
-    utils.runFramework(context)
-    const selectedArtboardsAndSymbols = utils.getSelectedArtboardsAndSymbols(context);
-    if(selectedArtboardsAndSymbols.length === 0)return modals.newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.')
-    const params = maskModal(context)
-    if (params.button !== 1000) return
-    maskProvider.initAddMaskOnSelectedArtboards(context, params, selectedArtboardsAndSymbols)
+  utils.runFramework(context)
+  const selectedArtboardsAndSymbols = utils.getSelectedArtboardsAndSymbols(context);
+  if (selectedArtboardsAndSymbols.length === 0) return modals.newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.')
+  const params = maskModal(context)
+  if (params.button !== 1000) return
+  maskProvider.initAddMaskOnSelectedArtboards(context, params, selectedArtboardsAndSymbols)
 }
 
 /**
@@ -57,12 +60,12 @@ export function addMaskOnSelectedArtboards(context) {
  * @param context
  */
 export function updateMaskOnSelectedArtboards(context) {
-    utils.runFramework(context)
-    const selectedArtboardsAndSymbols = utils.getSelectedArtboardsAndSymbols(context);
-    if(selectedArtboardsAndSymbols.length === 0)return modals.newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.')
-    const params = maskModal(context)
-    if (params.button !== 1000) return
-    maskProvider.initAddMaskOnSelectedArtboards(context, params, selectedArtboardsAndSymbols)
+  utils.runFramework(context)
+  const selectedArtboardsAndSymbols = utils.getSelectedArtboardsAndSymbols(context);
+  if (selectedArtboardsAndSymbols.length === 0) return modals.newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.')
+  const params = maskModal(context)
+  if (params.button !== 1000) return
+  maskProvider.initAddMaskOnSelectedArtboards(context, params, selectedArtboardsAndSymbols)
 }
 
 /**
@@ -72,7 +75,7 @@ export function updateMaskOnSelectedArtboards(context) {
  */
 export function removeMaskOnSelectedArtboards(context) {
   const selectedArtboardsAndSymbols = utils.getSelectedArtboardsAndSymbols(context);
-  if(selectedArtboardsAndSymbols.length === 0)return modals.newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.')
+  if (selectedArtboardsAndSymbols.length === 0) return modals.newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.')
   selectedArtboardsAndSymbols.forEach((rootElement) => {
     maskProvider.removeMask(rootElement.object, true)
   })

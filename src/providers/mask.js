@@ -1,10 +1,12 @@
 import utils from '../utils/utils'
+import svgProvider from './svg'
 import logger from '../utils/logger'
+
 export default {
   initAddMaskOnSelectedArtboards,
   addMask,
-  applyMask,
-  removeMask
+  removeMask,
+  applyMask
 }
 
 /**
@@ -15,9 +17,13 @@ export default {
  * @param artboards {Array} : MSArtboardGroup
  */
 function initAddMaskOnSelectedArtboards(context, params, artboards) {
-  artboards.some(function (artboard) {
+  artboards.some(async function (artboard) {
     if (utils.isArtboardMasked(artboard.object)) removeMask(artboard.object)
-    addMask(context, artboard.object, params)
+    try{
+      await addMask(context, artboard.object, params)
+    }catch(e){
+      logger.error(e)
+    }
   })
   utils.clearSelection(context)
 }
@@ -32,7 +38,7 @@ function removeMask(artboard, unMaskOtherLayers) {
   artboard.layers().forEach((layer, index) => {
     if (index % 2) {
       indexes.addIndex(index)
-    }else if(unMaskOtherLayers){
+    } else if (unMaskOtherLayers) {
       layer.hasClippingMask = false;
       layer.clippingMaskMode = 1
     }
@@ -47,7 +53,11 @@ function removeMask(artboard, unMaskOtherLayers) {
  * @param currentArtboard {Object} : MSArtboardGroup
  * @param params {Object}
  */
-function addMask(context, currentArtboard, params) {
+async function addMask(context, currentArtboard, params) {
+  if (!utils.isArtboardMasked(currentArtboard)) {
+      const svgData = utils.layerToSvg(currentArtboard.firstLayer())
+      await svgProvider.replaceSVG(context, currentArtboard, svgData, true, false)
+  }
   let mask
   if (params.color) {
     mask = getMaskSymbolFromLib(context, currentArtboard, params.color, params.colorLib)
@@ -98,23 +108,30 @@ function getMaskSymbolFromLib(context, currentArtboard, colorSymbolMaster, color
 /**
  * @name applyMask
  * @param currentArtboard
- * @param symbolInstance
+ * @param mask
  */
-function applyMask(currentArtboard, mask, context) {
+function applyMask(currentArtboard, mask) {
   const currentArtboardSize = currentArtboard.rect()
   mask.setHeightRespectingProportions(currentArtboardSize.size.height)
   mask.setWidthRespectingProportions(currentArtboardSize.size.width)
   mask.setName('🎨 color')
-  const newContent = []
-  currentArtboard.layers().reverse().forEach((layer) => {
-    newContent.push(mask.duplicate(), layer)
-  })
-  currentArtboard.removeAllLayers()
-  currentArtboard.addLayers(newContent.reverse())
-  newContent.forEach((layer, index) => {
-    if (!(index % 2)){
-      layer.hasClippingMask = true;
-      layer.clippingMaskMode = 0
-    }
-  })
+  // TODO: a modifier vite !
+  currentArtboard.addLayers([mask])
+  const iconLayer = currentArtboard.firstLayer()
+  mask.moveToLayer_beforeLayer(iconLayer, mask);
+  iconLayer.hasClippingMask = true
+  iconLayer.clippingMaskMode = 0
+  //
+  // const newContent = []
+  // currentArtboard.layers().reverse().forEach((layer) => {
+  //   newContent.push(mask.duplicate(), layer)
+  // })
+  // currentArtboard.removeAllLayers()
+  // currentArtboard.addLayers(newContent.reverse())
+  // newContent.forEach((layer, index) => {
+  //   if (!(index % 2)) {
+  //     layer.hasClippingMask = true;
+  //     layer.clippingMaskMode = 0
+  //   }
+  // })
 }

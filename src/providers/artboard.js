@@ -87,9 +87,11 @@ function initImportIcons(context, params) {
   params.listIcon.some((icon, index) => {
     try{
       const newArtboard = createArtboard(context, index, icon)
-      svg.addSVG(context, newArtboard, params.iconPadding, params.artboardSize, icon)
+      const svgData = String(NSString.alloc().initWithContentsOfURL(icon))
+      svg.addSVG(context, newArtboard, params.iconPadding, params.artboardSize, svgData, params.withMask, true)
       if (params.withMask) mask.addMask(context, newArtboard, params)
-      if(params.convertSymbol)MSSymbolMaster.convertArtboardToSymbol(newArtboard)
+      const newRootObject = (params.convertSymbol) ? MSSymbolMaster.convertArtboardToSymbol(newArtboard) : newArtboard
+      context.command.setValue_forKey_onLayer(params.iconPadding, "padding", newRootObject)
     }catch (e){
       logger.error(e)
     }
@@ -104,10 +106,9 @@ function initImportIcons(context, params) {
  * @param artboard {Object} : MSArtboardGroup
  * @returns {{iconPadding: Number, artboardSize: Number}}
  */
-function getPaddingAndSize(artboard){
-  const icon = artboard.layers()[0].rect()
+function getPaddingAndSize(context, artboard){
   return {
-    iconPadding: parseInt(Math.min(icon.origin.x, icon.origin.y)),
+    iconPadding: parseInt(context.command.valueForKey_onLayer("padding", artboard)),
     artboardSize: parseInt(artboard.rect().size.width)
   }
 }

@@ -7,8 +7,7 @@ import svgo from '../svgo/lib/svgo'
 export default {
   initUpdateIconsSelectedArtboards,
   addSVG,
-  resizeSVG,
-  removeTxt
+  replaceSVG
 }
 
 /**
@@ -20,15 +19,18 @@ export default {
  */
 function initUpdateIconsSelectedArtboards(context, artboards, listIcon) {
 
-  artboards.some(function (artboard, index) {
-    const layers = artboard.object.layers()
+  artboards.some(async function (artboard, index) {
+    let mask
+    const svgData = String(NSString.alloc().initWithContentsOfURL(listIcon[index]))
     const isMasked = utils.isArtboardMasked(artboard.object)
-    let params = Object.assign(artboardProvider.getPaddingAndSize(artboard.object), {iconPath: listIcon[index]})
-    if (isMasked) params.mask = layers[1].copy()
-    artboard.object.removeAllLayers()
-    addSVG(context, artboard.object, params.iconPadding, params.artboardSize, params.iconPath)
-    if (isMasked) maskProvider.applyMask(artboard.object, params.mask)
-    artboard.object.setName(utils.getIconNameByNSUrl(params.iconPath))
+    if (isMasked) mask = artboard.object.lastLayer().copy()
+    try{
+      await replaceSVG(context, artboard.object, svgData, isMasked, true)
+    }catch(e){
+      logger.error(e)
+    }
+    artboard.object.setName(utils.getIconNameByNSUrl(listIcon[index]))
+    if (isMasked) maskProvider.applyMask(artboard.object, mask)
   })
 
   utils.clearSelection(context)
@@ -40,35 +42,74 @@ function initUpdateIconsSelectedArtboards(context, artboards, listIcon) {
  * @param context {Object}
  * @param artboard {Object} : MSArtboardGroup
  * @param iconPadding {Number}
- * @param iconPath {Object} : NSUrl
+ * @param artboardSize {Number}
+ * @param svgData {String}
+ * @param withMask {Boolean}
+ * @param withResize {Boolean}
  */
-function addSVG(context, artboard, iconPadding, artboardSize, iconPath) {
+async function addSVG(context, artboard, iconPadding, artboardSize, svgData, withMask, withResize) {
 
-  const svgoInstance = new svgo({}, context)
-  svgoInstance.optimize(String(NSString.alloc().initWithContentsOfURL(iconPath)))
-    .then(function (result) {
-      const viewBox = getViewBox(result.data)
-      const addrect = `<rect width=${viewBox.width} height=${viewBox.height} id="delete-me" name="delete-me"/></svg>`
-      let svgData = NSString.stringWithString(result.data.replace('</svg>', addrect))
-      const svgImporter = MSSVGImporter.svgImporter();
-      svgImporter.prepareToImportFromData(svgData.dataUsingEncoding(NSUTF8StringEncoding));
-      const svgLayer = svgImporter.importAsLayer();
-      removeTxt(svgLayer)
-      artboard.addLayer(svgLayer)
-      removeUnecessaryGroup(svgLayer)
-      artboard.firstLayer().setName(artboard.name())
-      removeNoFillLayer(artboard)
-      mergeLayer(artboard)
-      artboard.firstLayer().resizeToFitChildrenWithOption(1)
-      resizeSVG(artboard.firstLayer(), artboard, iconPadding)
-      removeDeleteMeRect(artboard)
-      artboard.firstLayer().resizeToFitChildrenWithOption(1)
-      center(artboardSize, artboard.firstLayer())
-    }).catch(function (err) {
-    logger.error(err)
-  })
+  if (withMask) svgData = await convertLayersToPathWithSVGO(context, svgData)
+  svgData = NSString.stringWithString(svgData)
+  if (withResize) svgData = addRectToResize(svgData)
+  const svgImporter = MSSVGImporter.svgImporter()
+  svgImporter.prepareToImportFromData(svgData.dataUsingEncoding(NSUTF8StringEncoding))
+  const svgLayer = svgImporter.importAsLayer()
+  removeTxt(svgLayer)
+  artboard.addLayer(svgLayer)
+  if (withMask) cleanSvg(svgLayer, artboard)
+  if (withResize) resizeSVG(artboard.firstLayer(), artboard, iconPadding)
+  if (withResize) removeDeleteMeRect(artboard)
+  artboard.firstLayer().resizeToFitChildrenWithOption(1)
+  center(artboardSize, artboard.firstLayer())
 }
 
+/**
+ * @name convertLayersToPathWithSVGO
+ * @description used svgo to initiate conversion in one path
+ * @param context
+ * @param svgString
+ * @returns {Promise<void>}
+ */
+async function convertLayersToPathWithSVGO(context, svgString) {
+
+  const svgoInstance = new svgo({}, context)
+  const result = await svgoInstance.optimize(svgString)
+  return result.data
+}
+
+/**
+ * @name addRectToResize
+ * @description add rect to keep proportion on resize
+ * @param svgString
+ * @returns {String}
+ */
+function addRectToResize(svgString) {
+  const viewBox = getViewBox(svgString)
+  const addrect = `<rect width=${viewBox.width} height=${viewBox.height} id="delete-me" name="delete-me"/></svg>`
+  return NSString.stringWithString(svgString.replace('</svg>', addrect))
+}
+
+/**
+ * @name cleanSvg
+ * @description main function which used sketch properties to convert icon in one path
+ * @param svgLayer
+ * @param artboard
+ */
+function cleanSvg(svgLayer, artboard) {
+  unGroup(svgLayer)
+  artboard.firstLayer().setName(artboard.name())
+  removeNoFillLayer(artboard)
+  mergeLayer(artboard)
+  artboard.firstLayer().resizeToFitChildrenWithOption(1)
+}
+
+/**
+ * @name center
+ * @description center svg in artboard
+ * @param artboardSize
+ * @param svgLayer
+ */
 function center(artboardSize, svgLayer) {
   const shapeGroupWidth = svgLayer.frame().width()
   const shapeGroupHeight = svgLayer.frame().height()
@@ -80,12 +121,12 @@ function center(artboardSize, svgLayer) {
 /**
  * @name resizeSVG
  * @description resize layer by artboard
- * @param svgLayerFrame {Object} : MSShape*
+ * @param svgLayer {Object} : MSLayer
  * @param artboard {Object} : MSArtboardGroup
  * @param iconPadding {Number}
  */
 function resizeSVG(svgLayer, artboard, iconPadding) {
-  svgLayerFrame = svgLayer.frame()
+  const svgLayerFrame = svgLayer.frame()
 
   const currentArtboardRect = artboard.rect()
   const currentArtboardSize = {
@@ -124,7 +165,12 @@ function removeTxt(svgLayer) {
   }
 }
 
-function removeUnecessaryGroup(svgLayer) {
+/**
+ * @name removeUnecessaryGroup
+ * @description ungroup all group
+ * @param svgLayer
+ */
+function unGroup(svgLayer) {
   const scope = svgLayer.children(),
     predicateTextLayers = NSPredicate.predicateWithFormat("(className == %@)", "MSLayerGroup");
   layers = scope.filteredArrayUsingPredicate(predicateTextLayers)
@@ -136,12 +182,18 @@ function removeUnecessaryGroup(svgLayer) {
   }
 }
 
-function removeDeleteMeRect(svgLayer) {
-  const scope = svgLayer.children(),
+/**
+ * @name removeDeleteMeRect
+ * @description remove rect used to keep proportion on resize
+ * @param artboard
+ * @returns {*}
+ */
+function removeDeleteMeRect(artboard) {
+  const scope = artboard.children(),
     predicateTextLayers = NSPredicate.predicateWithFormat("(name == %@)", "delete-me");
-  layers = scope.filteredArrayUsingPredicate(predicateTextLayers)
+  const layers = scope.filteredArrayUsingPredicate(predicateTextLayers)
 
-  if (!layers.length) return svgLayer.firstLayer().lastLayer().removeFromParent()
+  if (!layers.length) return artboard.firstLayer().lastLayer().removeFromParent()
 
   const loop = layers.objectEnumerator();
   let layer;
@@ -151,45 +203,68 @@ function removeDeleteMeRect(svgLayer) {
 
 }
 
+/**
+ * @description remove transparent layers
+ * @name removeNoFillLayer
+ * @param artboard
+ */
 function removeNoFillLayer(artboard) {
   const indexes = NSMutableIndexSet.indexSet()
   artboard.layers().forEach(function (layer, index) {
-    if (!layer.style().hasEnabledFill() && !layer.style().hasEnabledBorder()) {
-      indexes.addIndex(index)
-    }
+    if (!layer.style().hasEnabledFill() && !layer.style().hasEnabledBorder()) indexes.addIndex(index)
   })
   artboard.removeLayersAtIndexes(indexes)
 }
 
 
 /**
- *
+ * @name mergeLayer
+ * @description merge all path in one path
  * @param artboard
  */
 function mergeLayer(artboard) {
 
   const layers = artboard.layers()
 
-  for (var i = 0; i <= layers.length - 1; i++) {
-    layers[1].moveToLayer_beforeLayer(layers[0], layers[1]);
-  }
-
-  if(artboard.layers().length > 1){
-    mergeLayer(artboard)
-  }
-
-  artboard.children().forEach(function(children){
-    if(String(children.class()) === 'MSShapePathLayer' && children.booleanOperation() !== -1){
-      children.setBooleanOperation(-1)
+  if (layers.length > 1) {
+    for (var i = 0; i <= layers.length - 1; i++) {
+      layers[1].moveToLayer_beforeLayer(layers[0], layers[1]);
     }
+  }
+
+  if (artboard.layers().length > 1) return mergeLayer(artboard)
+
+  artboard.children().forEach(function (children) {
+    if (String(children.class()) === 'MSShapePathLayer' && children.booleanOperation() !== -1) children.setBooleanOperation(-1)
   })
 
   layers[0].resizeToFitChildrenWithOption(0)
   layers[0].setName(artboard.name())
 }
 
+/**
+ * @name getViewBox
+ * @description return values of viewbox
+ * @param svg
+ * @returns {{width: number, height: number}}
+ */
 function getViewBox(svg) {
-  const viewBox = svg.match(/viewBox="[0-9]+ [0-9]+ [0-9]+ [0-9]+"/)[0]
-  const size = viewBox.match(/[0-9]+/g)
-  return {width: parseInt(size[2]), height: parseInt(size[3])}
+  let viewBox = svg.match(/viewBox="[0-9]+ [0-9]+ [0-9]+ [0-9]+"/)
+  let size;
+  let result;
+  if (Array.isArray(viewBox)) {
+    size = viewBox[0].match(/[0-9]+/g)
+    result = {width: parseFloat(size[2]), height: parseFloat(size[3])}
+  }
+  return result
+}
+
+async function replaceSVG(context, artboard, svgData, withMask, withResize) {
+  const params = artboardProvider.getPaddingAndSize(context, artboard)
+  artboard.removeAllLayers()
+  try{
+    await addSVG(context, artboard, params.iconPadding, params.artboardSize, String(svgData), withMask, withResize)
+  }catch(e){
+    logger.error(e)
+  }
 }

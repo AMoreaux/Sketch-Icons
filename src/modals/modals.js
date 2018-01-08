@@ -82,7 +82,7 @@ function importModal(context) {
     artboardSize: parseInt(this.artboardSize.stringValue()),
     iconPadding: parseInt(this.artboardPadding.stringValue()),
     convertSymbol: this.symbolParams.state(),
-    withMask: this.checkboxMaskParams.state()
+    withMask: !!this.checkboxMaskParams.state()
   }
 
   if (result.withMask && this.isLibrarySource) {
@@ -92,7 +92,7 @@ function importModal(context) {
     let colorLib = this.colorLibsMenuParams.selectedItem()
     result.colorLib = (colorLib) ? this.colorLibsMenuParams.representedObject() : null
 
-    if(!result.color || !result.colorLib)result.withMask = false
+    if(!result.color)result.withMask = false
   } else if (result.withMask) {
     result.colorPicker = this.colorPickerColor || MSColor.blackColor()
   }
@@ -139,8 +139,6 @@ function makeArtboardParams() {
   this.artboardSize = textBox
 
   this.artboardSize.setNextKeyView(this.artboardPadding)
-
-  return
 }
 
 function makeSymbolParams() {
@@ -187,7 +185,7 @@ function makeMaskRadioButtonParams() {
 
   const buttonFormat = NSButtonCell.alloc().init();
   buttonFormat.setButtonType(NSRadioButton);
-  var matrixFormat = NSMatrix.alloc().initWithFrame_mode_prototype_numberOfRows_numberOfColumns(
+  const matrixFormat = NSMatrix.alloc().initWithFrame_mode_prototype_numberOfRows_numberOfColumns(
     NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 300, 60),
     NSRadioModeMatrix,
     buttonFormat,
@@ -195,7 +193,7 @@ function makeMaskRadioButtonParams() {
     1
   );
   matrixFormat.setCellSize(CGSizeMake(300, 25));
-  var cells = matrixFormat.cells();
+  const cells = matrixFormat.cells();
   cells[0].setTitle("From Symbols");
   cells[0].setFont(NSFont.systemFontOfSize_(13));
   cells[1].setTitle("From Color picker");
@@ -351,11 +349,11 @@ function removePickerButton() {
 }
 
 function getStateColor(enabled){
-  if (enabled) {
-    color = NSColor.controlTextColor()
-  } else {
-    color = disabledColor
-    // this.colorsMenuParams.removeAllItems()
-  }
-  return color
+  // if (enabled) {
+  //   color = NSColor.controlTextColor()
+  // } else {
+  //   color = disabledColor
+  //   // this.colorsMenuParams.removeAllItems()
+  // }
+  return (enabled) ? NSColor.controlTextColor() : disabledColor
 }

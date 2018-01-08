@@ -13,7 +13,8 @@ export default {
   runFramework,
   getImageByColor,
   isArtboardMasked,
-  networkRequest
+  networkRequest,
+  layerToSvg
 }
 
 /**
@@ -132,7 +133,7 @@ function createWebview(context, pickerButton, setColor) {
       const query = windowObject.evaluateWebScript('window.location.hash')
       const color = JSON.parse(decodeURIComponent(query).split('color=')[1])
 
-      newColor = MSImmutableColor.colorWithSVGString(`rgba(${color.r},${color.g},${color.b},${color.a})`).newMutableCounterpart()
+      const newColor = MSImmutableColor.colorWithSVGString(`rgba(${color.r},${color.g},${color.b},${color.a})`).newMutableCounterpart()
       pickerButton.setImage(getImageByColor(NSColor.colorWithRed_green_blue_alpha(
         parseInt(color.r) / 255,
         parseInt(color.g) / 255,
@@ -213,15 +214,22 @@ function getImageByColor(color, colorSize = {width: 14, height: 14}) {
  * @return {boolean}
  */
 function isArtboardMasked(artboard) {
-  const layers = artboard.layers()
-  if (layers.length <= 1)return false
-  const maskedLayer = layers.slice().filter((layer, index) => {
-    if(!index%2 && layer.hasClippingMask()){
-      return true
-    }
-  })
-  return maskedLayer.length !== 0;
+  return !!artboard.firstLayer().hasClippingMask()
+  // if (layers[1].hasClippingMask())return true
+  // const maskedLayer = layers.slice().filter((layer, index) => {
+  //   if (!index % 2 && layer.hasClippingMask()) {
+  //     return true
+  //   }
+  // })
+  // return maskedLayer.length !== 0;
 }
+
+function layerToSvg(layer) {
+  const svgExporter = SketchSVGExporter.alloc().init();
+  const svgData = svgExporter.exportLayers([layer.immutableModelObject()]);
+  return NSString.alloc().initWithData_encoding(svgData, NSUTF8StringEncoding);
+}
+
 
 function networkRequest(svg) {
   // var task = NSTask.alloc().init();
@@ -234,11 +242,13 @@ function networkRequest(svg) {
   // logger.log(responseData)
 
 
-  var request = NSMutableURLRequest.alloc().init();
-  request.setHTTPMethod_("POST");
-  request.setURL_(NSURL.URLWithString_('http://localhost:1337/'));
-  request.setHTTPBody(svg)
-  var responseData = NSURLConnection.sendSynchronousRequest_returningResponse_error_(request,null,null);
+  // var request = NSMutableURLRequest.alloc().init();
+  // request.setHTTPMethod_("POST");
+  // request.setURL_(NSURL.URLWithString_('http://localhost:1337/'));
+  // request.setHTTPBody(svg)
+  // var responseData = NSURLConnection.sendSynchronousRequest_returningResponse_error_(request,null,null);
+
+
   // var stringResponse = NSString.alloc().initWithData_encoding_(responseData,NSUTF8StringEncoding);
   // var responseString = NSString.alloc().initWithData_encoding(responseData, NSUTF8StringEncoding);
   // if(!responseString) {
