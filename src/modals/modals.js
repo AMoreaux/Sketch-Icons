@@ -92,7 +92,7 @@ function importModal(context) {
     let colorLib = this.colorLibsMenuParams.selectedItem()
     result.colorLib = (colorLib) ? this.colorLibsMenuParams.representedObject() : null
 
-    if(!result.color || !result.colorLib)result.withMask = false
+    if(!result.color)result.withMask = false
   } else if (result.withMask) {
     result.colorPicker = this.colorPickerColor || MSColor.blackColor()
   }

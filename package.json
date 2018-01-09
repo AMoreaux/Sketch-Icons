@@ -14,7 +14,7 @@
   "skpm": {
     "name": "Sketch-Icons",
     "manifest": "src/manifest.json",
-    "main": "Sketch Icons.sketchplugin",
+    "main": "Sketch-Icons.sketchplugin",
     "title": "Sketch Icons"
   },
   "resources": [
