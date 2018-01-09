@@ -3254,9 +3254,10 @@ exports['default'] = {
   createDivider: createDivider,
   runFramework: runFramework,
   getImageByColor: getImageByColor,
-  isArtboardMasked: isArtboardMasked,
+  iconHasColor: iconHasColor,
   networkRequest: networkRequest,
-  layerToSvg: layerToSvg
+  layerToSvg: layerToSvg,
+  svgHasStroke: svgHasStroke
 
   /**
    * @name clearSelection
@@ -3458,25 +3459,28 @@ function getImageByColor(color) {
 }
 
 /**
- * @name isArtboardMasked
+ * @name iconHasColor
  * @param artboard
- * @return {boolean}
+ * @return {Boolean}
  */
-function isArtboardMasked(artboard) {
+function iconHasColor(artboard) {
   return !!artboard.firstLayer().hasClippingMask();
-  // if (layers[1].hasClippingMask())return true
-  // const maskedLayer = layers.slice().filter((layer, index) => {
-  //   if (!index % 2 && layer.hasClippingMask()) {
-  //     return true
-  //   }
-  // })
-  // return maskedLayer.length !== 0;
 }
 
 function layerToSvg(layer) {
   var svgExporter = SketchSVGExporter.alloc().init();
   var svgData = svgExporter.exportLayers([layer.immutableModelObject()]);
   return NSString.alloc().initWithData_encoding(svgData, NSUTF8StringEncoding);
+}
+
+function svgHasStroke(artboard) {
+  var hasBorder = false;
+  artboard.children().forEach(function (layer) {
+    if (layer.styledLayer().style().hasEnabledBorder()) {
+      hasBorder = true;
+    }
+  });
+  return hasBorder;
 }
 
 function networkRequest(svg) {
@@ -3708,7 +3712,7 @@ var util = __webpack_require__(22);
 util.inherits = __webpack_require__(16);
 /*</replacement>*/
 
-var Readable = __webpack_require__(113);
+var Readable = __webpack_require__(114);
 var Writable = __webpack_require__(40);
 
 util.inherits(Duplex, Readable);
@@ -4301,7 +4305,7 @@ var Schema = __webpack_require__(15);
 
 module.exports = new Schema({
   include: [
-    __webpack_require__(46)
+    __webpack_require__(47)
   ],
   implicit: [
     __webpack_require__(152),
@@ -4333,7 +4337,7 @@ module.exports = new Schema({
 
 var base64 = __webpack_require__(155)
 var ieee754 = __webpack_require__(156)
-var isArray = __webpack_require__(48)
+var isArray = __webpack_require__(49)
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -6979,6 +6983,10 @@ var _svg = __webpack_require__(31);
 
 var _svg2 = _interopRequireDefault(_svg);
 
+var _libraries = __webpack_require__(45);
+
+var _libraries2 = _interopRequireDefault(_libraries);
+
 var _logger = __webpack_require__(5);
 
 var _logger2 = _interopRequireDefault(_logger);
@@ -7000,10 +7008,10 @@ exports['default'] = {
    */
 };
 function initAddMaskOnSelectedArtboards(context, params, artboards) {
-  artboards.some(async function (artboard) {
-    if (_utils2['default'].isArtboardMasked(artboard.object)) removeMask(artboard.object);
+  artboards.some(function (artboard) {
     try {
-      await addMask(context, artboard.object, params);
+      if (_utils2['default'].iconHasColor(artboard.object) && !_utils2['default'].svgHasStroke(artboard.object)) removeMask(artboard.object);
+      addMask(context, artboard.object, params);
     } catch (e) {
       _logger2['default'].error(e);
     }
@@ -7012,21 +7020,34 @@ function initAddMaskOnSelectedArtboards(context, params, artboards) {
 }
 
 /**
+ * @name applyColor
+ * @description apply border color on svg with stroke
+ * @param artboard
+ * @param color
+ */
+function applyColor(artboard, color) {
+  artboard.children().forEach(function (layer) {
+    if (layer.styledLayer().style().hasEnabledBorder()) {
+      var style = layer.styledLayer().style();
+      style.enabledBorders().forEach(function (border) {
+        border.color = color;
+      });
+    }
+  });
+}
+
+/**
  * @name removeMask
  * @description remove all mask from artboard
  * @param artboard {Object} : MSArtboardGroup
  */
-function removeMask(artboard, unMaskOtherLayers) {
-  var indexes = NSMutableIndexSet.indexSet();
-  artboard.layers().forEach(function (layer, index) {
-    if (index % 2) {
-      indexes.addIndex(index);
-    } else if (unMaskOtherLayers) {
-      layer.hasClippingMask = false;
-      layer.clippingMaskMode = 1;
-    }
-  });
-  artboard.removeLayersAtIndexes(indexes);
+function removeMask(artboard) {
+  var iconLayer = artboard.firstLayer();
+  if (iconLayer.hasClippingMask()) {
+    iconLayer.hasClippingMask = false;
+    iconLayer.clippingMaskMode = 1;
+    artboard.lastLayer().removeFromParent();
+  }
 }
 
 /**
@@ -7037,17 +7058,38 @@ function removeMask(artboard, unMaskOtherLayers) {
  * @param params {Object}
  */
 async function addMask(context, currentArtboard, params) {
-  if (!_utils2['default'].isArtboardMasked(currentArtboard)) {
+  var mask = void 0;
+
+  registerMask(context, currentArtboard, params);
+
+  if (_utils2['default'].svgHasStroke(currentArtboard)) {
+    var color = params.colorPicker ? params.colorPicker : _libraries2['default'].getColorFromSymbol(params.color).color;
+    return applyColor(currentArtboard, color);
+  }
+
+  if (_utils2['default'].iconHasColor(currentArtboard)) {
+    removeMask(currentArtboard);
+  } else {
     var svgData = _utils2['default'].layerToSvg(currentArtboard.firstLayer());
     await _svg2['default'].replaceSVG(context, currentArtboard, svgData, true, false);
   }
-  var mask = void 0;
+
   if (params.color) {
     mask = getMaskSymbolFromLib(context, currentArtboard, params.color, params.colorLib);
   } else if (params.colorPicker) {
     mask = createMaskFromNean(context, currentArtboard, params.colorPicker);
   }
-  applyMask(currentArtboard, mask, context);
+
+  return applyMask(currentArtboard, mask);
+}
+
+function registerMask(context, currentArtboard, params) {
+  if (params.color) {
+    context.command.setValue_forKey_onLayer(params.colorLib, "colorLib", currentArtboard);
+    context.command.setValue_forKey_onLayer(params.color, "color", currentArtboard);
+  } else if (params.colorPicker) {
+    context.command.setValue_forKey_onLayer(params.color, "colorPicker", currentArtboard);
+  }
 }
 
 /**
@@ -7064,6 +7106,7 @@ function createMaskFromNean(context, currentArtboard, color) {
     origin: { x: 0, y: 0 },
     size: { width: currentArtboardSize.size.width, height: currentArtboardSize.size.height }
   });
+
   var fill = mask.style().addStylePartOfType(0);
   fill.color = color;
 
@@ -7082,7 +7125,6 @@ function createMaskFromNean(context, currentArtboard, color) {
 function getMaskSymbolFromLib(context, currentArtboard, colorSymbolMaster, colorLibrary) {
   _utils2['default'].clearSelection(context);
   var librairiesController = AppController.sharedInstance().librariesController();
-
   var symbolMaster = colorLibrary ? librairiesController.importForeignSymbol_fromLibrary_intoDocument(colorSymbolMaster, colorLibrary, context.document.documentData()).symbolMaster() : colorSymbolMaster;
   return symbolMaster.newSymbolInstance();
 }
@@ -7097,25 +7139,10 @@ function applyMask(currentArtboard, mask) {
   mask.setHeightRespectingProportions(currentArtboardSize.size.height);
   mask.setWidthRespectingProportions(currentArtboardSize.size.width);
   mask.setName('🎨 color');
-  // TODO: a modifier vite !
   currentArtboard.addLayers([mask]);
   var iconLayer = currentArtboard.firstLayer();
-  mask.moveToLayer_beforeLayer(iconLayer, mask);
   iconLayer.hasClippingMask = true;
   iconLayer.clippingMaskMode = 0;
-  //
-  // const newContent = []
-  // currentArtboard.layers().reverse().forEach((layer) => {
-  //   newContent.push(mask.duplicate(), layer)
-  // })
-  // currentArtboard.removeAllLayers()
-  // currentArtboard.addLayers(newContent.reverse())
-  // newContent.forEach((layer, index) => {
-  //   if (!(index % 2)) {
-  //     layer.hasClippingMask = true;
-  //     layer.clippingMaskMode = 0
-  //   }
-  // })
 }
 
 /***/ }),
@@ -7130,7 +7157,7 @@ var _mask = __webpack_require__(30);
 
 var _mask2 = _interopRequireDefault(_mask);
 
-var _artboard = __webpack_require__(45);
+var _artboard = __webpack_require__(46);
 
 var _artboard2 = _interopRequireDefault(_artboard);
 
@@ -7166,7 +7193,7 @@ function initUpdateIconsSelectedArtboards(context, artboards, listIcon) {
   artboards.some(async function (artboard, index) {
     var mask = void 0;
     var svgData = String(NSString.alloc().initWithContentsOfURL(listIcon[index]));
-    var isMasked = _utils2['default'].isArtboardMasked(artboard.object);
+    var isMasked = _utils2['default'].iconHasColor(artboard.object);
     if (isMasked) mask = artboard.object.lastLayer().copy();
     try {
       await replaceSVG(context, artboard.object, svgData, isMasked, true);
@@ -7195,12 +7222,17 @@ async function addSVG(context, artboard, iconPadding, artboardSize, svgData, wit
 
   if (withMask) svgData = await convertLayersToPathWithSVGO(context, svgData);
   svgData = NSString.stringWithString(svgData);
-  if (withResize) svgData = addRectToResize(svgData);
+  var viewBox = getViewBox(svgData);
+  if (withResize) svgData = addRectToResize(svgData, viewBox);
   var svgImporter = MSSVGImporter.svgImporter();
   svgImporter.prepareToImportFromData(svgData.dataUsingEncoding(NSUTF8StringEncoding));
   var svgLayer = svgImporter.importAsLayer();
   removeTxt(svgLayer);
   artboard.addLayer(svgLayer);
+  if (_utils2['default'].svgHasStroke(artboard)) {
+    var diagContainer = artboardSize - iconPadding;
+    setThicknessProportionnally(svgLayer, diagContainer, viewBox);
+  }
   if (withMask) cleanSvg(svgLayer, artboard);
   if (withResize) resizeSVG(artboard.firstLayer(), artboard, iconPadding);
   if (withResize) removeDeleteMeRect(artboard);
@@ -7226,10 +7258,10 @@ async function convertLayersToPathWithSVGO(context, svgString) {
  * @name addRectToResize
  * @description add rect to keep proportion on resize
  * @param svgString
+ * @param viewBox
  * @returns {String}
  */
-function addRectToResize(svgString) {
-  var viewBox = getViewBox(svgString);
+function addRectToResize(svgString, viewBox) {
   var addrect = '<rect width=' + String(viewBox.width) + ' height=' + String(viewBox.height) + ' id="delete-me" name="delete-me"/></svg>';
   return NSString.stringWithString(svgString.replace('</svg>', addrect));
 }
@@ -7407,6 +7439,21 @@ async function replaceSVG(context, artboard, svgData, withMask, withResize) {
   } catch (e) {
     _logger2['default'].error(e);
   }
+}
+
+function setThicknessProportionnally(svgLayer, diagContainer, viewBox) {
+
+  var diagViewbox = Math.sqrt(Math.pow(viewBox.width, 2) + Math.pow(viewBox.height, 2));
+  var diagArtboard = Math.sqrt(Math.pow(diagContainer, 2) * 2);
+  var ratio = diagArtboard / diagViewbox;
+
+  svgLayer.children().forEach(function (layer) {
+    if (layer.styledLayer().style().hasEnabledBorder() && String(layer['class']()) === 'MSShapePathLayer') {
+      var style = layer.styledLayer().style();
+      var thickness = style.firstEnabledBorder().thickness();
+      style.firstEnabledBorder().thickness = Math.round(thickness * ratio);
+    }
+  });
 }
 
 /***/ }),
@@ -8603,12 +8650,12 @@ function isUndefined(arg) {
 /* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(113);
+exports = module.exports = __webpack_require__(114);
 exports.Stream = exports;
 exports.Readable = exports;
 exports.Writable = __webpack_require__(40);
 exports.Duplex = __webpack_require__(12);
-exports.Transform = __webpack_require__(117);
+exports.Transform = __webpack_require__(118);
 exports.PassThrough = __webpack_require__(305);
 
 
@@ -8694,7 +8741,7 @@ var internalUtil = {
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(114);
+var Stream = __webpack_require__(115);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -8708,7 +8755,7 @@ function _isUint8Array(obj) {
 }
 /*</replacement>*/
 
-var destroyImpl = __webpack_require__(115);
+var destroyImpl = __webpack_require__(116);
 
 util.inherits(Writable, Stream);
 
@@ -9648,6 +9695,195 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+var _logger = __webpack_require__(5);
+
+var _logger2 = _interopRequireDefault(_logger);
+
+var _utils = __webpack_require__(10);
+
+var _utils2 = _interopRequireDefault(_utils);
+
+var _modals = __webpack_require__(133);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
+exports["default"] = {
+  getLibs: getLibs,
+  getLibById: getLibById,
+  loadColorFromSelectedLib: loadColorFromSelectedLib,
+  initLibsSelectList: initLibsSelectList,
+  initColorSelectList: initColorSelectList,
+  getColorFromSymbol: getColorFromSymbol
+
+  /**
+   * @name getLibs
+   * @description get all libraries
+   * @returns {Array}
+   */
+};
+function getLibs() {
+  return AppController.sharedInstance().librariesController().userLibraries().slice().map(function (lib) {
+    return lib;
+  });
+}
+
+/**
+ * @name getLibById
+ * @description return library by id
+ * @param libraryId
+ * @returns {Object} : MSAssetLibrary
+ */
+function getLibById(libraryId) {
+  return AppController.sharedInstance().librariesController().userLibraries().slice().filter(function (lib) {
+    return String(libraryId) === String(lib.libraryID());
+  })[0];
+}
+
+/**
+ * @name loadColorFromSelectedLib
+ * @description get colors form lib selected
+ * @param lib
+ * @param colorMenu
+ * @returns {Array}
+ */
+function loadColorFromSelectedLib(lib, colorMenu) {
+  colorMenu.removeAllItems();
+
+  var libraryInstance = lib.representedObject();
+  libraryInstance.loadSynchronously();
+
+  return getColorSymbolsFromDocument(libraryInstance.document());
+}
+
+/**
+ * @name initLibsSelectList
+ * @description get list of library in NSMenu
+ * @param libs  {Array}
+ * @param colorMenu {Object} : NSPopUpButton
+ * @returns {Object} : NSMenu
+ */
+function initLibsSelectList(context, libs, colorMenu) {
+
+  function addListener(item) {
+    item.setCOSJSTargetFunction(function (lib) {
+      updateColorMenu(context, lib, colorMenu);
+    });
+  }
+
+  var colorLibsMenu = NSMenu.alloc().init();
+  var currentFile = NSMenuItem.alloc().init();
+  currentFile.title = 'Current file';
+  addListener(currentFile);
+  colorLibsMenu.addItem(currentFile);
+  libs.some(function (lib) {
+    var item = NSMenuItem.alloc().init();
+    item.title = lib.name();
+    item.representedObject = lib;
+    colorLibsMenu.addItem(item);
+    addListener(item);
+  });
+
+  updateColorMenu(context, currentFile, colorMenu);
+
+  return colorLibsMenu;
+}
+
+function updateColorMenu(context, lib, colorMenu) {
+  var colors = [];
+  if (String(lib.title()) === 'Current file') {
+    colors = getColorSymbolsFromDocument(context.document.documentData());
+  } else {
+    colors = loadColorFromSelectedLib(lib, colorMenu);
+  }
+  if (colors.length > 0) {
+    initColorSelectList(colorMenu, colors);
+    (0, _modals.setEnabledColorMenu)(true);
+  } else {
+    (0, _modals.setEnabledColorMenu)(false);
+  }
+}
+
+/**
+ * @name initColorSelectList
+ * @description get list of colors in NSMenu
+ * @param popColorMenu {Object} : NSPopUpMenu
+ * @param colors
+ * @returns {Object} : NSMenu
+ */
+function initColorSelectList(popColorMenu, colors) {
+
+  var menu = NSMenu.alloc().init();
+
+  menu.cancelTracking();
+
+  colors.forEach(function (color) {
+    var item = NSMenuItem.alloc().init();
+    item.title = color.symbol ? color.symbol.name() : "";
+    var colorRGBA = color.color ? NSColor.colorWithRed_green_blue_alpha(color.color.red(), color.color.green(), color.color.blue(), color.color.alpha()) : NSColor.colorWithRed_green_blue_alpha(color.red(), color.green(), color.blue(), color.alpha());
+    item.representedObject = color.symbol ? color.symbol : colorRGBA;
+    item.image = _utils2["default"].getImageByColor(colorRGBA);
+    menu.addItem(item);
+  });
+
+  popColorMenu.menu = menu;
+  return popColorMenu;
+}
+
+/**
+ * @name getColorSymbolsFromCurrentDocument
+ * @param document
+ * @return {Array}
+ */
+function getColorSymbolsFromDocument(document) {
+  var result = [];
+  document.localSymbols().some(function (symbol) {
+    var color = getColorFromSymbol(symbol);
+    if (color) result.push(color);
+
+    // if(layers.length === 0 && symbol.backgroundColor()){
+    //   result.push({
+    //     color: symbol.backgroundColor(),
+    //     symbol: symbol
+    //   })
+    // }
+    // else if(layers.length === 1 && layers[0].children().length === 2 && String(layers[0].children()[0].class()) === 'MSRectangleShape' && layers[0].style().hasEnabledFill()){
+    //
+    //   result.push({
+    //     color: layers[0].style().fills()[0].color(),
+    //     symbol: symbol
+    //   })
+    // }
+  });
+
+  return result;
+}
+
+function getColorFromSymbol(symbol) {
+  var layers = symbol.layers();
+  var result = void 0;
+  if (layers.length === 0 && symbol.backgroundColor()) {
+    result = {
+      color: symbol.backgroundColor(),
+      symbol: symbol
+    };
+  } else if (layers.length === 1 && layers[0].children().length === 2 && String(layers[0].children()[0]["class"]()) === 'MSRectangleShape' && layers[0].style().hasEnabledFill()) {
+
+    result = {
+      color: layers[0].style().fills()[0].color(),
+      symbol: symbol
+    };
+  }
+  return result;
+}
+
+/***/ }),
+/* 46 */
+/***/ (function(module, exports, __webpack_require__) {
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
 var _utils = __webpack_require__(10);
 
 var _utils2 = _interopRequireDefault(_utils);
@@ -9758,13 +9994,14 @@ function initImportIcons(context, params) {
       _logger2['default'].error(e);
     }
   });
-  context.document.showMessage('\uD83C\uDF89 Tadaaa! \uD83C\uDF89 ' + String(params.listIcon.length) + ' icon' + (params.listIcon.length > 1 ? 's' : '') + ' imported');
   _utils2['default'].clearSelection(context);
+  context.document.showMessage('\uD83C\uDF89 Tadaaa! \uD83C\uDF89 ' + String(params.listIcon.length) + ' icon' + (params.listIcon.length > 1 ? 's' : '') + ' imported');
 }
 
 /**
  * @name getPaddingAndSize
  * @description get padding and size by artboard
+ * @param context
  * @param artboard {Object} : MSArtboardGroup
  * @returns {{iconPadding: Number, artboardSize: Number}}
  */
@@ -9776,7 +10013,7 @@ function getPaddingAndSize(context, artboard) {
 }
 
 /***/ }),
-/* 46 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9795,13 +10032,13 @@ var Schema = __webpack_require__(15);
 
 module.exports = new Schema({
   include: [
-    __webpack_require__(47)
+    __webpack_require__(48)
   ]
 });
 
 
 /***/ }),
-/* 47 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9833,7 +10070,7 @@ module.exports = new Schema({
 
 
 /***/ }),
-/* 48 */
+/* 49 */
 /***/ (function(module, exports) {
 
 var toString = {}.toString;
@@ -9844,7 +10081,7 @@ module.exports = Array.isArray || function (arr) {
 
 
 /***/ }),
-/* 49 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var map = {
@@ -9854,98 +10091,98 @@ var map = {
 	"./_path.js": 6,
 	"./_transforms": 9,
 	"./_transforms.js": 9,
-	"./addAttributesToSVGElement": 50,
-	"./addAttributesToSVGElement.js": 50,
-	"./addClassesToSVGElement": 51,
-	"./addClassesToSVGElement.js": 51,
-	"./cleanupAttrs": 52,
-	"./cleanupAttrs.js": 52,
-	"./cleanupEnableBackground": 53,
-	"./cleanupEnableBackground.js": 53,
-	"./cleanupIDs": 54,
-	"./cleanupIDs.js": 54,
-	"./cleanupListOfValues": 55,
-	"./cleanupListOfValues.js": 55,
-	"./cleanupNumericValues": 56,
-	"./cleanupNumericValues.js": 56,
-	"./collapseGroups": 57,
-	"./collapseGroups.js": 57,
-	"./convertColors": 58,
-	"./convertColors.js": 58,
-	"./convertPathData": 59,
-	"./convertPathData.js": 59,
-	"./convertShapeToPath": 60,
-	"./convertShapeToPath.js": 60,
-	"./convertStyleToAttrs": 61,
-	"./convertStyleToAttrs.js": 61,
-	"./convertTransform": 62,
-	"./convertTransform.js": 62,
-	"./inlineStyles": 63,
-	"./inlineStyles.js": 63,
-	"./mergePaths": 80,
-	"./mergePaths.js": 80,
-	"./mergePathsOverride": 81,
-	"./mergePathsOverride.js": 81,
-	"./minifyStyles": 82,
-	"./minifyStyles.js": 82,
-	"./moveElemsAttrsToGroup": 84,
-	"./moveElemsAttrsToGroup.js": 84,
-	"./moveGroupAttrsToElems": 85,
-	"./moveGroupAttrsToElems.js": 85,
-	"./prefixIds": 86,
-	"./prefixIds.js": 86,
-	"./removeAttrs": 87,
-	"./removeAttrs.js": 87,
-	"./removeComments": 88,
-	"./removeComments.js": 88,
-	"./removeDesc": 89,
-	"./removeDesc.js": 89,
-	"./removeDimensions": 90,
-	"./removeDimensions.js": 90,
-	"./removeDoctype": 91,
-	"./removeDoctype.js": 91,
-	"./removeEditorsNSData": 92,
-	"./removeEditorsNSData.js": 92,
-	"./removeElementsByAttr": 93,
-	"./removeElementsByAttr.js": 93,
-	"./removeEmptyAttrs": 94,
-	"./removeEmptyAttrs.js": 94,
-	"./removeEmptyContainers": 95,
-	"./removeEmptyContainers.js": 95,
-	"./removeEmptyRect": 96,
-	"./removeEmptyRect.js": 96,
-	"./removeEmptyText": 97,
-	"./removeEmptyText.js": 97,
-	"./removeHiddenElems": 98,
-	"./removeHiddenElems.js": 98,
-	"./removeMetadata": 99,
-	"./removeMetadata.js": 99,
-	"./removeNonInheritableGroupAttrs": 100,
-	"./removeNonInheritableGroupAttrs.js": 100,
-	"./removeRasterImages": 101,
-	"./removeRasterImages.js": 101,
-	"./removeScriptElement": 102,
-	"./removeScriptElement.js": 102,
-	"./removeStyleElement": 103,
-	"./removeStyleElement.js": 103,
-	"./removeTitle": 104,
-	"./removeTitle.js": 104,
-	"./removeUnknownsAndDefaults": 105,
-	"./removeUnknownsAndDefaults.js": 105,
-	"./removeUnusedNS": 106,
-	"./removeUnusedNS.js": 106,
-	"./removeUselessDefs": 107,
-	"./removeUselessDefs.js": 107,
-	"./removeUselessStrokeAndFill": 108,
-	"./removeUselessStrokeAndFill.js": 108,
-	"./removeViewBox": 109,
-	"./removeViewBox.js": 109,
-	"./removeXMLNS": 110,
-	"./removeXMLNS.js": 110,
-	"./removeXMLProcInst": 111,
-	"./removeXMLProcInst.js": 111,
-	"./sortAttrs": 112,
-	"./sortAttrs.js": 112
+	"./addAttributesToSVGElement": 51,
+	"./addAttributesToSVGElement.js": 51,
+	"./addClassesToSVGElement": 52,
+	"./addClassesToSVGElement.js": 52,
+	"./cleanupAttrs": 53,
+	"./cleanupAttrs.js": 53,
+	"./cleanupEnableBackground": 54,
+	"./cleanupEnableBackground.js": 54,
+	"./cleanupIDs": 55,
+	"./cleanupIDs.js": 55,
+	"./cleanupListOfValues": 56,
+	"./cleanupListOfValues.js": 56,
+	"./cleanupNumericValues": 57,
+	"./cleanupNumericValues.js": 57,
+	"./collapseGroups": 58,
+	"./collapseGroups.js": 58,
+	"./convertColors": 59,
+	"./convertColors.js": 59,
+	"./convertPathData": 60,
+	"./convertPathData.js": 60,
+	"./convertShapeToPath": 61,
+	"./convertShapeToPath.js": 61,
+	"./convertStyleToAttrs": 62,
+	"./convertStyleToAttrs.js": 62,
+	"./convertTransform": 63,
+	"./convertTransform.js": 63,
+	"./inlineStyles": 64,
+	"./inlineStyles.js": 64,
+	"./mergePaths": 81,
+	"./mergePaths.js": 81,
+	"./mergePathsOverride": 82,
+	"./mergePathsOverride.js": 82,
+	"./minifyStyles": 83,
+	"./minifyStyles.js": 83,
+	"./moveElemsAttrsToGroup": 85,
+	"./moveElemsAttrsToGroup.js": 85,
+	"./moveGroupAttrsToElems": 86,
+	"./moveGroupAttrsToElems.js": 86,
+	"./prefixIds": 87,
+	"./prefixIds.js": 87,
+	"./removeAttrs": 88,
+	"./removeAttrs.js": 88,
+	"./removeComments": 89,
+	"./removeComments.js": 89,
+	"./removeDesc": 90,
+	"./removeDesc.js": 90,
+	"./removeDimensions": 91,
+	"./removeDimensions.js": 91,
+	"./removeDoctype": 92,
+	"./removeDoctype.js": 92,
+	"./removeEditorsNSData": 93,
+	"./removeEditorsNSData.js": 93,
+	"./removeElementsByAttr": 94,
+	"./removeElementsByAttr.js": 94,
+	"./removeEmptyAttrs": 95,
+	"./removeEmptyAttrs.js": 95,
+	"./removeEmptyContainers": 96,
+	"./removeEmptyContainers.js": 96,
+	"./removeEmptyRect": 97,
+	"./removeEmptyRect.js": 97,
+	"./removeEmptyText": 98,
+	"./removeEmptyText.js": 98,
+	"./removeHiddenElems": 99,
+	"./removeHiddenElems.js": 99,
+	"./removeMetadata": 100,
+	"./removeMetadata.js": 100,
+	"./removeNonInheritableGroupAttrs": 101,
+	"./removeNonInheritableGroupAttrs.js": 101,
+	"./removeRasterImages": 102,
+	"./removeRasterImages.js": 102,
+	"./removeScriptElement": 103,
+	"./removeScriptElement.js": 103,
+	"./removeStyleElement": 104,
+	"./removeStyleElement.js": 104,
+	"./removeTitle": 105,
+	"./removeTitle.js": 105,
+	"./removeUnknownsAndDefaults": 106,
+	"./removeUnknownsAndDefaults.js": 106,
+	"./removeUnusedNS": 107,
+	"./removeUnusedNS.js": 107,
+	"./removeUselessDefs": 108,
+	"./removeUselessDefs.js": 108,
+	"./removeUselessStrokeAndFill": 109,
+	"./removeUselessStrokeAndFill.js": 109,
+	"./removeViewBox": 110,
+	"./removeViewBox.js": 110,
+	"./removeXMLNS": 111,
+	"./removeXMLNS.js": 111,
+	"./removeXMLProcInst": 112,
+	"./removeXMLProcInst.js": 112,
+	"./sortAttrs": 113,
+	"./sortAttrs.js": 113
 };
 function webpackContext(req) {
 	return __webpack_require__(webpackContextResolve(req));
@@ -9961,10 +10198,10 @@ webpackContext.keys = function webpackContextKeys() {
 };
 webpackContext.resolve = webpackContextResolve;
 module.exports = webpackContext;
-webpackContext.id = 49;
+webpackContext.id = 50;
 
 /***/ }),
-/* 50 */
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10038,7 +10275,7 @@ exports.fn = function (data, params) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
 
 /***/ }),
-/* 51 */
+/* 52 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10083,7 +10320,7 @@ exports.fn = function (data, params) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
 
 /***/ }),
-/* 52 */
+/* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10142,7 +10379,7 @@ exports.fn = function (item, params) {
 };
 
 /***/ }),
-/* 53 */
+/* 54 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10223,7 +10460,7 @@ exports.fn = function (data) {
 };
 
 /***/ }),
-/* 54 */
+/* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10475,7 +10712,7 @@ function getIDstring(arr, params) {
 }
 
 /***/ }),
-/* 55 */
+/* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10613,7 +10850,7 @@ exports.fn = function (item, params) {
 };
 
 /***/ }),
-/* 56 */
+/* 57 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10702,7 +10939,7 @@ exports.fn = function (item, params) {
 };
 
 /***/ }),
-/* 57 */
+/* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10797,7 +11034,7 @@ exports.fn = function (item) {
 };
 
 /***/ }),
-/* 58 */
+/* 59 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10928,7 +11165,7 @@ function rgb2hex(rgb) {
 }
 
 /***/ }),
-/* 59 */
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11769,7 +12006,7 @@ function data2Path(params, pathData) {
 }
 
 /***/ }),
-/* 60 */
+/* 61 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11892,7 +12129,7 @@ exports.fn = function (item, params) {
 };
 
 /***/ }),
-/* 61 */
+/* 62 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12019,7 +12256,7 @@ function g() {
 }
 
 /***/ }),
-/* 62 */
+/* 63 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12335,7 +12572,7 @@ function smartRound(precision, data) {
 }
 
 /***/ }),
-/* 63 */
+/* 64 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12355,7 +12592,7 @@ exports.params = {
 exports.description = 'inline styles (additional options)';
 
 var csstree = __webpack_require__(1),
-    cssTools = __webpack_require__(78);
+    cssTools = __webpack_require__(79);
 
 /**
  * Moves + merges styles from style elements to element styles
@@ -12719,7 +12956,7 @@ exports.fn = function (document, opts) {
 };
 
 /***/ }),
-/* 64 */
+/* 65 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12897,7 +13134,7 @@ module.exports = {
 
 
 /***/ }),
-/* 65 */
+/* 66 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12966,13 +13203,13 @@ module.exports = {
 
 
 /***/ }),
-/* 66 */
+/* 67 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var SyntaxParseError = __webpack_require__(67).SyntaxParseError;
+var SyntaxParseError = __webpack_require__(68).SyntaxParseError;
 
 var TAB = 9;
 var N = 10;
@@ -13476,7 +13713,7 @@ module.exports = parse;
 
 
 /***/ }),
-/* 67 */
+/* 68 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13503,7 +13740,7 @@ module.exports = {
 
 
 /***/ }),
-/* 68 */
+/* 69 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13541,7 +13778,7 @@ module.exports = function walk(node, fn, context) {
 
 
 /***/ }),
-/* 69 */
+/* 70 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13626,7 +13863,7 @@ module.exports = function generateSourceMap(generator, ast) {
 
 
 /***/ }),
-/* 70 */
+/* 71 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -13636,9 +13873,9 @@ module.exports = function generateSourceMap(generator, ast) {
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
-var base64VLQ = __webpack_require__(71);
+var base64VLQ = __webpack_require__(72);
 var util = __webpack_require__(21);
-var ArraySet = __webpack_require__(72).ArraySet;
+var ArraySet = __webpack_require__(73).ArraySet;
 var MappingList = __webpack_require__(182).MappingList;
 
 /**
@@ -14048,7 +14285,7 @@ exports.SourceMapGenerator = SourceMapGenerator;
 
 
 /***/ }),
-/* 71 */
+/* 72 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -14194,7 +14431,7 @@ exports.decode = function base64VLQ_decode(aStr, aIndex, aOutParam) {
 
 
 /***/ }),
-/* 72 */
+/* 73 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -14321,7 +14558,7 @@ exports.ArraySet = ArraySet;
 
 
 /***/ }),
-/* 73 */
+/* 74 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var cmpChar = __webpack_require__(0).cmpChar;
@@ -14405,7 +14642,7 @@ module.exports = function defaultRecognizer(context) {
 
 
 /***/ }),
-/* 74 */
+/* 75 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var List = __webpack_require__(2);
@@ -14426,7 +14663,7 @@ module.exports = function() {
 
 
 /***/ }),
-/* 75 */
+/* 76 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var List = __webpack_require__(2);
@@ -14441,7 +14678,7 @@ module.exports = {
 
 
 /***/ }),
-/* 76 */
+/* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var List = __webpack_require__(2);
@@ -14457,7 +14694,7 @@ module.exports = {
 
 
 /***/ }),
-/* 77 */
+/* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var List = __webpack_require__(2);
@@ -14473,7 +14710,7 @@ module.exports = {
 
 
 /***/ }),
-/* 78 */
+/* 79 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14482,7 +14719,7 @@ module.exports = {
 var csstree = __webpack_require__(1),
     List = csstree.List,
     stable = __webpack_require__(258),
-    specificity = __webpack_require__(79);
+    specificity = __webpack_require__(80);
 
 /**
  * Flatten a CSS AST to a selectors list.
@@ -14692,7 +14929,7 @@ module.exports.getCssStr = getCssStr;
 module.exports.setCssStr = setCssStr;
 
 /***/ }),
-/* 79 */
+/* 80 */
 /***/ (function(module, exports) {
 
 module.exports = function specificity(simpleSelector) {
@@ -14755,7 +14992,7 @@ module.exports = function specificity(simpleSelector) {
 
 
 /***/ }),
-/* 80 */
+/* 81 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14820,7 +15057,7 @@ exports.fn = function (item, params) {
 };
 
 /***/ }),
-/* 81 */
+/* 82 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14896,7 +15133,7 @@ exports.fn = function (item, params) {
 };
 
 /***/ }),
-/* 82 */
+/* 83 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15065,7 +15302,7 @@ function collectUsageData(ast, options) {
 }
 
 /***/ }),
-/* 83 */
+/* 84 */
 /***/ (function(module, exports) {
 
 function removeItemAndRedundantWhiteSpace(list, item) {
@@ -15102,7 +15339,7 @@ module.exports = function compressBorder(node) {
 
 
 /***/ }),
-/* 84 */
+/* 85 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15221,7 +15458,7 @@ function intersectInheritableAttrs(a, b) {
 }
 
 /***/ }),
-/* 85 */
+/* 86 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15283,7 +15520,7 @@ exports.fn = function (item) {
 };
 
 /***/ }),
-/* 86 */
+/* 87 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15511,7 +15748,7 @@ exports.fn = function (node, opts, extra) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
 
 /***/ }),
-/* 87 */
+/* 88 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15636,7 +15873,7 @@ exports.fn = function (item, params) {
 };
 
 /***/ }),
-/* 88 */
+/* 89 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15668,7 +15905,7 @@ exports.fn = function (item) {
 };
 
 /***/ }),
-/* 89 */
+/* 90 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15704,7 +15941,7 @@ exports.fn = function (item, params) {
 };
 
 /***/ }),
-/* 90 */
+/* 91 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15738,7 +15975,7 @@ exports.fn = function (item) {
 };
 
 /***/ }),
-/* 91 */
+/* 92 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15783,7 +16020,7 @@ exports.fn = function (item) {
 };
 
 /***/ }),
-/* 92 */
+/* 93 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15851,7 +16088,7 @@ exports.fn = function (item, params) {
 };
 
 /***/ }),
-/* 93 */
+/* 94 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15937,7 +16174,7 @@ exports.fn = function (item, params) {
 };
 
 /***/ }),
-/* 94 */
+/* 95 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15970,7 +16207,7 @@ exports.fn = function (item) {
 };
 
 /***/ }),
-/* 95 */
+/* 96 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16006,7 +16243,7 @@ exports.fn = function (item) {
 };
 
 /***/ }),
-/* 96 */
+/* 97 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _logger = __webpack_require__(5);
@@ -16048,7 +16285,7 @@ exports.fn = function (item) {
 };
 
 /***/ }),
-/* 97 */
+/* 98 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16100,7 +16337,7 @@ exports.fn = function (item, params) {
 };
 
 /***/ }),
-/* 98 */
+/* 99 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16262,7 +16499,7 @@ exports.fn = function (item, params) {
 };
 
 /***/ }),
-/* 99 */
+/* 100 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16290,7 +16527,7 @@ exports.fn = function (item) {
 };
 
 /***/ }),
-/* 100 */
+/* 101 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16327,7 +16564,7 @@ exports.fn = function (item) {
 };
 
 /***/ }),
-/* 101 */
+/* 102 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16357,7 +16594,7 @@ exports.fn = function (item) {
 };
 
 /***/ }),
-/* 102 */
+/* 103 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16385,7 +16622,7 @@ exports.fn = function (item) {
 };
 
 /***/ }),
-/* 103 */
+/* 104 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16413,7 +16650,7 @@ exports.fn = function (item) {
 };
 
 /***/ }),
-/* 104 */
+/* 105 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16441,7 +16678,7 @@ exports.fn = function (item) {
 };
 
 /***/ }),
-/* 105 */
+/* 106 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16553,7 +16790,7 @@ exports.fn = function (item, params) {
 };
 
 /***/ }),
-/* 106 */
+/* 107 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16660,7 +16897,7 @@ exports.fn = function (data) {
 };
 
 /***/ }),
-/* 107 */
+/* 108 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16714,7 +16951,7 @@ function getUsefulItems(item, usefulItems) {
 }
 
 /***/ }),
-/* 108 */
+/* 109 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16803,7 +17040,7 @@ exports.fn = function (item, params) {
 };
 
 /***/ }),
-/* 109 */
+/* 110 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16846,7 +17083,7 @@ exports.fn = function (item) {
 };
 
 /***/ }),
-/* 110 */
+/* 111 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16879,7 +17116,7 @@ exports.fn = function (item) {
 };
 
 /***/ }),
-/* 111 */
+/* 112 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16908,7 +17145,7 @@ exports.fn = function (item) {
 };
 
 /***/ }),
-/* 112 */
+/* 113 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16983,7 +17220,7 @@ exports.fn = function (item, params) {
 };
 
 /***/ }),
-/* 113 */
+/* 114 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17018,7 +17255,7 @@ var processNextTick = __webpack_require__(27);
 module.exports = Readable;
 
 /*<replacement>*/
-var isArray = __webpack_require__(48);
+var isArray = __webpack_require__(49);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -17036,7 +17273,7 @@ var EElistenerCount = function (emitter, type) {
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(114);
+var Stream = __webpack_require__(115);
 /*</replacement>*/
 
 // TODO(bmeurer): Change this back to const once hole checks are
@@ -17068,7 +17305,7 @@ if (debugUtil && debugUtil.debuglog) {
 /*</replacement>*/
 
 var BufferList = __webpack_require__(301);
-var destroyImpl = __webpack_require__(115);
+var destroyImpl = __webpack_require__(116);
 var StringDecoder;
 
 util.inherits(Readable, Stream);
@@ -17997,14 +18234,14 @@ function indexOf(xs, x) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8), __webpack_require__(13)))
 
 /***/ }),
-/* 114 */
+/* 115 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(38).EventEmitter;
 
 
 /***/ }),
-/* 115 */
+/* 116 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18082,7 +18319,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 116 */
+/* 117 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/* globals coscript */
@@ -18131,7 +18368,7 @@ module.exports = {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8)))
 
 /***/ }),
-/* 117 */
+/* 118 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18351,7 +18588,7 @@ function done(stream, er, data) {
 }
 
 /***/ }),
-/* 118 */
+/* 119 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18707,25 +18944,25 @@ JSAPI.prototype.matches = function (selector) {
 };
 
 /***/ }),
-/* 119 */
+/* 120 */
 /***/ (function(module, exports) {
 
 module.exports = {"amp":"&","apos":"'","gt":">","lt":"<","quot":"\""}
 
 /***/ }),
-/* 120 */
+/* 121 */
 /***/ (function(module, exports) {
 
 module.exports = {"Aacute":"Á","aacute":"á","Abreve":"Ă","abreve":"ă","ac":"∾","acd":"∿","acE":"∾̳","Acirc":"Â","acirc":"â","acute":"´","Acy":"А","acy":"а","AElig":"Æ","aelig":"æ","af":"⁡","Afr":"𝔄","afr":"𝔞","Agrave":"À","agrave":"à","alefsym":"ℵ","aleph":"ℵ","Alpha":"Α","alpha":"α","Amacr":"Ā","amacr":"ā","amalg":"⨿","amp":"&","AMP":"&","andand":"⩕","And":"⩓","and":"∧","andd":"⩜","andslope":"⩘","andv":"⩚","ang":"∠","ange":"⦤","angle":"∠","angmsdaa":"⦨","angmsdab":"⦩","angmsdac":"⦪","angmsdad":"⦫","angmsdae":"⦬","angmsdaf":"⦭","angmsdag":"⦮","angmsdah":"⦯","angmsd":"∡","angrt":"∟","angrtvb":"⊾","angrtvbd":"⦝","angsph":"∢","angst":"Å","angzarr":"⍼","Aogon":"Ą","aogon":"ą","Aopf":"𝔸","aopf":"𝕒","apacir":"⩯","ap":"≈","apE":"⩰","ape":"≊","apid":"≋","apos":"'","ApplyFunction":"⁡","approx":"≈","approxeq":"≊","Aring":"Å","aring":"å","Ascr":"𝒜","ascr":"𝒶","Assign":"≔","ast":"*","asymp":"≈","asympeq":"≍","Atilde":"Ã","atilde":"ã","Auml":"Ä","auml":"ä","awconint":"∳","awint":"⨑","backcong":"≌","backepsilon":"϶","backprime":"‵","backsim":"∽","backsimeq":"⋍","Backslash":"∖","Barv":"⫧","barvee":"⊽","barwed":"⌅","Barwed":"⌆","barwedge":"⌅","bbrk":"⎵","bbrktbrk":"⎶","bcong":"≌","Bcy":"Б","bcy":"б","bdquo":"„","becaus":"∵","because":"∵","Because":"∵","bemptyv":"⦰","bepsi":"϶","bernou":"ℬ","Bernoullis":"ℬ","Beta":"Β","beta":"β","beth":"ℶ","between":"≬","Bfr":"𝔅","bfr":"𝔟","bigcap":"⋂","bigcirc":"◯","bigcup":"⋃","bigodot":"⨀","bigoplus":"⨁","bigotimes":"⨂","bigsqcup":"⨆","bigstar":"★","bigtriangledown":"▽","bigtriangleup":"△","biguplus":"⨄","bigvee":"⋁","bigwedge":"⋀","bkarow":"⤍","blacklozenge":"⧫","blacksquare":"▪","blacktriangle":"▴","blacktriangledown":"▾","blacktriangleleft":"◂","blacktriangleright":"▸","blank":"␣","blk12":"▒","blk14":"░","blk34":"▓","block":"█","bne":"=⃥","bnequiv":"≡⃥","bNot":"⫭","bnot":"⌐","Bopf":"𝔹","bopf":"𝕓","bot":"⊥","bottom":"⊥","bowtie":"⋈","boxbox":"⧉","boxdl":"┐","boxdL":"╕","boxDl":"╖","boxDL":"╗","boxdr":"┌","boxdR":"╒","boxDr":"╓","boxDR":"╔","boxh":"─","boxH":"═","boxhd":"┬","boxHd":"╤","boxhD":"╥","boxHD":"╦","boxhu":"┴","boxHu":"╧","boxhU":"╨","boxHU":"╩","boxminus":"⊟","boxplus":"⊞","boxtimes":"⊠","boxul":"┘","boxuL":"╛","boxUl":"╜","boxUL":"╝","boxur":"└","boxuR":"╘","boxUr":"╙","boxUR":"╚","boxv":"│","boxV":"║","boxvh":"┼","boxvH":"╪","boxVh":"╫","boxVH":"╬","boxvl":"┤","boxvL":"╡","boxVl":"╢","boxVL":"╣","boxvr":"├","boxvR":"╞","boxVr":"╟","boxVR":"╠","bprime":"‵","breve":"˘","Breve":"˘","brvbar":"¦","bscr":"𝒷","Bscr":"ℬ","bsemi":"⁏","bsim":"∽","bsime":"⋍","bsolb":"⧅","bsol":"\\","bsolhsub":"⟈","bull":"•","bullet":"•","bump":"≎","bumpE":"⪮","bumpe":"≏","Bumpeq":"≎","bumpeq":"≏","Cacute":"Ć","cacute":"ć","capand":"⩄","capbrcup":"⩉","capcap":"⩋","cap":"∩","Cap":"⋒","capcup":"⩇","capdot":"⩀","CapitalDifferentialD":"ⅅ","caps":"∩︀","caret":"⁁","caron":"ˇ","Cayleys":"ℭ","ccaps":"⩍","Ccaron":"Č","ccaron":"č","Ccedil":"Ç","ccedil":"ç","Ccirc":"Ĉ","ccirc":"ĉ","Cconint":"∰","ccups":"⩌","ccupssm":"⩐","Cdot":"Ċ","cdot":"ċ","cedil":"¸","Cedilla":"¸","cemptyv":"⦲","cent":"¢","centerdot":"·","CenterDot":"·","cfr":"𝔠","Cfr":"ℭ","CHcy":"Ч","chcy":"ч","check":"✓","checkmark":"✓","Chi":"Χ","chi":"χ","circ":"ˆ","circeq":"≗","circlearrowleft":"↺","circlearrowright":"↻","circledast":"⊛","circledcirc":"⊚","circleddash":"⊝","CircleDot":"⊙","circledR":"®","circledS":"Ⓢ","CircleMinus":"⊖","CirclePlus":"⊕","CircleTimes":"⊗","cir":"○","cirE":"⧃","cire":"≗","cirfnint":"⨐","cirmid":"⫯","cirscir":"⧂","ClockwiseContourIntegral":"∲","CloseCurlyDoubleQuote":"”","CloseCurlyQuote":"’","clubs":"♣","clubsuit":"♣","colon":":","Colon":"∷","Colone":"⩴","colone":"≔","coloneq":"≔","comma":",","commat":"@","comp":"∁","compfn":"∘","complement":"∁","complexes":"ℂ","cong":"≅","congdot":"⩭","Congruent":"≡","conint":"∮","Conint":"∯","ContourIntegral":"∮","copf":"𝕔","Copf":"ℂ","coprod":"∐","Coproduct":"∐","copy":"©","COPY":"©","copysr":"℗","CounterClockwiseContourIntegral":"∳","crarr":"↵","cross":"✗","Cross":"⨯","Cscr":"𝒞","cscr":"𝒸","csub":"⫏","csube":"⫑","csup":"⫐","csupe":"⫒","ctdot":"⋯","cudarrl":"⤸","cudarrr":"⤵","cuepr":"⋞","cuesc":"⋟","cularr":"↶","cularrp":"⤽","cupbrcap":"⩈","cupcap":"⩆","CupCap":"≍","cup":"∪","Cup":"⋓","cupcup":"⩊","cupdot":"⊍","cupor":"⩅","cups":"∪︀","curarr":"↷","curarrm":"⤼","curlyeqprec":"⋞","curlyeqsucc":"⋟","curlyvee":"⋎","curlywedge":"⋏","curren":"¤","curvearrowleft":"↶","curvearrowright":"↷","cuvee":"⋎","cuwed":"⋏","cwconint":"∲","cwint":"∱","cylcty":"⌭","dagger":"†","Dagger":"‡","daleth":"ℸ","darr":"↓","Darr":"↡","dArr":"⇓","dash":"‐","Dashv":"⫤","dashv":"⊣","dbkarow":"⤏","dblac":"˝","Dcaron":"Ď","dcaron":"ď","Dcy":"Д","dcy":"д","ddagger":"‡","ddarr":"⇊","DD":"ⅅ","dd":"ⅆ","DDotrahd":"⤑","ddotseq":"⩷","deg":"°","Del":"∇","Delta":"Δ","delta":"δ","demptyv":"⦱","dfisht":"⥿","Dfr":"𝔇","dfr":"𝔡","dHar":"⥥","dharl":"⇃","dharr":"⇂","DiacriticalAcute":"´","DiacriticalDot":"˙","DiacriticalDoubleAcute":"˝","DiacriticalGrave":"`","DiacriticalTilde":"˜","diam":"⋄","diamond":"⋄","Diamond":"⋄","diamondsuit":"♦","diams":"♦","die":"¨","DifferentialD":"ⅆ","digamma":"ϝ","disin":"⋲","div":"÷","divide":"÷","divideontimes":"⋇","divonx":"⋇","DJcy":"Ђ","djcy":"ђ","dlcorn":"⌞","dlcrop":"⌍","dollar":"$","Dopf":"𝔻","dopf":"𝕕","Dot":"¨","dot":"˙","DotDot":"⃜","doteq":"≐","doteqdot":"≑","DotEqual":"≐","dotminus":"∸","dotplus":"∔","dotsquare":"⊡","doublebarwedge":"⌆","DoubleContourIntegral":"∯","DoubleDot":"¨","DoubleDownArrow":"⇓","DoubleLeftArrow":"⇐","DoubleLeftRightArrow":"⇔","DoubleLeftTee":"⫤","DoubleLongLeftArrow":"⟸","DoubleLongLeftRightArrow":"⟺","DoubleLongRightArrow":"⟹","DoubleRightArrow":"⇒","DoubleRightTee":"⊨","DoubleUpArrow":"⇑","DoubleUpDownArrow":"⇕","DoubleVerticalBar":"∥","DownArrowBar":"⤓","downarrow":"↓","DownArrow":"↓","Downarrow":"⇓","DownArrowUpArrow":"⇵","DownBreve":"̑","downdownarrows":"⇊","downharpoonleft":"⇃","downharpoonright":"⇂","DownLeftRightVector":"⥐","DownLeftTeeVector":"⥞","DownLeftVectorBar":"⥖","DownLeftVector":"↽","DownRightTeeVector":"⥟","DownRightVectorBar":"⥗","DownRightVector":"⇁","DownTeeArrow":"↧","DownTee":"⊤","drbkarow":"⤐","drcorn":"⌟","drcrop":"⌌","Dscr":"𝒟","dscr":"𝒹","DScy":"Ѕ","dscy":"ѕ","dsol":"⧶","Dstrok":"Đ","dstrok":"đ","dtdot":"⋱","dtri":"▿","dtrif":"▾","duarr":"⇵","duhar":"⥯","dwangle":"⦦","DZcy":"Џ","dzcy":"џ","dzigrarr":"⟿","Eacute":"É","eacute":"é","easter":"⩮","Ecaron":"Ě","ecaron":"ě","Ecirc":"Ê","ecirc":"ê","ecir":"≖","ecolon":"≕","Ecy":"Э","ecy":"э","eDDot":"⩷","Edot":"Ė","edot":"ė","eDot":"≑","ee":"ⅇ","efDot":"≒","Efr":"𝔈","efr":"𝔢","eg":"⪚","Egrave":"È","egrave":"è","egs":"⪖","egsdot":"⪘","el":"⪙","Element":"∈","elinters":"⏧","ell":"ℓ","els":"⪕","elsdot":"⪗","Emacr":"Ē","emacr":"ē","empty":"∅","emptyset":"∅","EmptySmallSquare":"◻","emptyv":"∅","EmptyVerySmallSquare":"▫","emsp13":" ","emsp14":" ","emsp":" ","ENG":"Ŋ","eng":"ŋ","ensp":" ","Eogon":"Ę","eogon":"ę","Eopf":"𝔼","eopf":"𝕖","epar":"⋕","eparsl":"⧣","eplus":"⩱","epsi":"ε","Epsilon":"Ε","epsilon":"ε","epsiv":"ϵ","eqcirc":"≖","eqcolon":"≕","eqsim":"≂","eqslantgtr":"⪖","eqslantless":"⪕","Equal":"⩵","equals":"=","EqualTilde":"≂","equest":"≟","Equilibrium":"⇌","equiv":"≡","equivDD":"⩸","eqvparsl":"⧥","erarr":"⥱","erDot":"≓","escr":"ℯ","Escr":"ℰ","esdot":"≐","Esim":"⩳","esim":"≂","Eta":"Η","eta":"η","ETH":"Ð","eth":"ð","Euml":"Ë","euml":"ë","euro":"€","excl":"!","exist":"∃","Exists":"∃","expectation":"ℰ","exponentiale":"ⅇ","ExponentialE":"ⅇ","fallingdotseq":"≒","Fcy":"Ф","fcy":"ф","female":"♀","ffilig":"ﬃ","fflig":"ﬀ","ffllig":"ﬄ","Ffr":"𝔉","ffr":"𝔣","filig":"ﬁ","FilledSmallSquare":"◼","FilledVerySmallSquare":"▪","fjlig":"fj","flat":"♭","fllig":"ﬂ","fltns":"▱","fnof":"ƒ","Fopf":"𝔽","fopf":"𝕗","forall":"∀","ForAll":"∀","fork":"⋔","forkv":"⫙","Fouriertrf":"ℱ","fpartint":"⨍","frac12":"½","frac13":"⅓","frac14":"¼","frac15":"⅕","frac16":"⅙","frac18":"⅛","frac23":"⅔","frac25":"⅖","frac34":"¾","frac35":"⅗","frac38":"⅜","frac45":"⅘","frac56":"⅚","frac58":"⅝","frac78":"⅞","frasl":"⁄","frown":"⌢","fscr":"𝒻","Fscr":"ℱ","gacute":"ǵ","Gamma":"Γ","gamma":"γ","Gammad":"Ϝ","gammad":"ϝ","gap":"⪆","Gbreve":"Ğ","gbreve":"ğ","Gcedil":"Ģ","Gcirc":"Ĝ","gcirc":"ĝ","Gcy":"Г","gcy":"г","Gdot":"Ġ","gdot":"ġ","ge":"≥","gE":"≧","gEl":"⪌","gel":"⋛","geq":"≥","geqq":"≧","geqslant":"⩾","gescc":"⪩","ges":"⩾","gesdot":"⪀","gesdoto":"⪂","gesdotol":"⪄","gesl":"⋛︀","gesles":"⪔","Gfr":"𝔊","gfr":"𝔤","gg":"≫","Gg":"⋙","ggg":"⋙","gimel":"ℷ","GJcy":"Ѓ","gjcy":"ѓ","gla":"⪥","gl":"≷","glE":"⪒","glj":"⪤","gnap":"⪊","gnapprox":"⪊","gne":"⪈","gnE":"≩","gneq":"⪈","gneqq":"≩","gnsim":"⋧","Gopf":"𝔾","gopf":"𝕘","grave":"`","GreaterEqual":"≥","GreaterEqualLess":"⋛","GreaterFullEqual":"≧","GreaterGreater":"⪢","GreaterLess":"≷","GreaterSlantEqual":"⩾","GreaterTilde":"≳","Gscr":"𝒢","gscr":"ℊ","gsim":"≳","gsime":"⪎","gsiml":"⪐","gtcc":"⪧","gtcir":"⩺","gt":">","GT":">","Gt":"≫","gtdot":"⋗","gtlPar":"⦕","gtquest":"⩼","gtrapprox":"⪆","gtrarr":"⥸","gtrdot":"⋗","gtreqless":"⋛","gtreqqless":"⪌","gtrless":"≷","gtrsim":"≳","gvertneqq":"≩︀","gvnE":"≩︀","Hacek":"ˇ","hairsp":" ","half":"½","hamilt":"ℋ","HARDcy":"Ъ","hardcy":"ъ","harrcir":"⥈","harr":"↔","hArr":"⇔","harrw":"↭","Hat":"^","hbar":"ℏ","Hcirc":"Ĥ","hcirc":"ĥ","hearts":"♥","heartsuit":"♥","hellip":"…","hercon":"⊹","hfr":"𝔥","Hfr":"ℌ","HilbertSpace":"ℋ","hksearow":"⤥","hkswarow":"⤦","hoarr":"⇿","homtht":"∻","hookleftarrow":"↩","hookrightarrow":"↪","hopf":"𝕙","Hopf":"ℍ","horbar":"―","HorizontalLine":"─","hscr":"𝒽","Hscr":"ℋ","hslash":"ℏ","Hstrok":"Ħ","hstrok":"ħ","HumpDownHump":"≎","HumpEqual":"≏","hybull":"⁃","hyphen":"‐","Iacute":"Í","iacute":"í","ic":"⁣","Icirc":"Î","icirc":"î","Icy":"И","icy":"и","Idot":"İ","IEcy":"Е","iecy":"е","iexcl":"¡","iff":"⇔","ifr":"𝔦","Ifr":"ℑ","Igrave":"Ì","igrave":"ì","ii":"ⅈ","iiiint":"⨌","iiint":"∭","iinfin":"⧜","iiota":"℩","IJlig":"Ĳ","ijlig":"ĳ","Imacr":"Ī","imacr":"ī","image":"ℑ","ImaginaryI":"ⅈ","imagline":"ℐ","imagpart":"ℑ","imath":"ı","Im":"ℑ","imof":"⊷","imped":"Ƶ","Implies":"⇒","incare":"℅","in":"∈","infin":"∞","infintie":"⧝","inodot":"ı","intcal":"⊺","int":"∫","Int":"∬","integers":"ℤ","Integral":"∫","intercal":"⊺","Intersection":"⋂","intlarhk":"⨗","intprod":"⨼","InvisibleComma":"⁣","InvisibleTimes":"⁢","IOcy":"Ё","iocy":"ё","Iogon":"Į","iogon":"į","Iopf":"𝕀","iopf":"𝕚","Iota":"Ι","iota":"ι","iprod":"⨼","iquest":"¿","iscr":"𝒾","Iscr":"ℐ","isin":"∈","isindot":"⋵","isinE":"⋹","isins":"⋴","isinsv":"⋳","isinv":"∈","it":"⁢","Itilde":"Ĩ","itilde":"ĩ","Iukcy":"І","iukcy":"і","Iuml":"Ï","iuml":"ï","Jcirc":"Ĵ","jcirc":"ĵ","Jcy":"Й","jcy":"й","Jfr":"𝔍","jfr":"𝔧","jmath":"ȷ","Jopf":"𝕁","jopf":"𝕛","Jscr":"𝒥","jscr":"𝒿","Jsercy":"Ј","jsercy":"ј","Jukcy":"Є","jukcy":"є","Kappa":"Κ","kappa":"κ","kappav":"ϰ","Kcedil":"Ķ","kcedil":"ķ","Kcy":"К","kcy":"к","Kfr":"𝔎","kfr":"𝔨","kgreen":"ĸ","KHcy":"Х","khcy":"х","KJcy":"Ќ","kjcy":"ќ","Kopf":"𝕂","kopf":"𝕜","Kscr":"𝒦","kscr":"𝓀","lAarr":"⇚","Lacute":"Ĺ","lacute":"ĺ","laemptyv":"⦴","lagran":"ℒ","Lambda":"Λ","lambda":"λ","lang":"⟨","Lang":"⟪","langd":"⦑","langle":"⟨","lap":"⪅","Laplacetrf":"ℒ","laquo":"«","larrb":"⇤","larrbfs":"⤟","larr":"←","Larr":"↞","lArr":"⇐","larrfs":"⤝","larrhk":"↩","larrlp":"↫","larrpl":"⤹","larrsim":"⥳","larrtl":"↢","latail":"⤙","lAtail":"⤛","lat":"⪫","late":"⪭","lates":"⪭︀","lbarr":"⤌","lBarr":"⤎","lbbrk":"❲","lbrace":"{","lbrack":"[","lbrke":"⦋","lbrksld":"⦏","lbrkslu":"⦍","Lcaron":"Ľ","lcaron":"ľ","Lcedil":"Ļ","lcedil":"ļ","lceil":"⌈","lcub":"{","Lcy":"Л","lcy":"л","ldca":"⤶","ldquo":"“","ldquor":"„","ldrdhar":"⥧","ldrushar":"⥋","ldsh":"↲","le":"≤","lE":"≦","LeftAngleBracket":"⟨","LeftArrowBar":"⇤","leftarrow":"←","LeftArrow":"←","Leftarrow":"⇐","LeftArrowRightArrow":"⇆","leftarrowtail":"↢","LeftCeiling":"⌈","LeftDoubleBracket":"⟦","LeftDownTeeVector":"⥡","LeftDownVectorBar":"⥙","LeftDownVector":"⇃","LeftFloor":"⌊","leftharpoondown":"↽","leftharpoonup":"↼","leftleftarrows":"⇇","leftrightarrow":"↔","LeftRightArrow":"↔","Leftrightarrow":"⇔","leftrightarrows":"⇆","leftrightharpoons":"⇋","leftrightsquigarrow":"↭","LeftRightVector":"⥎","LeftTeeArrow":"↤","LeftTee":"⊣","LeftTeeVector":"⥚","leftthreetimes":"⋋","LeftTriangleBar":"⧏","LeftTriangle":"⊲","LeftTriangleEqual":"⊴","LeftUpDownVector":"⥑","LeftUpTeeVector":"⥠","LeftUpVectorBar":"⥘","LeftUpVector":"↿","LeftVectorBar":"⥒","LeftVector":"↼","lEg":"⪋","leg":"⋚","leq":"≤","leqq":"≦","leqslant":"⩽","lescc":"⪨","les":"⩽","lesdot":"⩿","lesdoto":"⪁","lesdotor":"⪃","lesg":"⋚︀","lesges":"⪓","lessapprox":"⪅","lessdot":"⋖","lesseqgtr":"⋚","lesseqqgtr":"⪋","LessEqualGreater":"⋚","LessFullEqual":"≦","LessGreater":"≶","lessgtr":"≶","LessLess":"⪡","lesssim":"≲","LessSlantEqual":"⩽","LessTilde":"≲","lfisht":"⥼","lfloor":"⌊","Lfr":"𝔏","lfr":"𝔩","lg":"≶","lgE":"⪑","lHar":"⥢","lhard":"↽","lharu":"↼","lharul":"⥪","lhblk":"▄","LJcy":"Љ","ljcy":"љ","llarr":"⇇","ll":"≪","Ll":"⋘","llcorner":"⌞","Lleftarrow":"⇚","llhard":"⥫","lltri":"◺","Lmidot":"Ŀ","lmidot":"ŀ","lmoustache":"⎰","lmoust":"⎰","lnap":"⪉","lnapprox":"⪉","lne":"⪇","lnE":"≨","lneq":"⪇","lneqq":"≨","lnsim":"⋦","loang":"⟬","loarr":"⇽","lobrk":"⟦","longleftarrow":"⟵","LongLeftArrow":"⟵","Longleftarrow":"⟸","longleftrightarrow":"⟷","LongLeftRightArrow":"⟷","Longleftrightarrow":"⟺","longmapsto":"⟼","longrightarrow":"⟶","LongRightArrow":"⟶","Longrightarrow":"⟹","looparrowleft":"↫","looparrowright":"↬","lopar":"⦅","Lopf":"𝕃","lopf":"𝕝","loplus":"⨭","lotimes":"⨴","lowast":"∗","lowbar":"_","LowerLeftArrow":"↙","LowerRightArrow":"↘","loz":"◊","lozenge":"◊","lozf":"⧫","lpar":"(","lparlt":"⦓","lrarr":"⇆","lrcorner":"⌟","lrhar":"⇋","lrhard":"⥭","lrm":"‎","lrtri":"⊿","lsaquo":"‹","lscr":"𝓁","Lscr":"ℒ","lsh":"↰","Lsh":"↰","lsim":"≲","lsime":"⪍","lsimg":"⪏","lsqb":"[","lsquo":"‘","lsquor":"‚","Lstrok":"Ł","lstrok":"ł","ltcc":"⪦","ltcir":"⩹","lt":"<","LT":"<","Lt":"≪","ltdot":"⋖","lthree":"⋋","ltimes":"⋉","ltlarr":"⥶","ltquest":"⩻","ltri":"◃","ltrie":"⊴","ltrif":"◂","ltrPar":"⦖","lurdshar":"⥊","luruhar":"⥦","lvertneqq":"≨︀","lvnE":"≨︀","macr":"¯","male":"♂","malt":"✠","maltese":"✠","Map":"⤅","map":"↦","mapsto":"↦","mapstodown":"↧","mapstoleft":"↤","mapstoup":"↥","marker":"▮","mcomma":"⨩","Mcy":"М","mcy":"м","mdash":"—","mDDot":"∺","measuredangle":"∡","MediumSpace":" ","Mellintrf":"ℳ","Mfr":"𝔐","mfr":"𝔪","mho":"℧","micro":"µ","midast":"*","midcir":"⫰","mid":"∣","middot":"·","minusb":"⊟","minus":"−","minusd":"∸","minusdu":"⨪","MinusPlus":"∓","mlcp":"⫛","mldr":"…","mnplus":"∓","models":"⊧","Mopf":"𝕄","mopf":"𝕞","mp":"∓","mscr":"𝓂","Mscr":"ℳ","mstpos":"∾","Mu":"Μ","mu":"μ","multimap":"⊸","mumap":"⊸","nabla":"∇","Nacute":"Ń","nacute":"ń","nang":"∠⃒","nap":"≉","napE":"⩰̸","napid":"≋̸","napos":"ŉ","napprox":"≉","natural":"♮","naturals":"ℕ","natur":"♮","nbsp":" ","nbump":"≎̸","nbumpe":"≏̸","ncap":"⩃","Ncaron":"Ň","ncaron":"ň","Ncedil":"Ņ","ncedil":"ņ","ncong":"≇","ncongdot":"⩭̸","ncup":"⩂","Ncy":"Н","ncy":"н","ndash":"–","nearhk":"⤤","nearr":"↗","neArr":"⇗","nearrow":"↗","ne":"≠","nedot":"≐̸","NegativeMediumSpace":"​","NegativeThickSpace":"​","NegativeThinSpace":"​","NegativeVeryThinSpace":"​","nequiv":"≢","nesear":"⤨","nesim":"≂̸","NestedGreaterGreater":"≫","NestedLessLess":"≪","NewLine":"\n","nexist":"∄","nexists":"∄","Nfr":"𝔑","nfr":"𝔫","ngE":"≧̸","nge":"≱","ngeq":"≱","ngeqq":"≧̸","ngeqslant":"⩾̸","nges":"⩾̸","nGg":"⋙̸","ngsim":"≵","nGt":"≫⃒","ngt":"≯","ngtr":"≯","nGtv":"≫̸","nharr":"↮","nhArr":"⇎","nhpar":"⫲","ni":"∋","nis":"⋼","nisd":"⋺","niv":"∋","NJcy":"Њ","njcy":"њ","nlarr":"↚","nlArr":"⇍","nldr":"‥","nlE":"≦̸","nle":"≰","nleftarrow":"↚","nLeftarrow":"⇍","nleftrightarrow":"↮","nLeftrightarrow":"⇎","nleq":"≰","nleqq":"≦̸","nleqslant":"⩽̸","nles":"⩽̸","nless":"≮","nLl":"⋘̸","nlsim":"≴","nLt":"≪⃒","nlt":"≮","nltri":"⋪","nltrie":"⋬","nLtv":"≪̸","nmid":"∤","NoBreak":"⁠","NonBreakingSpace":" ","nopf":"𝕟","Nopf":"ℕ","Not":"⫬","not":"¬","NotCongruent":"≢","NotCupCap":"≭","NotDoubleVerticalBar":"∦","NotElement":"∉","NotEqual":"≠","NotEqualTilde":"≂̸","NotExists":"∄","NotGreater":"≯","NotGreaterEqual":"≱","NotGreaterFullEqual":"≧̸","NotGreaterGreater":"≫̸","NotGreaterLess":"≹","NotGreaterSlantEqual":"⩾̸","NotGreaterTilde":"≵","NotHumpDownHump":"≎̸","NotHumpEqual":"≏̸","notin":"∉","notindot":"⋵̸","notinE":"⋹̸","notinva":"∉","notinvb":"⋷","notinvc":"⋶","NotLeftTriangleBar":"⧏̸","NotLeftTriangle":"⋪","NotLeftTriangleEqual":"⋬","NotLess":"≮","NotLessEqual":"≰","NotLessGreater":"≸","NotLessLess":"≪̸","NotLessSlantEqual":"⩽̸","NotLessTilde":"≴","NotNestedGreaterGreater":"⪢̸","NotNestedLessLess":"⪡̸","notni":"∌","notniva":"∌","notnivb":"⋾","notnivc":"⋽","NotPrecedes":"⊀","NotPrecedesEqual":"⪯̸","NotPrecedesSlantEqual":"⋠","NotReverseElement":"∌","NotRightTriangleBar":"⧐̸","NotRightTriangle":"⋫","NotRightTriangleEqual":"⋭","NotSquareSubset":"⊏̸","NotSquareSubsetEqual":"⋢","NotSquareSuperset":"⊐̸","NotSquareSupersetEqual":"⋣","NotSubset":"⊂⃒","NotSubsetEqual":"⊈","NotSucceeds":"⊁","NotSucceedsEqual":"⪰̸","NotSucceedsSlantEqual":"⋡","NotSucceedsTilde":"≿̸","NotSuperset":"⊃⃒","NotSupersetEqual":"⊉","NotTilde":"≁","NotTildeEqual":"≄","NotTildeFullEqual":"≇","NotTildeTilde":"≉","NotVerticalBar":"∤","nparallel":"∦","npar":"∦","nparsl":"⫽⃥","npart":"∂̸","npolint":"⨔","npr":"⊀","nprcue":"⋠","nprec":"⊀","npreceq":"⪯̸","npre":"⪯̸","nrarrc":"⤳̸","nrarr":"↛","nrArr":"⇏","nrarrw":"↝̸","nrightarrow":"↛","nRightarrow":"⇏","nrtri":"⋫","nrtrie":"⋭","nsc":"⊁","nsccue":"⋡","nsce":"⪰̸","Nscr":"𝒩","nscr":"𝓃","nshortmid":"∤","nshortparallel":"∦","nsim":"≁","nsime":"≄","nsimeq":"≄","nsmid":"∤","nspar":"∦","nsqsube":"⋢","nsqsupe":"⋣","nsub":"⊄","nsubE":"⫅̸","nsube":"⊈","nsubset":"⊂⃒","nsubseteq":"⊈","nsubseteqq":"⫅̸","nsucc":"⊁","nsucceq":"⪰̸","nsup":"⊅","nsupE":"⫆̸","nsupe":"⊉","nsupset":"⊃⃒","nsupseteq":"⊉","nsupseteqq":"⫆̸","ntgl":"≹","Ntilde":"Ñ","ntilde":"ñ","ntlg":"≸","ntriangleleft":"⋪","ntrianglelefteq":"⋬","ntriangleright":"⋫","ntrianglerighteq":"⋭","Nu":"Ν","nu":"ν","num":"#","numero":"№","numsp":" ","nvap":"≍⃒","nvdash":"⊬","nvDash":"⊭","nVdash":"⊮","nVDash":"⊯","nvge":"≥⃒","nvgt":">⃒","nvHarr":"⤄","nvinfin":"⧞","nvlArr":"⤂","nvle":"≤⃒","nvlt":"<⃒","nvltrie":"⊴⃒","nvrArr":"⤃","nvrtrie":"⊵⃒","nvsim":"∼⃒","nwarhk":"⤣","nwarr":"↖","nwArr":"⇖","nwarrow":"↖","nwnear":"⤧","Oacute":"Ó","oacute":"ó","oast":"⊛","Ocirc":"Ô","ocirc":"ô","ocir":"⊚","Ocy":"О","ocy":"о","odash":"⊝","Odblac":"Ő","odblac":"ő","odiv":"⨸","odot":"⊙","odsold":"⦼","OElig":"Œ","oelig":"œ","ofcir":"⦿","Ofr":"𝔒","ofr":"𝔬","ogon":"˛","Ograve":"Ò","ograve":"ò","ogt":"⧁","ohbar":"⦵","ohm":"Ω","oint":"∮","olarr":"↺","olcir":"⦾","olcross":"⦻","oline":"‾","olt":"⧀","Omacr":"Ō","omacr":"ō","Omega":"Ω","omega":"ω","Omicron":"Ο","omicron":"ο","omid":"⦶","ominus":"⊖","Oopf":"𝕆","oopf":"𝕠","opar":"⦷","OpenCurlyDoubleQuote":"“","OpenCurlyQuote":"‘","operp":"⦹","oplus":"⊕","orarr":"↻","Or":"⩔","or":"∨","ord":"⩝","order":"ℴ","orderof":"ℴ","ordf":"ª","ordm":"º","origof":"⊶","oror":"⩖","orslope":"⩗","orv":"⩛","oS":"Ⓢ","Oscr":"𝒪","oscr":"ℴ","Oslash":"Ø","oslash":"ø","osol":"⊘","Otilde":"Õ","otilde":"õ","otimesas":"⨶","Otimes":"⨷","otimes":"⊗","Ouml":"Ö","ouml":"ö","ovbar":"⌽","OverBar":"‾","OverBrace":"⏞","OverBracket":"⎴","OverParenthesis":"⏜","para":"¶","parallel":"∥","par":"∥","parsim":"⫳","parsl":"⫽","part":"∂","PartialD":"∂","Pcy":"П","pcy":"п","percnt":"%","period":".","permil":"‰","perp":"⊥","pertenk":"‱","Pfr":"𝔓","pfr":"𝔭","Phi":"Φ","phi":"φ","phiv":"ϕ","phmmat":"ℳ","phone":"☎","Pi":"Π","pi":"π","pitchfork":"⋔","piv":"ϖ","planck":"ℏ","planckh":"ℎ","plankv":"ℏ","plusacir":"⨣","plusb":"⊞","pluscir":"⨢","plus":"+","plusdo":"∔","plusdu":"⨥","pluse":"⩲","PlusMinus":"±","plusmn":"±","plussim":"⨦","plustwo":"⨧","pm":"±","Poincareplane":"ℌ","pointint":"⨕","popf":"𝕡","Popf":"ℙ","pound":"£","prap":"⪷","Pr":"⪻","pr":"≺","prcue":"≼","precapprox":"⪷","prec":"≺","preccurlyeq":"≼","Precedes":"≺","PrecedesEqual":"⪯","PrecedesSlantEqual":"≼","PrecedesTilde":"≾","preceq":"⪯","precnapprox":"⪹","precneqq":"⪵","precnsim":"⋨","pre":"⪯","prE":"⪳","precsim":"≾","prime":"′","Prime":"″","primes":"ℙ","prnap":"⪹","prnE":"⪵","prnsim":"⋨","prod":"∏","Product":"∏","profalar":"⌮","profline":"⌒","profsurf":"⌓","prop":"∝","Proportional":"∝","Proportion":"∷","propto":"∝","prsim":"≾","prurel":"⊰","Pscr":"𝒫","pscr":"𝓅","Psi":"Ψ","psi":"ψ","puncsp":" ","Qfr":"𝔔","qfr":"𝔮","qint":"⨌","qopf":"𝕢","Qopf":"ℚ","qprime":"⁗","Qscr":"𝒬","qscr":"𝓆","quaternions":"ℍ","quatint":"⨖","quest":"?","questeq":"≟","quot":"\"","QUOT":"\"","rAarr":"⇛","race":"∽̱","Racute":"Ŕ","racute":"ŕ","radic":"√","raemptyv":"⦳","rang":"⟩","Rang":"⟫","rangd":"⦒","range":"⦥","rangle":"⟩","raquo":"»","rarrap":"⥵","rarrb":"⇥","rarrbfs":"⤠","rarrc":"⤳","rarr":"→","Rarr":"↠","rArr":"⇒","rarrfs":"⤞","rarrhk":"↪","rarrlp":"↬","rarrpl":"⥅","rarrsim":"⥴","Rarrtl":"⤖","rarrtl":"↣","rarrw":"↝","ratail":"⤚","rAtail":"⤜","ratio":"∶","rationals":"ℚ","rbarr":"⤍","rBarr":"⤏","RBarr":"⤐","rbbrk":"❳","rbrace":"}","rbrack":"]","rbrke":"⦌","rbrksld":"⦎","rbrkslu":"⦐","Rcaron":"Ř","rcaron":"ř","Rcedil":"Ŗ","rcedil":"ŗ","rceil":"⌉","rcub":"}","Rcy":"Р","rcy":"р","rdca":"⤷","rdldhar":"⥩","rdquo":"”","rdquor":"”","rdsh":"↳","real":"ℜ","realine":"ℛ","realpart":"ℜ","reals":"ℝ","Re":"ℜ","rect":"▭","reg":"®","REG":"®","ReverseElement":"∋","ReverseEquilibrium":"⇋","ReverseUpEquilibrium":"⥯","rfisht":"⥽","rfloor":"⌋","rfr":"𝔯","Rfr":"ℜ","rHar":"⥤","rhard":"⇁","rharu":"⇀","rharul":"⥬","Rho":"Ρ","rho":"ρ","rhov":"ϱ","RightAngleBracket":"⟩","RightArrowBar":"⇥","rightarrow":"→","RightArrow":"→","Rightarrow":"⇒","RightArrowLeftArrow":"⇄","rightarrowtail":"↣","RightCeiling":"⌉","RightDoubleBracket":"⟧","RightDownTeeVector":"⥝","RightDownVectorBar":"⥕","RightDownVector":"⇂","RightFloor":"⌋","rightharpoondown":"⇁","rightharpoonup":"⇀","rightleftarrows":"⇄","rightleftharpoons":"⇌","rightrightarrows":"⇉","rightsquigarrow":"↝","RightTeeArrow":"↦","RightTee":"⊢","RightTeeVector":"⥛","rightthreetimes":"⋌","RightTriangleBar":"⧐","RightTriangle":"⊳","RightTriangleEqual":"⊵","RightUpDownVector":"⥏","RightUpTeeVector":"⥜","RightUpVectorBar":"⥔","RightUpVector":"↾","RightVectorBar":"⥓","RightVector":"⇀","ring":"˚","risingdotseq":"≓","rlarr":"⇄","rlhar":"⇌","rlm":"‏","rmoustache":"⎱","rmoust":"⎱","rnmid":"⫮","roang":"⟭","roarr":"⇾","robrk":"⟧","ropar":"⦆","ropf":"𝕣","Ropf":"ℝ","roplus":"⨮","rotimes":"⨵","RoundImplies":"⥰","rpar":")","rpargt":"⦔","rppolint":"⨒","rrarr":"⇉","Rrightarrow":"⇛","rsaquo":"›","rscr":"𝓇","Rscr":"ℛ","rsh":"↱","Rsh":"↱","rsqb":"]","rsquo":"’","rsquor":"’","rthree":"⋌","rtimes":"⋊","rtri":"▹","rtrie":"⊵","rtrif":"▸","rtriltri":"⧎","RuleDelayed":"⧴","ruluhar":"⥨","rx":"℞","Sacute":"Ś","sacute":"ś","sbquo":"‚","scap":"⪸","Scaron":"Š","scaron":"š","Sc":"⪼","sc":"≻","sccue":"≽","sce":"⪰","scE":"⪴","Scedil":"Ş","scedil":"ş","Scirc":"Ŝ","scirc":"ŝ","scnap":"⪺","scnE":"⪶","scnsim":"⋩","scpolint":"⨓","scsim":"≿","Scy":"С","scy":"с","sdotb":"⊡","sdot":"⋅","sdote":"⩦","searhk":"⤥","searr":"↘","seArr":"⇘","searrow":"↘","sect":"§","semi":";","seswar":"⤩","setminus":"∖","setmn":"∖","sext":"✶","Sfr":"𝔖","sfr":"𝔰","sfrown":"⌢","sharp":"♯","SHCHcy":"Щ","shchcy":"щ","SHcy":"Ш","shcy":"ш","ShortDownArrow":"↓","ShortLeftArrow":"←","shortmid":"∣","shortparallel":"∥","ShortRightArrow":"→","ShortUpArrow":"↑","shy":"­","Sigma":"Σ","sigma":"σ","sigmaf":"ς","sigmav":"ς","sim":"∼","simdot":"⩪","sime":"≃","simeq":"≃","simg":"⪞","simgE":"⪠","siml":"⪝","simlE":"⪟","simne":"≆","simplus":"⨤","simrarr":"⥲","slarr":"←","SmallCircle":"∘","smallsetminus":"∖","smashp":"⨳","smeparsl":"⧤","smid":"∣","smile":"⌣","smt":"⪪","smte":"⪬","smtes":"⪬︀","SOFTcy":"Ь","softcy":"ь","solbar":"⌿","solb":"⧄","sol":"/","Sopf":"𝕊","sopf":"𝕤","spades":"♠","spadesuit":"♠","spar":"∥","sqcap":"⊓","sqcaps":"⊓︀","sqcup":"⊔","sqcups":"⊔︀","Sqrt":"√","sqsub":"⊏","sqsube":"⊑","sqsubset":"⊏","sqsubseteq":"⊑","sqsup":"⊐","sqsupe":"⊒","sqsupset":"⊐","sqsupseteq":"⊒","square":"□","Square":"□","SquareIntersection":"⊓","SquareSubset":"⊏","SquareSubsetEqual":"⊑","SquareSuperset":"⊐","SquareSupersetEqual":"⊒","SquareUnion":"⊔","squarf":"▪","squ":"□","squf":"▪","srarr":"→","Sscr":"𝒮","sscr":"𝓈","ssetmn":"∖","ssmile":"⌣","sstarf":"⋆","Star":"⋆","star":"☆","starf":"★","straightepsilon":"ϵ","straightphi":"ϕ","strns":"¯","sub":"⊂","Sub":"⋐","subdot":"⪽","subE":"⫅","sube":"⊆","subedot":"⫃","submult":"⫁","subnE":"⫋","subne":"⊊","subplus":"⪿","subrarr":"⥹","subset":"⊂","Subset":"⋐","subseteq":"⊆","subseteqq":"⫅","SubsetEqual":"⊆","subsetneq":"⊊","subsetneqq":"⫋","subsim":"⫇","subsub":"⫕","subsup":"⫓","succapprox":"⪸","succ":"≻","succcurlyeq":"≽","Succeeds":"≻","SucceedsEqual":"⪰","SucceedsSlantEqual":"≽","SucceedsTilde":"≿","succeq":"⪰","succnapprox":"⪺","succneqq":"⪶","succnsim":"⋩","succsim":"≿","SuchThat":"∋","sum":"∑","Sum":"∑","sung":"♪","sup1":"¹","sup2":"²","sup3":"³","sup":"⊃","Sup":"⋑","supdot":"⪾","supdsub":"⫘","supE":"⫆","supe":"⊇","supedot":"⫄","Superset":"⊃","SupersetEqual":"⊇","suphsol":"⟉","suphsub":"⫗","suplarr":"⥻","supmult":"⫂","supnE":"⫌","supne":"⊋","supplus":"⫀","supset":"⊃","Supset":"⋑","supseteq":"⊇","supseteqq":"⫆","supsetneq":"⊋","supsetneqq":"⫌","supsim":"⫈","supsub":"⫔","supsup":"⫖","swarhk":"⤦","swarr":"↙","swArr":"⇙","swarrow":"↙","swnwar":"⤪","szlig":"ß","Tab":"\t","target":"⌖","Tau":"Τ","tau":"τ","tbrk":"⎴","Tcaron":"Ť","tcaron":"ť","Tcedil":"Ţ","tcedil":"ţ","Tcy":"Т","tcy":"т","tdot":"⃛","telrec":"⌕","Tfr":"𝔗","tfr":"𝔱","there4":"∴","therefore":"∴","Therefore":"∴","Theta":"Θ","theta":"θ","thetasym":"ϑ","thetav":"ϑ","thickapprox":"≈","thicksim":"∼","ThickSpace":"  ","ThinSpace":" ","thinsp":" ","thkap":"≈","thksim":"∼","THORN":"Þ","thorn":"þ","tilde":"˜","Tilde":"∼","TildeEqual":"≃","TildeFullEqual":"≅","TildeTilde":"≈","timesbar":"⨱","timesb":"⊠","times":"×","timesd":"⨰","tint":"∭","toea":"⤨","topbot":"⌶","topcir":"⫱","top":"⊤","Topf":"𝕋","topf":"𝕥","topfork":"⫚","tosa":"⤩","tprime":"‴","trade":"™","TRADE":"™","triangle":"▵","triangledown":"▿","triangleleft":"◃","trianglelefteq":"⊴","triangleq":"≜","triangleright":"▹","trianglerighteq":"⊵","tridot":"◬","trie":"≜","triminus":"⨺","TripleDot":"⃛","triplus":"⨹","trisb":"⧍","tritime":"⨻","trpezium":"⏢","Tscr":"𝒯","tscr":"𝓉","TScy":"Ц","tscy":"ц","TSHcy":"Ћ","tshcy":"ћ","Tstrok":"Ŧ","tstrok":"ŧ","twixt":"≬","twoheadleftarrow":"↞","twoheadrightarrow":"↠","Uacute":"Ú","uacute":"ú","uarr":"↑","Uarr":"↟","uArr":"⇑","Uarrocir":"⥉","Ubrcy":"Ў","ubrcy":"ў","Ubreve":"Ŭ","ubreve":"ŭ","Ucirc":"Û","ucirc":"û","Ucy":"У","ucy":"у","udarr":"⇅","Udblac":"Ű","udblac":"ű","udhar":"⥮","ufisht":"⥾","Ufr":"𝔘","ufr":"𝔲","Ugrave":"Ù","ugrave":"ù","uHar":"⥣","uharl":"↿","uharr":"↾","uhblk":"▀","ulcorn":"⌜","ulcorner":"⌜","ulcrop":"⌏","ultri":"◸","Umacr":"Ū","umacr":"ū","uml":"¨","UnderBar":"_","UnderBrace":"⏟","UnderBracket":"⎵","UnderParenthesis":"⏝","Union":"⋃","UnionPlus":"⊎","Uogon":"Ų","uogon":"ų","Uopf":"𝕌","uopf":"𝕦","UpArrowBar":"⤒","uparrow":"↑","UpArrow":"↑","Uparrow":"⇑","UpArrowDownArrow":"⇅","updownarrow":"↕","UpDownArrow":"↕","Updownarrow":"⇕","UpEquilibrium":"⥮","upharpoonleft":"↿","upharpoonright":"↾","uplus":"⊎","UpperLeftArrow":"↖","UpperRightArrow":"↗","upsi":"υ","Upsi":"ϒ","upsih":"ϒ","Upsilon":"Υ","upsilon":"υ","UpTeeArrow":"↥","UpTee":"⊥","upuparrows":"⇈","urcorn":"⌝","urcorner":"⌝","urcrop":"⌎","Uring":"Ů","uring":"ů","urtri":"◹","Uscr":"𝒰","uscr":"𝓊","utdot":"⋰","Utilde":"Ũ","utilde":"ũ","utri":"▵","utrif":"▴","uuarr":"⇈","Uuml":"Ü","uuml":"ü","uwangle":"⦧","vangrt":"⦜","varepsilon":"ϵ","varkappa":"ϰ","varnothing":"∅","varphi":"ϕ","varpi":"ϖ","varpropto":"∝","varr":"↕","vArr":"⇕","varrho":"ϱ","varsigma":"ς","varsubsetneq":"⊊︀","varsubsetneqq":"⫋︀","varsupsetneq":"⊋︀","varsupsetneqq":"⫌︀","vartheta":"ϑ","vartriangleleft":"⊲","vartriangleright":"⊳","vBar":"⫨","Vbar":"⫫","vBarv":"⫩","Vcy":"В","vcy":"в","vdash":"⊢","vDash":"⊨","Vdash":"⊩","VDash":"⊫","Vdashl":"⫦","veebar":"⊻","vee":"∨","Vee":"⋁","veeeq":"≚","vellip":"⋮","verbar":"|","Verbar":"‖","vert":"|","Vert":"‖","VerticalBar":"∣","VerticalLine":"|","VerticalSeparator":"❘","VerticalTilde":"≀","VeryThinSpace":" ","Vfr":"𝔙","vfr":"𝔳","vltri":"⊲","vnsub":"⊂⃒","vnsup":"⊃⃒","Vopf":"𝕍","vopf":"𝕧","vprop":"∝","vrtri":"⊳","Vscr":"𝒱","vscr":"𝓋","vsubnE":"⫋︀","vsubne":"⊊︀","vsupnE":"⫌︀","vsupne":"⊋︀","Vvdash":"⊪","vzigzag":"⦚","Wcirc":"Ŵ","wcirc":"ŵ","wedbar":"⩟","wedge":"∧","Wedge":"⋀","wedgeq":"≙","weierp":"℘","Wfr":"𝔚","wfr":"𝔴","Wopf":"𝕎","wopf":"𝕨","wp":"℘","wr":"≀","wreath":"≀","Wscr":"𝒲","wscr":"𝓌","xcap":"⋂","xcirc":"◯","xcup":"⋃","xdtri":"▽","Xfr":"𝔛","xfr":"𝔵","xharr":"⟷","xhArr":"⟺","Xi":"Ξ","xi":"ξ","xlarr":"⟵","xlArr":"⟸","xmap":"⟼","xnis":"⋻","xodot":"⨀","Xopf":"𝕏","xopf":"𝕩","xoplus":"⨁","xotime":"⨂","xrarr":"⟶","xrArr":"⟹","Xscr":"𝒳","xscr":"𝓍","xsqcup":"⨆","xuplus":"⨄","xutri":"△","xvee":"⋁","xwedge":"⋀","Yacute":"Ý","yacute":"ý","YAcy":"Я","yacy":"я","Ycirc":"Ŷ","ycirc":"ŷ","Ycy":"Ы","ycy":"ы","yen":"¥","Yfr":"𝔜","yfr":"𝔶","YIcy":"Ї","yicy":"ї","Yopf":"𝕐","yopf":"𝕪","Yscr":"𝒴","yscr":"𝓎","YUcy":"Ю","yucy":"ю","yuml":"ÿ","Yuml":"Ÿ","Zacute":"Ź","zacute":"ź","Zcaron":"Ž","zcaron":"ž","Zcy":"З","zcy":"з","Zdot":"Ż","zdot":"ż","zeetrf":"ℨ","ZeroWidthSpace":"​","Zeta":"Ζ","zeta":"ζ","zfr":"𝔷","Zfr":"ℨ","ZHcy":"Ж","zhcy":"ж","zigrarr":"⇝","zopf":"𝕫","Zopf":"ℤ","Zscr":"𝒵","zscr":"𝓏","zwj":"‍","zwnj":"‌"}
 
 /***/ }),
-/* 121 */
+/* 122 */
 /***/ (function(module, exports) {
 
 module.exports = {"universal":50,"tag":30,"attribute":1,"pseudo":0,"descendant":-1,"child":-1,"parent":-1,"sibling":-1,"adjacent":-1}
 
 /***/ }),
-/* 122 */
+/* 123 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var falseFunc = __webpack_require__(23).falseFunc;
@@ -18912,7 +19149,7 @@ module.exports = factory;
 
 
 /***/ }),
-/* 123 */
+/* 124 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18975,7 +19212,7 @@ module.exports = defineProperties;
 
 
 /***/ }),
-/* 124 */
+/* 125 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18999,7 +19236,7 @@ module.exports = function values(O) {
 
 
 /***/ }),
-/* 125 */
+/* 126 */
 /***/ (function(module, exports) {
 
 module.exports = function isPrimitive(value) {
@@ -19008,7 +19245,7 @@ module.exports = function isPrimitive(value) {
 
 
 /***/ }),
-/* 126 */
+/* 127 */
 /***/ (function(module, exports) {
 
 module.exports = Number.isNaN || function isNaN(a) {
@@ -19017,7 +19254,7 @@ module.exports = Number.isNaN || function isNaN(a) {
 
 
 /***/ }),
-/* 127 */
+/* 128 */
 /***/ (function(module, exports) {
 
 var $isNaN = Number.isNaN || function (a) { return a !== a; };
@@ -19026,7 +19263,7 @@ module.exports = Number.isFinite || function (x) { return typeof x === 'number' 
 
 
 /***/ }),
-/* 128 */
+/* 129 */
 /***/ (function(module, exports) {
 
 var has = Object.prototype.hasOwnProperty;
@@ -19044,7 +19281,7 @@ module.exports = function assign(target, source) {
 
 
 /***/ }),
-/* 129 */
+/* 130 */
 /***/ (function(module, exports) {
 
 module.exports = function sign(number) {
@@ -19053,7 +19290,7 @@ module.exports = function sign(number) {
 
 
 /***/ }),
-/* 130 */
+/* 131 */
 /***/ (function(module, exports) {
 
 module.exports = function mod(number, modulo) {
@@ -19063,187 +19300,18 @@ module.exports = function mod(number, modulo) {
 
 
 /***/ }),
-/* 131 */
+/* 132 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var implementation = __webpack_require__(124);
+var implementation = __webpack_require__(125);
 
 module.exports = function getPolyfill() {
 	return typeof Object.values === 'function' ? Object.values : implementation;
 };
 
-
-/***/ }),
-/* 132 */
-/***/ (function(module, exports, __webpack_require__) {
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _logger = __webpack_require__(5);
-
-var _logger2 = _interopRequireDefault(_logger);
-
-var _utils = __webpack_require__(10);
-
-var _utils2 = _interopRequireDefault(_utils);
-
-var _modals = __webpack_require__(133);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-
-exports["default"] = {
-  getLibs: getLibs,
-  getLibById: getLibById,
-  loadColorFromSelectedLib: loadColorFromSelectedLib,
-  initLibsSelectList: initLibsSelectList,
-  initColorSelectList: initColorSelectList
-
-  /**
-   * @name getLibs
-   * @description get all libraries
-   * @returns {Array}
-   */
-};
-function getLibs() {
-  return AppController.sharedInstance().librariesController().userLibraries().slice().map(function (lib) {
-    return lib;
-  });
-}
-
-/**
- * @name getLibById
- * @description return library by id
- * @param libraryId
- * @returns {Object} : MSAssetLibrary
- */
-function getLibById(libraryId) {
-  return AppController.sharedInstance().librariesController().userLibraries().slice().filter(function (lib) {
-    return String(libraryId) === String(lib.libraryID());
-  })[0];
-}
-
-/**
- * @name loadColorFromSelectedLib
- * @description get colors form lib selected
- * @param lib
- * @param colorMenu
- * @returns {Array}
- */
-function loadColorFromSelectedLib(lib, colorMenu) {
-  colorMenu.removeAllItems();
-
-  var libraryInstance = lib.representedObject();
-  libraryInstance.loadSynchronously();
-
-  return getColorSymbolsFromDocument(libraryInstance.document());
-}
-
-/**
- * @name initLibsSelectList
- * @description get list of library in NSMenu
- * @param libs  {Array}
- * @param colorMenu {Object} : NSPopUpButton
- * @returns {Object} : NSMenu
- */
-function initLibsSelectList(context, libs, colorMenu) {
-
-  function addListener(item) {
-    item.setCOSJSTargetFunction(function (lib) {
-      updateColorMenu(context, lib, colorMenu);
-    });
-  }
-
-  var colorLibsMenu = NSMenu.alloc().init();
-  var currentFile = NSMenuItem.alloc().init();
-  currentFile.title = 'Current file';
-  addListener(currentFile);
-  colorLibsMenu.addItem(currentFile);
-  libs.some(function (lib) {
-    var item = NSMenuItem.alloc().init();
-    item.title = lib.name();
-    item.representedObject = lib;
-    colorLibsMenu.addItem(item);
-    addListener(item);
-  });
-
-  updateColorMenu(context, currentFile, colorMenu);
-
-  return colorLibsMenu;
-}
-
-function updateColorMenu(context, lib, colorMenu) {
-  var colors = [];
-  if (String(lib.title()) === 'Current file') {
-    colors = getColorSymbolsFromDocument(context.document.documentData());
-  } else {
-    colors = loadColorFromSelectedLib(lib, colorMenu);
-  }
-  if (colors.length > 0) {
-    initColorSelectList(colorMenu, colors);
-    (0, _modals.setEnabledColorMenu)(true);
-  } else {
-    (0, _modals.setEnabledColorMenu)(false);
-  }
-}
-
-/**
- * @name initColorSelectList
- * @description get list of colors in NSMenu
- * @param popColorMenu {Object} : NSPopUpMenu
- * @param colors
- * @returns {Object} : NSMenu
- */
-function initColorSelectList(popColorMenu, colors) {
-
-  var menu = NSMenu.alloc().init();
-
-  menu.cancelTracking();
-
-  colors.forEach(function (color) {
-    var item = NSMenuItem.alloc().init();
-    item.title = color.symbol ? color.symbol.name() : "";
-    var colorRGBA = color.color ? NSColor.colorWithRed_green_blue_alpha(color.color.red(), color.color.green(), color.color.blue(), color.color.alpha()) : NSColor.colorWithRed_green_blue_alpha(color.red(), color.green(), color.blue(), color.alpha());
-    item.representedObject = color.symbol ? color.symbol : colorRGBA;
-    item.image = _utils2["default"].getImageByColor(colorRGBA);
-    menu.addItem(item);
-  });
-
-  popColorMenu.menu = menu;
-  return popColorMenu;
-}
-
-/**
- * @name getColorSymbolsFromCurrentDocument
- * @param document
- * @return {Array}
- */
-function getColorSymbolsFromDocument(document) {
-  var result = [];
-  var layers = void 0;
-  document.localSymbols().some(function (symbol) {
-    layers = symbol.layers();
-
-    if (layers.length === 0 && symbol.backgroundColor()) {
-      result.push({
-        color: symbol.backgroundColor(),
-        symbol: symbol
-      });
-    } else if (layers.length === 1 && layers[0].children().length === 2 && String(layers[0].children()[0]["class"]()) === 'MSRectangleShape' && layers[0].style().hasEnabledFill()) {
-
-      result.push({
-        color: layers[0].style().fills()[0].color(),
-        symbol: symbol
-      });
-    }
-  });
-
-  return result;
-}
 
 /***/ }),
 /* 133 */
@@ -19262,7 +19330,7 @@ var _logger = __webpack_require__(5);
 
 var _logger2 = _interopRequireDefault(_logger);
 
-var _libraries = __webpack_require__(132);
+var _libraries = __webpack_require__(45);
 
 var _libraries2 = _interopRequireDefault(_libraries);
 
@@ -19637,7 +19705,7 @@ var _utils = __webpack_require__(10);
 
 var _utils2 = _interopRequireDefault(_utils);
 
-var _artboard = __webpack_require__(45);
+var _artboard = __webpack_require__(46);
 
 var _artboard2 = _interopRequireDefault(_artboard);
 
@@ -19731,7 +19799,7 @@ function removeMaskOnSelectedArtboards(context) {
   var selectedArtboardsAndSymbols = _utils2['default'].getSelectedArtboardsAndSymbols(context);
   if (selectedArtboardsAndSymbols.length === 0) return _modals2['default'].newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.');
   selectedArtboardsAndSymbols.forEach(function (rootElement) {
-    _mask2['default'].removeMask(rootElement.object, true);
+    _mask2['default'].removeMask(rootElement.object);
   });
 }
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
@@ -20116,7 +20184,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'd
 var CONFIG = __webpack_require__(140),
     SVG2JS = __webpack_require__(297),
     PLUGINS = __webpack_require__(354),
-    JSAPI = __webpack_require__(118),
+    JSAPI = __webpack_require__(119),
     encodeSVGDatauri = __webpack_require__(11).encodeSVGDatauri,
     JS2SVG = __webpack_require__(355);
 
@@ -20274,7 +20342,7 @@ function preparePluginsArray(plugins) {
         plugin = setupCustomPlugin(key, item[key]);
       } else {
 
-        plugin = Object.assign({}, __webpack_require__(49)("./" + key));
+        plugin = Object.assign({}, __webpack_require__(50)("./" + key));
 
         // name: {}
         if (_typeof(item[key]) === 'object') {
@@ -20296,7 +20364,7 @@ function preparePluginsArray(plugins) {
       // name
     } else {
 
-      plugin = Object.assign({}, __webpack_require__(49)("./" + item));
+      plugin = Object.assign({}, __webpack_require__(50)("./" + item));
       plugin.name = item;
     }
 
@@ -20438,8 +20506,8 @@ function deprecated(name) {
 module.exports.Type                = __webpack_require__(4);
 module.exports.Schema              = __webpack_require__(15);
 module.exports.FAILSAFE_SCHEMA     = __webpack_require__(32);
-module.exports.JSON_SCHEMA         = __webpack_require__(47);
-module.exports.CORE_SCHEMA         = __webpack_require__(46);
+module.exports.JSON_SCHEMA         = __webpack_require__(48);
+module.exports.CORE_SCHEMA         = __webpack_require__(47);
 module.exports.DEFAULT_SAFE_SCHEMA = __webpack_require__(19);
 module.exports.DEFAULT_FULL_SCHEMA = __webpack_require__(24);
 module.exports.load                = loader.load;
@@ -31044,7 +31112,7 @@ exports.create = function(config) {
 
 var CssSyntaxError = __webpack_require__(168);
 
-var constants = __webpack_require__(64);
+var constants = __webpack_require__(65);
 var TYPE = constants.TYPE;
 var NAME = constants.NAME;
 var SYMBOL_TYPE = constants.SYMBOL_TYPE;
@@ -31767,7 +31835,7 @@ module.exports = CssSyntaxError;
 "use strict";
 
 
-var constants = __webpack_require__(64);
+var constants = __webpack_require__(65);
 var PUNCTUATION = constants.PUNCTUATION;
 var STOP_URL_RAW = constants.STOP_URL_RAW;
 var TYPE = constants.TYPE;
@@ -32033,13 +32101,13 @@ module.exports = {
 "use strict";
 
 
-var SyntaxReferenceError = __webpack_require__(65).SyntaxReferenceError;
-var MatchError = __webpack_require__(65).MatchError;
+var SyntaxReferenceError = __webpack_require__(66).SyntaxReferenceError;
+var MatchError = __webpack_require__(66).MatchError;
 var names = __webpack_require__(25);
 var generic = __webpack_require__(171);
-var parse = __webpack_require__(66);
+var parse = __webpack_require__(67);
 var translate = __webpack_require__(34);
-var walk = __webpack_require__(68);
+var walk = __webpack_require__(69);
 var match = __webpack_require__(172);
 var trace = __webpack_require__(173);
 var search = __webpack_require__(174);
@@ -33476,10 +33544,10 @@ module.exports = {
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = {
-    SyntaxParseError: __webpack_require__(67).SyntaxParseError,
-    parse: __webpack_require__(66),
+    SyntaxParseError: __webpack_require__(68).SyntaxParseError,
+    parse: __webpack_require__(67),
     translate: __webpack_require__(34),
-    walk: __webpack_require__(68)
+    walk: __webpack_require__(69)
 };
 
 
@@ -33716,7 +33784,7 @@ module.exports = function readSequence(recognizer) {
 "use strict";
 
 
-var sourceMapGenerator = __webpack_require__(69);
+var sourceMapGenerator = __webpack_require__(70);
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 var noop = function() {};
 
@@ -33874,7 +33942,7 @@ module.exports = function(config) {
 
 module.exports.createGenerator = createGenerator;
 module.exports.createMarkupGenerator = createMarkupGenerator;
-module.exports.sourceMap = __webpack_require__(69);
+module.exports.sourceMap = __webpack_require__(70);
 
 
 /***/ }),
@@ -33886,7 +33954,7 @@ module.exports.sourceMap = __webpack_require__(69);
  * Licensed under the New BSD license. See LICENSE.txt or:
  * http://opensource.org/licenses/BSD-3-Clause
  */
-exports.SourceMapGenerator = __webpack_require__(70).SourceMapGenerator;
+exports.SourceMapGenerator = __webpack_require__(71).SourceMapGenerator;
 exports.SourceMapConsumer = __webpack_require__(183).SourceMapConsumer;
 exports.SourceNode = __webpack_require__(186).SourceNode;
 
@@ -34062,8 +34130,8 @@ exports.MappingList = MappingList;
 
 var util = __webpack_require__(21);
 var binarySearch = __webpack_require__(184);
-var ArraySet = __webpack_require__(72).ArraySet;
-var base64VLQ = __webpack_require__(71);
+var ArraySet = __webpack_require__(73).ArraySet;
+var base64VLQ = __webpack_require__(72);
 var quickSort = __webpack_require__(185).quickSort;
 
 function SourceMapConsumer(aSourceMap) {
@@ -35385,7 +35453,7 @@ exports.quickSort = function (ary, comparator) {
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
-var SourceMapGenerator = __webpack_require__(70).SourceMapGenerator;
+var SourceMapGenerator = __webpack_require__(71).SourceMapGenerator;
 var util = __webpack_require__(21);
 
 // Matches a Windows-style `\r\n` newline or a `\n` newline used by all other
@@ -38751,7 +38819,7 @@ module.exports = {
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = {
-    getNode: __webpack_require__(73)
+    getNode: __webpack_require__(74)
 };
 
 
@@ -38822,9 +38890,9 @@ module.exports = {
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = {
-    getNode: __webpack_require__(73),
-    '-moz-element': __webpack_require__(74),
-    'element': __webpack_require__(74),
+    getNode: __webpack_require__(74),
+    '-moz-element': __webpack_require__(75),
+    'element': __webpack_require__(75),
     'expression': __webpack_require__(238),
     'var': __webpack_require__(239)
 };
@@ -39177,42 +39245,42 @@ module.exports = {
 /* 250 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(75);
+module.exports = __webpack_require__(76);
 
 
 /***/ }),
 /* 251 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(75);
+module.exports = __webpack_require__(76);
 
 
 /***/ }),
 /* 252 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(76);
+module.exports = __webpack_require__(77);
 
 
 /***/ }),
 /* 253 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(76);
+module.exports = __webpack_require__(77);
 
 
 /***/ }),
 /* 254 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(77);
+module.exports = __webpack_require__(78);
 
 
 /***/ }),
 /* 255 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(77);
+module.exports = __webpack_require__(78);
 
 
 /***/ }),
@@ -40185,8 +40253,8 @@ var handlers = {
     'font': __webpack_require__(275),
     'font-weight': __webpack_require__(276),
     'background': __webpack_require__(277),
-    'border': __webpack_require__(83),
-    'outline': __webpack_require__(83)
+    'border': __webpack_require__(84),
+    'outline': __webpack_require__(84)
 };
 
 module.exports = function compressValue(node) {
@@ -40670,7 +40738,7 @@ module.exports = function createDeclarationIndexer() {
 /***/ (function(module, exports, __webpack_require__) {
 
 var translate = __webpack_require__(1).translate;
-var specificity = __webpack_require__(79);
+var specificity = __webpack_require__(80);
 
 var nonFreezePseudoElements = {
     'first-letter': true,
@@ -41973,7 +42041,7 @@ module.exports = function restructRule(ast) {
 /* 293 */
 /***/ (function(module, exports) {
 
-module.exports = {"_args":[["csso@3.4.0","/Users/antoinemoreaux/Sites/Sketch-Icons"]],"_from":"csso@3.4.0","_id":"csso@3.4.0","_inBundle":false,"_integrity":"sha1-V7J+9VPMy/WqlkxkF0hkHprxE/M=","_location":"/csso","_phantomChildren":{},"_requested":{"type":"version","registry":true,"raw":"csso@3.4.0","name":"csso","escapedName":"csso","rawSpec":"3.4.0","saveSpec":null,"fetchSpec":"3.4.0"},"_requiredBy":[],"_resolved":"https://registry.npmjs.org/csso/-/csso-3.4.0.tgz","_spec":"3.4.0","_where":"/Users/antoinemoreaux/Sites/Sketch-Icons","author":{"name":"Sergey Kryzhanovsky","email":"skryzhanovsky@ya.ru","url":"https://github.com/afelix"},"bugs":{"url":"https://github.com/css/csso/issues"},"dependencies":{"css-tree":"1.0.0-alpha25"},"description":"CSS minifier with structural optimisations","devDependencies":{"browserify":"^13.0.0","coveralls":"^2.11.6","eslint":"^2.2.0","istanbul":"^0.4.2","jscs":"~2.10.0","mocha":"~2.4.2","package-json-versionify":"^1.0.4","source-map":"^0.5.6","uglify-js":"^2.6.1"},"engines":{"node":">=0.10.0"},"eslintConfig":{"env":{"node":true,"mocha":true,"es6":true},"rules":{"no-duplicate-case":2,"no-undef":2,"no-unused-vars":[2,{"vars":"all","args":"after-used"}]}},"files":["dist/csso-browser.js","lib","HISTORY.md","LICENSE","README.md"],"homepage":"https://github.com/css/csso","keywords":["css","compress","minifier","minify","optimise","optimisation","csstree"],"license":"MIT","main":"./lib/index","maintainers":[{"name":"Roman Dvornov","email":"rdvornov@gmail.com"}],"name":"csso","repository":{"type":"git","url":"git+https://github.com/css/csso.git"},"scripts":{"browserify":"browserify -t package-json-versionify --standalone csso lib/index.js | uglifyjs --compress --mangle -o dist/csso-browser.js","codestyle":"jscs lib test && eslint lib test","codestyle-and-test":"npm run codestyle && npm test","coverage":"istanbul cover _mocha -- -R dot","coveralls":"istanbul cover _mocha --report lcovonly -- -R dot && cat ./coverage/lcov.info | coveralls","gh-pages":"git clone -b gh-pages https://github.com/css/csso.git .gh-pages && npm run browserify && cp dist/csso-browser.js .gh-pages/ && cd .gh-pages && git commit -am \"update\" && git push && cd .. && rm -rf .gh-pages","hydrogen":"node --trace-hydrogen --trace-phase=Z --trace-deopt --code-comments --hydrogen-track-positions --redirect-code-traces --redirect-code-traces-to=code.asm --trace_hydrogen_file=code.cfg --print-opt-code bin/csso --stat -o /dev/null","prepublish":"npm run browserify","test":"mocha --reporter dot","travis":"npm run codestyle-and-test && npm run coveralls"},"version":"3.4.0"}
+module.exports = {"_from":"csso@^3.3.1","_id":"csso@3.4.0","_inBundle":false,"_integrity":"sha1-V7J+9VPMy/WqlkxkF0hkHprxE/M=","_location":"/csso","_phantomChildren":{},"_requested":{"type":"range","registry":true,"raw":"csso@^3.3.1","name":"csso","escapedName":"csso","rawSpec":"^3.3.1","saveSpec":null,"fetchSpec":"^3.3.1"},"_requiredBy":["/svgo"],"_resolved":"https://registry.npmjs.org/csso/-/csso-3.4.0.tgz","_shasum":"57b27ef553cccbf5aa964c641748641e9af113f3","_spec":"csso@^3.3.1","_where":"/Users/antoinemoreaux/Sites/node_modules/svgo","author":{"name":"Sergey Kryzhanovsky","email":"skryzhanovsky@ya.ru","url":"https://github.com/afelix"},"bugs":{"url":"https://github.com/css/csso/issues"},"bundleDependencies":false,"dependencies":{"css-tree":"1.0.0-alpha25"},"deprecated":false,"description":"CSS minifier with structural optimisations","devDependencies":{"browserify":"^13.0.0","coveralls":"^2.11.6","eslint":"^2.2.0","istanbul":"^0.4.2","jscs":"~2.10.0","mocha":"~2.4.2","package-json-versionify":"^1.0.4","source-map":"^0.5.6","uglify-js":"^2.6.1"},"engines":{"node":">=0.10.0"},"eslintConfig":{"env":{"node":true,"mocha":true,"es6":true},"rules":{"no-duplicate-case":2,"no-undef":2,"no-unused-vars":[2,{"vars":"all","args":"after-used"}]}},"files":["dist/csso-browser.js","lib","HISTORY.md","LICENSE","README.md"],"homepage":"https://github.com/css/csso","keywords":["css","compress","minifier","minify","optimise","optimisation","csstree"],"license":"MIT","main":"./lib/index","maintainers":[{"name":"Roman Dvornov","email":"rdvornov@gmail.com"}],"name":"csso","repository":{"type":"git","url":"git+https://github.com/css/csso.git"},"scripts":{"browserify":"browserify -t package-json-versionify --standalone csso lib/index.js | uglifyjs --compress --mangle -o dist/csso-browser.js","codestyle":"jscs lib test && eslint lib test","codestyle-and-test":"npm run codestyle && npm test","coverage":"istanbul cover _mocha -- -R dot","coveralls":"istanbul cover _mocha --report lcovonly -- -R dot && cat ./coverage/lcov.info | coveralls","gh-pages":"git clone -b gh-pages https://github.com/css/csso.git .gh-pages && npm run browserify && cp dist/csso-browser.js .gh-pages/ && cd .gh-pages && git commit -am \"update\" && git push && cd .. && rm -rf .gh-pages","hydrogen":"node --trace-hydrogen --trace-phase=Z --trace-deopt --code-comments --hydrogen-track-positions --redirect-code-traces --redirect-code-traces-to=code.asm --trace_hydrogen_file=code.cfg --print-opt-code bin/csso --stat -o /dev/null","prepublish":"npm run browserify","test":"mocha --reporter dot","travis":"npm run codestyle-and-test && npm run coveralls"},"version":"3.4.0"}
 
 /***/ }),
 /* 294 */
@@ -42246,7 +42314,7 @@ module.exports = function unquote(str) {
 
 
 var SAX = __webpack_require__(298),
-    JSAPI = __webpack_require__(118),
+    JSAPI = __webpack_require__(119),
     CSSClassList = __webpack_require__(336),
     CSSStyleDeclaration = __webpack_require__(353),
     entityDeclaration = /<!ENTITY\s+(\S+)\s+(?:'([^\']+)'|"([^\"]+)")\s*>/g;
@@ -44284,7 +44352,7 @@ __webpack_require__(303);
 exports.setImmediate = setImmediate;
 exports.clearImmediate = clearImmediate;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(17)["setTimeout"], __webpack_require__(17)["clearTimeout"], __webpack_require__(116)["setInterval"], __webpack_require__(116)["clearInterval"]))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(17)["setTimeout"], __webpack_require__(17)["clearTimeout"], __webpack_require__(117)["setInterval"], __webpack_require__(117)["clearInterval"]))
 
 /***/ }),
 /* 303 */
@@ -44587,7 +44655,7 @@ function config (name) {
 
 module.exports = PassThrough;
 
-var Transform = __webpack_require__(117);
+var Transform = __webpack_require__(118);
 
 /*<replacement>*/
 var util = __webpack_require__(22);
@@ -45020,12 +45088,12 @@ exports.escape = encode.escape;
 /* 316 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var inverseXML = getInverseObj(__webpack_require__(119)),
+var inverseXML = getInverseObj(__webpack_require__(120)),
     xmlReplacer = getInverseReplacer(inverseXML);
 
 exports.XML = getInverse(inverseXML, xmlReplacer);
 
-var inverseHTML = getInverseObj(__webpack_require__(120)),
+var inverseHTML = getInverseObj(__webpack_require__(121)),
     htmlReplacer = getInverseReplacer(inverseHTML);
 
 exports.HTML = getInverse(inverseHTML, htmlReplacer);
@@ -45099,9 +45167,9 @@ exports.escape = escapeXML;
 /* 317 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var entityMap = __webpack_require__(120),
+var entityMap = __webpack_require__(121),
     legacyMap = __webpack_require__(318),
-    xmlMap    = __webpack_require__(119),
+    xmlMap    = __webpack_require__(120),
     decodeCodePoint = __webpack_require__(319);
 
 var decodeXMLStrict  = getStrictDecoder(xmlMap),
@@ -45682,7 +45750,7 @@ module.exports = compileFactory;
 var parse          = __webpack_require__(327),
 	BaseFuncs      = __webpack_require__(23),
 	sortRules      = __webpack_require__(328),
-	procedure      = __webpack_require__(121),
+	procedure      = __webpack_require__(122),
 	rulesFactory   = __webpack_require__(329),
 	pseudosFactory = __webpack_require__(330),
 	trueFunc       = BaseFuncs.trueFunc,
@@ -46168,7 +46236,7 @@ module.exports = sortByProcedure;
 	(some types of selectors are faster than others)
 */
 
-var procedure = __webpack_require__(121);
+var procedure = __webpack_require__(122);
 
 var attributes = {
 	__proto__: null,
@@ -46246,7 +46314,7 @@ function getProcedure(token){
 /* 329 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var attributeFactory = __webpack_require__(122);
+var attributeFactory = __webpack_require__(123);
 
 function generalFactory(adapter, Pseudos){
 	/*
@@ -46366,7 +46434,7 @@ module.exports = generalFactory;
 
 var getNCheck         = __webpack_require__(331),
 	BaseFuncs         = __webpack_require__(23),
-	attributesFactory = __webpack_require__(122),
+	attributesFactory = __webpack_require__(123),
 	trueFunc          = BaseFuncs.trueFunc,
 	falseFunc         = BaseFuncs.falseFunc;
 
@@ -47209,10 +47277,10 @@ module.exports = CSSClassList;
 "use strict";
 
 
-var define = __webpack_require__(123);
+var define = __webpack_require__(124);
 
-var implementation = __webpack_require__(124);
-var getPolyfill = __webpack_require__(131);
+var implementation = __webpack_require__(125);
+var getPolyfill = __webpack_require__(132);
 var shim = __webpack_require__(352);
 
 var polyfill = getPolyfill();
@@ -47443,7 +47511,7 @@ module.exports = __webpack_require__(342);
 
 
 var ES2015 = __webpack_require__(343);
-var assign = __webpack_require__(128);
+var assign = __webpack_require__(129);
 
 var ES2016 = assign(assign({}, ES2015), {
 	// https://github.com/tc39/ecma262/pull/60
@@ -47471,13 +47539,13 @@ var toPrimitive = __webpack_require__(345);
 var toStr = Object.prototype.toString;
 var hasSymbols = typeof Symbol === 'function' && typeof Symbol.iterator === 'symbol';
 
-var $isNaN = __webpack_require__(126);
-var $isFinite = __webpack_require__(127);
+var $isNaN = __webpack_require__(127);
+var $isFinite = __webpack_require__(128);
 var MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER || Math.pow(2, 53) - 1;
 
-var assign = __webpack_require__(128);
-var sign = __webpack_require__(129);
-var mod = __webpack_require__(130);
+var assign = __webpack_require__(129);
+var sign = __webpack_require__(130);
+var mod = __webpack_require__(131);
 var isPrimitive = __webpack_require__(348);
 var parseInteger = parseInt;
 var bind = __webpack_require__(43);
@@ -48098,7 +48166,7 @@ module.exports = function bind(that) {
 
 var hasSymbols = typeof Symbol === 'function' && typeof Symbol.iterator === 'symbol';
 
-var isPrimitive = __webpack_require__(125);
+var isPrimitive = __webpack_require__(126);
 var isCallable = __webpack_require__(44);
 var isDate = __webpack_require__(346);
 var isSymbol = __webpack_require__(347);
@@ -48247,11 +48315,11 @@ module.exports = function isPrimitive(value) {
 "use strict";
 
 
-var $isNaN = __webpack_require__(126);
-var $isFinite = __webpack_require__(127);
+var $isNaN = __webpack_require__(127);
+var $isFinite = __webpack_require__(128);
 
-var sign = __webpack_require__(129);
-var mod = __webpack_require__(130);
+var sign = __webpack_require__(130);
+var mod = __webpack_require__(131);
 
 var IsCallable = __webpack_require__(44);
 var toPrimitive = __webpack_require__(350);
@@ -48492,7 +48560,7 @@ module.exports = ES5;
 
 var toStr = Object.prototype.toString;
 
-var isPrimitive = __webpack_require__(125);
+var isPrimitive = __webpack_require__(126);
 
 var isCallable = __webpack_require__(44);
 
@@ -48580,8 +48648,8 @@ module.exports = function isRegex(value) {
 "use strict";
 
 
-var getPolyfill = __webpack_require__(131);
-var define = __webpack_require__(123);
+var getPolyfill = __webpack_require__(132);
+var define = __webpack_require__(124);
 
 module.exports = function shimValues() {
 	var polyfill = getPolyfill();
@@ -48602,7 +48670,7 @@ module.exports = function shimValues() {
 /* WEBPACK VAR INJECTION */(function(console) {
 
 var csstree = __webpack_require__(1),
-    csstools = __webpack_require__(78);
+    csstools = __webpack_require__(79);
 
 var CSSStyleDeclaration = function CSSStyleDeclaration(node) {
     this.parentNode = node;
@@ -49249,7 +49317,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _libraries = __webpack_require__(132);
+var _libraries = __webpack_require__(45);
 
 var _libraries2 = _interopRequireDefault(_libraries);
 

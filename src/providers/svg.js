@@ -22,7 +22,7 @@ function initUpdateIconsSelectedArtboards(context, artboards, listIcon) {
   artboards.some(async function (artboard, index) {
     let mask
     const svgData = String(NSString.alloc().initWithContentsOfURL(listIcon[index]))
-    const isMasked = utils.isArtboardMasked(artboard.object)
+    const isMasked = utils.iconHasColor(artboard.object)
     if (isMasked) mask = artboard.object.lastLayer().copy()
     try{
       await replaceSVG(context, artboard.object, svgData, isMasked, true)
@@ -51,12 +51,17 @@ async function addSVG(context, artboard, iconPadding, artboardSize, svgData, wit
 
   if (withMask) svgData = await convertLayersToPathWithSVGO(context, svgData)
   svgData = NSString.stringWithString(svgData)
-  if (withResize) svgData = addRectToResize(svgData)
+  const viewBox = getViewBox(svgData)
+  if (withResize) svgData = addRectToResize(svgData, viewBox)
   const svgImporter = MSSVGImporter.svgImporter()
   svgImporter.prepareToImportFromData(svgData.dataUsingEncoding(NSUTF8StringEncoding))
   const svgLayer = svgImporter.importAsLayer()
   removeTxt(svgLayer)
   artboard.addLayer(svgLayer)
+  if(utils.svgHasStroke(artboard)){
+    const diagContainer = artboardSize - iconPadding
+    setThicknessProportionnally(svgLayer, diagContainer, viewBox)
+  }
   if (withMask) cleanSvg(svgLayer, artboard)
   if (withResize) resizeSVG(artboard.firstLayer(), artboard, iconPadding)
   if (withResize) removeDeleteMeRect(artboard)
@@ -82,10 +87,10 @@ async function convertLayersToPathWithSVGO(context, svgString) {
  * @name addRectToResize
  * @description add rect to keep proportion on resize
  * @param svgString
+ * @param viewBox
  * @returns {String}
  */
-function addRectToResize(svgString) {
-  const viewBox = getViewBox(svgString)
+function addRectToResize(svgString, viewBox) {
   const addrect = `<rect width=${viewBox.width} height=${viewBox.height} id="delete-me" name="delete-me"/></svg>`
   return NSString.stringWithString(svgString.replace('</svg>', addrect))
 }
@@ -267,4 +272,19 @@ async function replaceSVG(context, artboard, svgData, withMask, withResize) {
   }catch(e){
     logger.error(e)
   }
+}
+
+function setThicknessProportionnally(svgLayer, diagContainer, viewBox){
+
+  const diagViewbox = Math.sqrt(Math.pow(viewBox.width, 2) + Math.pow(viewBox.height, 2))
+  const diagArtboard = Math.sqrt(Math.pow(diagContainer, 2) * 2)
+  const ratio = diagArtboard / diagViewbox
+
+  svgLayer.children().forEach((layer) => {
+    if (layer.styledLayer().style().hasEnabledBorder() && String(layer.class()) === 'MSShapePathLayer') {
+      const style = layer.styledLayer().style()
+      const thickness = style.firstEnabledBorder().thickness()
+      style.firstEnabledBorder().thickness = Math.round(thickness * ratio)
+    }
+  })
 }

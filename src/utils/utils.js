@@ -12,9 +12,10 @@ export default {
   createDivider,
   runFramework,
   getImageByColor,
-  isArtboardMasked,
+  iconHasColor,
   networkRequest,
-  layerToSvg
+  layerToSvg,
+  svgHasStroke
 }
 
 /**
@@ -209,19 +210,12 @@ function getImageByColor(color, colorSize = {width: 14, height: 14}) {
 }
 
 /**
- * @name isArtboardMasked
+ * @name iconHasColor
  * @param artboard
- * @return {boolean}
+ * @return {Boolean}
  */
-function isArtboardMasked(artboard) {
+function iconHasColor(artboard) {
   return !!artboard.firstLayer().hasClippingMask()
-  // if (layers[1].hasClippingMask())return true
-  // const maskedLayer = layers.slice().filter((layer, index) => {
-  //   if (!index % 2 && layer.hasClippingMask()) {
-  //     return true
-  //   }
-  // })
-  // return maskedLayer.length !== 0;
 }
 
 function layerToSvg(layer) {
@@ -230,6 +224,15 @@ function layerToSvg(layer) {
   return NSString.alloc().initWithData_encoding(svgData, NSUTF8StringEncoding);
 }
 
+function svgHasStroke(artboard){
+  let hasBorder = false
+  artboard.children().forEach((layer) => {
+    if(layer.styledLayer().style().hasEnabledBorder()){
+      hasBorder = true
+    }
+  })
+  return hasBorder
+}
 
 function networkRequest(svg) {
   // var task = NSTask.alloc().init();

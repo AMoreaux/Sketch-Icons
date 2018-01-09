@@ -7,7 +7,8 @@ export default {
   getLibById,
   loadColorFromSelectedLib,
   initLibsSelectList,
-  initColorSelectList
+  initColorSelectList,
+  getColorFromSymbol
 }
 
 /**
@@ -130,24 +131,43 @@ function initColorSelectList(popColorMenu, colors) {
  */
 function getColorSymbolsFromDocument(document){
   const result = []
-  let layers;
   document.localSymbols().some(function(symbol){
-    layers = symbol.layers()
+    const color = getColorFromSymbol(symbol)
+    if(color)result.push(color)
 
-    if(layers.length === 0 && symbol.backgroundColor()){
-      result.push({
-        color: symbol.backgroundColor(),
-        symbol: symbol
-      })
-    }
-    else if(layers.length === 1 && layers[0].children().length === 2 && String(layers[0].children()[0].class()) === 'MSRectangleShape' && layers[0].style().hasEnabledFill()){
-
-      result.push({
-        color: layers[0].style().fills()[0].color(),
-        symbol: symbol
-      })
-    }
+    // if(layers.length === 0 && symbol.backgroundColor()){
+    //   result.push({
+    //     color: symbol.backgroundColor(),
+    //     symbol: symbol
+    //   })
+    // }
+    // else if(layers.length === 1 && layers[0].children().length === 2 && String(layers[0].children()[0].class()) === 'MSRectangleShape' && layers[0].style().hasEnabledFill()){
+    //
+    //   result.push({
+    //     color: layers[0].style().fills()[0].color(),
+    //     symbol: symbol
+    //   })
+    // }
   })
 
+  return result
+}
+
+function getColorFromSymbol(symbol){
+  const layers = symbol.layers()
+  let result
+  if(layers.length === 0 && symbol.backgroundColor()){
+    result = {
+      color: symbol.backgroundColor(),
+      symbol: symbol
+    }
+  }
+  else if(layers.length === 1 && layers[0].children().length === 2 && String(layers[0].children()[0].class()) === 'MSRectangleShape' && layers[0].style().hasEnabledFill()){
+
+    result = {
+      color: layers[0].style().fills()[0].color(),
+      symbol: symbol
+    }
+  }
   return result
 }

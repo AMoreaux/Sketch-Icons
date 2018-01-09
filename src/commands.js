@@ -77,6 +77,6 @@ export function removeMaskOnSelectedArtboards(context) {
   const selectedArtboardsAndSymbols = utils.getSelectedArtboardsAndSymbols(context);
   if (selectedArtboardsAndSymbols.length === 0) return modals.newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.')
   selectedArtboardsAndSymbols.forEach((rootElement) => {
-    maskProvider.removeMask(rootElement.object, true)
+    maskProvider.removeMask(rootElement.object)
   })
 }

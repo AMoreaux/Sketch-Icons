@@ -79,7 +79,6 @@ function initArtboardsParams(context) {
  */
 function initImportIcons(context, params) {
 
-
   utils.clearSelection(context)
   artboardParams.size.height = artboardParams.size.width = params.artboardSize
   initArtboardsParams(context)
@@ -96,13 +95,14 @@ function initImportIcons(context, params) {
       logger.error(e)
     }
   })
-  context.document.showMessage(`🎉 Tadaaa! 🎉 ${params.listIcon.length} icon${(params.listIcon.length > 1) ? 's' : ''} imported`)
   utils.clearSelection(context)
+  context.document.showMessage(`🎉 Tadaaa! 🎉 ${params.listIcon.length} icon${(params.listIcon.length > 1) ? 's' : ''} imported`)
 }
 
 /**
  * @name getPaddingAndSize
  * @description get padding and size by artboard
+ * @param context
  * @param artboard {Object} : MSArtboardGroup
  * @returns {{iconPadding: Number, artboardSize: Number}}
  */

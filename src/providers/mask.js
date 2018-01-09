@@ -1,5 +1,6 @@
 import utils from '../utils/utils'
 import svgProvider from './svg'
+import librariesProvider from './libraries'
 import logger from '../utils/logger'
 
 export default {
@@ -17,11 +18,11 @@ export default {
  * @param artboards {Array} : MSArtboardGroup
  */
 function initAddMaskOnSelectedArtboards(context, params, artboards) {
-  artboards.some(async function (artboard) {
-    if (utils.isArtboardMasked(artboard.object)) removeMask(artboard.object)
-    try{
-      await addMask(context, artboard.object, params)
-    }catch(e){
+  artboards.some(function (artboard) {
+    try {
+      if (utils.iconHasColor(artboard.object) && !utils.svgHasStroke(artboard.object)) removeMask(artboard.object)
+      addMask(context, artboard.object, params)
+    } catch (e) {
       logger.error(e)
     }
   })
@@ -29,21 +30,34 @@ function initAddMaskOnSelectedArtboards(context, params, artboards) {
 }
 
 /**
+ * @name applyColor
+ * @description apply border color on svg with stroke
+ * @param artboard
+ * @param color
+ */
+function applyColor(artboard, color) {
+  artboard.children().forEach((layer) => {
+    if (layer.styledLayer().style().hasEnabledBorder()) {
+      const style = layer.styledLayer().style()
+      style.enabledBorders().forEach((border) => {
+        border.color = color
+      })
+    }
+  })
+}
+
+/**
  * @name removeMask
  * @description remove all mask from artboard
  * @param artboard {Object} : MSArtboardGroup
  */
-function removeMask(artboard, unMaskOtherLayers) {
-  const indexes = NSMutableIndexSet.indexSet()
-  artboard.layers().forEach((layer, index) => {
-    if (index % 2) {
-      indexes.addIndex(index)
-    } else if (unMaskOtherLayers) {
-      layer.hasClippingMask = false;
-      layer.clippingMaskMode = 1
-    }
-  })
-  artboard.removeLayersAtIndexes(indexes)
+function removeMask(artboard) {
+  const iconLayer = artboard.firstLayer()
+  if (iconLayer.hasClippingMask()) {
+    iconLayer.hasClippingMask = false;
+    iconLayer.clippingMaskMode = 1
+    artboard.lastLayer().removeFromParent()
+  }
 }
 
 /**
@@ -54,17 +68,39 @@ function removeMask(artboard, unMaskOtherLayers) {
  * @param params {Object}
  */
 async function addMask(context, currentArtboard, params) {
-  if (!utils.isArtboardMasked(currentArtboard)) {
-      const svgData = utils.layerToSvg(currentArtboard.firstLayer())
-      await svgProvider.replaceSVG(context, currentArtboard, svgData, true, false)
-  }
   let mask
+
+  registerMask(context, currentArtboard, params)
+
+
+  if (utils.svgHasStroke(currentArtboard)) {
+    const color = (params.colorPicker) ? params.colorPicker : librariesProvider.getColorFromSymbol(params.color).color
+    return applyColor(currentArtboard, color);
+  }
+
+  if (utils.iconHasColor(currentArtboard)) {
+    removeMask(currentArtboard)
+  } else {
+    const svgData = utils.layerToSvg(currentArtboard.firstLayer())
+    await svgProvider.replaceSVG(context, currentArtboard, svgData, true, false)
+  }
+
   if (params.color) {
     mask = getMaskSymbolFromLib(context, currentArtboard, params.color, params.colorLib)
   } else if (params.colorPicker) {
     mask = createMaskFromNean(context, currentArtboard, params.colorPicker)
   }
-  applyMask(currentArtboard, mask, context)
+
+  return applyMask(currentArtboard, mask)
+}
+
+function registerMask(context, currentArtboard, params){
+  if (params.color) {
+    context.command.setValue_forKey_onLayer(params.colorLib, "colorLib", currentArtboard)
+    context.command.setValue_forKey_onLayer(params.color, "color", currentArtboard)
+  } else if (params.colorPicker) {
+    context.command.setValue_forKey_onLayer(params.color, "colorPicker", currentArtboard)
+  }
 }
 
 
@@ -82,6 +118,7 @@ function createMaskFromNean(context, currentArtboard, color) {
     origin: {x: 0, y: 0},
     size: {width: currentArtboardSize.size.width, height: currentArtboardSize.size.height}
   })
+
   const fill = mask.style().addStylePartOfType(0);
   fill.color = color;
 
@@ -100,7 +137,6 @@ function createMaskFromNean(context, currentArtboard, color) {
 function getMaskSymbolFromLib(context, currentArtboard, colorSymbolMaster, colorLibrary) {
   utils.clearSelection(context)
   const librairiesController = AppController.sharedInstance().librariesController()
-
   const symbolMaster = (colorLibrary) ? librairiesController.importForeignSymbol_fromLibrary_intoDocument(colorSymbolMaster, colorLibrary, context.document.documentData()).symbolMaster() : colorSymbolMaster
   return symbolMaster.newSymbolInstance();
 }
@@ -115,23 +151,8 @@ function applyMask(currentArtboard, mask) {
   mask.setHeightRespectingProportions(currentArtboardSize.size.height)
   mask.setWidthRespectingProportions(currentArtboardSize.size.width)
   mask.setName('🎨 color')
-  // TODO: a modifier vite !
   currentArtboard.addLayers([mask])
   const iconLayer = currentArtboard.firstLayer()
-  mask.moveToLayer_beforeLayer(iconLayer, mask);
   iconLayer.hasClippingMask = true
   iconLayer.clippingMaskMode = 0
-  //
-  // const newContent = []
-  // currentArtboard.layers().reverse().forEach((layer) => {
-  //   newContent.push(mask.duplicate(), layer)
-  // })
-  // currentArtboard.removeAllLayers()
-  // currentArtboard.addLayers(newContent.reverse())
-  // newContent.forEach((layer, index) => {
-  //   if (!(index % 2)) {
-  //     layer.hasClippingMask = true;
-  //     layer.clippingMaskMode = 0
-  //   }
-  // })
 }
