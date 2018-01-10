@@ -4,6 +4,8 @@
 
 A Sketch plugin that allows you to import a set of icons and automatically apply a color mask.
 
+📣 <a href="https://blog.prototypr.io/introducing-sketch-icons-2074d9dc9ed2">Read our Medium article to use Sketch Icons efficiently</a>
+
 ## Features
 
 Since the arrival of nested symbols and Sketch libraries, our worfklow has been incredibly improved.
