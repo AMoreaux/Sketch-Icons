@@ -7,7 +7,8 @@ export default {
   initAddMaskOnSelectedArtboards,
   addMask,
   removeMask,
-  applyMask
+  applyMask,
+  applyColor
 }
 
 /**
@@ -33,9 +34,10 @@ function initAddMaskOnSelectedArtboards(context, params, artboards) {
  * @name applyColor
  * @description apply border color on svg with stroke
  * @param artboard
- * @param color
+ * @param params
  */
-function applyColor(artboard, color) {
+function applyColor(artboard, params) {
+  const color = (params.colorPicker) ? params.colorPicker : librariesProvider.getColorFromSymbol(params.color).color
   artboard.children().forEach((layer) => {
     if (layer.styledLayer().style().hasEnabledBorder()) {
       const style = layer.styledLayer().style()
@@ -72,10 +74,8 @@ async function addMask(context, currentArtboard, params) {
 
   registerMask(context, currentArtboard, params)
 
-
   if (utils.svgHasStroke(currentArtboard)) {
-    const color = (params.colorPicker) ? params.colorPicker : librariesProvider.getColorFromSymbol(params.color).color
-    return applyColor(currentArtboard, color);
+    return applyColor(currentArtboard, params);
   }
 
   if (utils.iconHasColor(currentArtboard)) {
@@ -96,10 +96,21 @@ async function addMask(context, currentArtboard, params) {
 
 function registerMask(context, currentArtboard, params){
   if (params.color) {
-    context.command.setValue_forKey_onLayer(params.colorLib, "colorLib", currentArtboard)
-    context.command.setValue_forKey_onLayer(params.color, "color", currentArtboard)
+    const libraryId = (params.colorLib) ? params.colorLib.libraryID() : null
+    context.command.setValue_forKey_onLayer(libraryId, "colorLib", currentArtboard)
+    context.command.setValue_forKey_onLayer(params.color.symbolID(), "color", currentArtboard)
+    context.command.setValue_forKey_onLayer(null, "colorPicker", currentArtboard)
   } else if (params.colorPicker) {
-    context.command.setValue_forKey_onLayer(params.color, "colorPicker", currentArtboard)
+    console.log('>>>>>>>>>>>', params.colorPicker.red());
+    const color = MSImmutableColor.colorWithIntegerRed_green_blue_alpha(
+      parseFloat(params.colorPicker.red()),
+      parseFloat(params.colorPicker.green()),
+      parseFloat(params.colorPicker.blue()),
+      params.colorPicker.alpha())
+    console.log('>>>>>>>>>>>', color.hexValue());
+    context.command.setValue_forKey_onLayer(params.colorPicker, "colorPicker", currentArtboard)
+    context.command.setValue_forKey_onLayer(null, "colorLib", currentArtboard)
+    context.command.setValue_forKey_onLayer(null, "color", currentArtboard)
   }
 }
 

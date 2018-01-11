@@ -3257,7 +3257,8 @@ exports['default'] = {
   iconHasColor: iconHasColor,
   networkRequest: networkRequest,
   layerToSvg: layerToSvg,
-  svgHasStroke: svgHasStroke
+  svgHasStroke: svgHasStroke,
+  iconHasBorderColor: iconHasBorderColor
 
   /**
    * @name clearSelection
@@ -3385,7 +3386,8 @@ function createWebview(context, pickerButton, setColor) {
         var query = windowObject.evaluateWebScript('window.location.hash');
         var color = JSON.parse(decodeURIComponent(query).split('color=')[1]);
 
-        var newColor = MSImmutableColor.colorWithSVGString('rgba(' + String(color.r) + ',' + String(color.g) + ',' + String(color.b) + ',' + String(color.a) + ')').newMutableCounterpart();
+        var newColor = MSImmutableColor.colorWithIntegerRed_green_blue_alpha(parseInt(color.r) / 255, parseInt(color.g) / 255, parseInt(color.b) / 255, parseFloat(color.a));
+        _logger2['default'].log(newColor);
         pickerButton.setImage(getImageByColor(NSColor.colorWithRed_green_blue_alpha(parseInt(color.r) / 255, parseInt(color.g) / 255, parseInt(color.b) / 255, parseFloat(color.a)), { width: 40, height: 30 }));
         setColor(newColor);
       }
@@ -3481,6 +3483,19 @@ function svgHasStroke(artboard) {
     }
   });
   return hasBorder;
+}
+
+function iconHasBorderColor(artboard) {
+  var color = void 0;
+  var layers = artboard.children();
+
+  for (var i = 0; i < layers.length; i++) {
+    var style = layers[i].styledLayer().style();
+    color = style.firstEnabledBorder();
+    if (color) break;
+  }
+
+  return color;
 }
 
 function networkRequest(svg) {
@@ -6971,7 +6986,7 @@ module.exports = bind.call(Function.call, Object.prototype.hasOwnProperty);
 /* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
-Object.defineProperty(exports, "__esModule", {
+/* WEBPACK VAR INJECTION */(function(console) {Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
@@ -6997,7 +7012,8 @@ exports['default'] = {
   initAddMaskOnSelectedArtboards: initAddMaskOnSelectedArtboards,
   addMask: addMask,
   removeMask: removeMask,
-  applyMask: applyMask
+  applyMask: applyMask,
+  applyColor: applyColor
 
   /**
    * @name initAddMaskOnSelectedArtboards
@@ -7023,9 +7039,10 @@ function initAddMaskOnSelectedArtboards(context, params, artboards) {
  * @name applyColor
  * @description apply border color on svg with stroke
  * @param artboard
- * @param color
+ * @param params
  */
-function applyColor(artboard, color) {
+function applyColor(artboard, params) {
+  var color = params.colorPicker ? params.colorPicker : _libraries2['default'].getColorFromSymbol(params.color).color;
   artboard.children().forEach(function (layer) {
     if (layer.styledLayer().style().hasEnabledBorder()) {
       var style = layer.styledLayer().style();
@@ -7063,8 +7080,7 @@ async function addMask(context, currentArtboard, params) {
   registerMask(context, currentArtboard, params);
 
   if (_utils2['default'].svgHasStroke(currentArtboard)) {
-    var color = params.colorPicker ? params.colorPicker : _libraries2['default'].getColorFromSymbol(params.color).color;
-    return applyColor(currentArtboard, color);
+    return applyColor(currentArtboard, params);
   }
 
   if (_utils2['default'].iconHasColor(currentArtboard)) {
@@ -7085,10 +7101,17 @@ async function addMask(context, currentArtboard, params) {
 
 function registerMask(context, currentArtboard, params) {
   if (params.color) {
-    context.command.setValue_forKey_onLayer(params.colorLib, "colorLib", currentArtboard);
-    context.command.setValue_forKey_onLayer(params.color, "color", currentArtboard);
+    var libraryId = params.colorLib ? params.colorLib.libraryID() : null;
+    context.command.setValue_forKey_onLayer(libraryId, "colorLib", currentArtboard);
+    context.command.setValue_forKey_onLayer(params.color.symbolID(), "color", currentArtboard);
+    context.command.setValue_forKey_onLayer(null, "colorPicker", currentArtboard);
   } else if (params.colorPicker) {
-    context.command.setValue_forKey_onLayer(params.color, "colorPicker", currentArtboard);
+    console.log('>>>>>>>>>>>', params.colorPicker.red());
+    var color = MSImmutableColor.colorWithIntegerRed_green_blue_alpha(parseFloat(params.colorPicker.red()), parseFloat(params.colorPicker.green()), parseFloat(params.colorPicker.blue()), params.colorPicker.alpha());
+    console.log('>>>>>>>>>>>', color.hexValue());
+    context.command.setValue_forKey_onLayer(params.colorPicker, "colorPicker", currentArtboard);
+    context.command.setValue_forKey_onLayer(null, "colorLib", currentArtboard);
+    context.command.setValue_forKey_onLayer(null, "color", currentArtboard);
   }
 }
 
@@ -7144,6 +7167,7 @@ function applyMask(currentArtboard, mask) {
   iconLayer.hasClippingMask = true;
   iconLayer.clippingMaskMode = 0;
 }
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
 
 /***/ }),
 /* 31 */
@@ -7191,17 +7215,30 @@ exports['default'] = {
 function initUpdateIconsSelectedArtboards(context, artboards, listIcon) {
 
   artboards.some(async function (artboard, index) {
-    var mask = void 0;
+    var color = void 0,
+        isMasked = void 0;
     var svgData = String(NSString.alloc().initWithContentsOfURL(listIcon[index]));
-    var isMasked = _utils2['default'].iconHasColor(artboard.object);
-    if (isMasked) mask = artboard.object.lastLayer().copy();
-    try {
-      await replaceSVG(context, artboard.object, svgData, isMasked, true);
-    } catch (e) {
-      _logger2['default'].error(e);
+
+    if (!_utils2['default'].svgHasStroke(artboard.object)) {
+      isMasked = _utils2['default'].iconHasColor(artboard.object);
+      if (isMasked) color = artboard.object.lastLayer().copy();
+    } else {
+      color = _utils2['default'].iconHasBorderColor();
+      if (color) isMasked = true;
     }
+    await replaceSVG(context, artboard.object, svgData, isMasked, true);
     artboard.object.setName(_utils2['default'].getIconNameByNSUrl(listIcon[index]));
-    if (isMasked) _mask2['default'].applyMask(artboard.object, mask);
+
+    if (isMasked) {
+      _mask2['default'].applyMask(artboard.object, color);
+    } else if (isMasked && _utils2['default'].svgHasStroke(artboard.object)) {
+      var params = {
+        colorPicker: context.command.valueForKey_onLayer("colorPicker", artboard),
+        color: context.command.valueForKey_onLayer("color", artboard),
+        colorLib: context.command.valueForKey_onLayer("colorLib", artboard)
+      };
+      _mask2['default'].applyColor(artboard, params);
+    }
   });
 
   _utils2['default'].clearSelection(context);
@@ -9839,20 +9876,6 @@ function getColorSymbolsFromDocument(document) {
   document.localSymbols().some(function (symbol) {
     var color = getColorFromSymbol(symbol);
     if (color) result.push(color);
-
-    // if(layers.length === 0 && symbol.backgroundColor()){
-    //   result.push({
-    //     color: symbol.backgroundColor(),
-    //     symbol: symbol
-    //   })
-    // }
-    // else if(layers.length === 1 && layers[0].children().length === 2 && String(layers[0].children()[0].class()) === 'MSRectangleShape' && layers[0].style().hasEnabledFill()){
-    //
-    //   result.push({
-    //     color: layers[0].style().fills()[0].color(),
-    //     symbol: symbol
-    //   })
-    // }
   });
 
   return result;

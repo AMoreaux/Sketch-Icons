@@ -20,17 +20,30 @@ export default {
 function initUpdateIconsSelectedArtboards(context, artboards, listIcon) {
 
   artboards.some(async function (artboard, index) {
-    let mask
+    let color, isMasked;
     const svgData = String(NSString.alloc().initWithContentsOfURL(listIcon[index]))
-    const isMasked = utils.iconHasColor(artboard.object)
-    if (isMasked) mask = artboard.object.lastLayer().copy()
-    try{
-      await replaceSVG(context, artboard.object, svgData, isMasked, true)
-    }catch(e){
-      logger.error(e)
+
+    if (!utils.svgHasStroke(artboard.object)) {
+      isMasked = utils.iconHasColor(artboard.object)
+      if (isMasked) color = artboard.object.lastLayer().copy()
+    } else {
+      color = utils.iconHasBorderColor()
+      if (color) isMasked = true;
     }
+    await replaceSVG(context, artboard.object, svgData, isMasked, true)
     artboard.object.setName(utils.getIconNameByNSUrl(listIcon[index]))
-    if (isMasked) maskProvider.applyMask(artboard.object, mask)
+
+    if (isMasked) {
+      maskProvider.applyMask(artboard.object, color)
+    } else if (isMasked && utils.svgHasStroke(artboard.object)) {
+      const params = {
+        colorPicker: context.command.valueForKey_onLayer("colorPicker", artboard),
+        color: context.command.valueForKey_onLayer("color", artboard),
+        colorLib: context.command.valueForKey_onLayer("colorLib", artboard)
+      }
+      maskProvider.applyColor(artboard, params);
+    }
+
   })
 
   utils.clearSelection(context)
@@ -58,7 +71,7 @@ async function addSVG(context, artboard, iconPadding, artboardSize, svgData, wit
   const svgLayer = svgImporter.importAsLayer()
   removeTxt(svgLayer)
   artboard.addLayer(svgLayer)
-  if(utils.svgHasStroke(artboard)){
+  if (utils.svgHasStroke(artboard)) {
     const diagContainer = artboardSize - iconPadding
     setThicknessProportionnally(svgLayer, diagContainer, viewBox)
   }
@@ -267,14 +280,14 @@ function getViewBox(svg) {
 async function replaceSVG(context, artboard, svgData, withMask, withResize) {
   const params = artboardProvider.getPaddingAndSize(context, artboard)
   artboard.removeAllLayers()
-  try{
+  try {
     await addSVG(context, artboard, params.iconPadding, params.artboardSize, String(svgData), withMask, withResize)
-  }catch(e){
+  } catch (e) {
     logger.error(e)
   }
 }
 
-function setThicknessProportionnally(svgLayer, diagContainer, viewBox){
+function setThicknessProportionnally(svgLayer, diagContainer, viewBox) {
 
   const diagViewbox = Math.sqrt(Math.pow(viewBox.width, 2) + Math.pow(viewBox.height, 2))
   const diagArtboard = Math.sqrt(Math.pow(diagContainer, 2) * 2)

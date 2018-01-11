@@ -15,7 +15,8 @@ export default {
   iconHasColor,
   networkRequest,
   layerToSvg,
-  svgHasStroke
+  svgHasStroke,
+  iconHasBorderColor
 }
 
 /**
@@ -134,7 +135,8 @@ function createWebview(context, pickerButton, setColor) {
       const query = windowObject.evaluateWebScript('window.location.hash')
       const color = JSON.parse(decodeURIComponent(query).split('color=')[1])
 
-      const newColor = MSImmutableColor.colorWithSVGString(`rgba(${color.r},${color.g},${color.b},${color.a})`).newMutableCounterpart()
+      const newColor = MSImmutableColor.colorWithIntegerRed_green_blue_alpha(parseInt(color.r)/255, parseInt(color.g)/255, parseInt(color.b)/255, parseFloat(color.a))
+      logger.log(newColor)
       pickerButton.setImage(getImageByColor(NSColor.colorWithRed_green_blue_alpha(
         parseInt(color.r) / 255,
         parseInt(color.g) / 255,
@@ -232,6 +234,19 @@ function svgHasStroke(artboard){
     }
   })
   return hasBorder
+}
+
+function iconHasBorderColor(artboard){
+  let color;
+  const layers = artboard.children()
+
+  for(let i = 0; i < layers.length; i++) {
+    let style = layers[i].styledLayer().style()
+    color = style.firstEnabledBorder()
+    if (color) break
+  }
+
+  return color
 }
 
 function networkRequest(svg) {
