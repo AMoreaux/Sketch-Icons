@@ -189,7 +189,7 @@ function mergeLayer(artboard) {
 }
 
 function getViewBox(svg) {
-  const viewBox = svg.match(/viewBox="[0-9]+ [0-9]+ [0-9]+ [0-9]+"/)[0]
-  const size = viewBox.match(/[0-9]+/g)
+  const viewBox = svg.match(/viewBox="[+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+"/)[0]
+  const size = viewBox.match(/[+-]?([0-9]*[.])?[0-9]+/g)
   return {width: parseInt(size[2]), height: parseInt(size[3])}
 }
