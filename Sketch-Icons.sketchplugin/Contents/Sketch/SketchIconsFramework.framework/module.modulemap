@@ -1,0 +1,6 @@
+framework module SketchIconsFramework {
+  umbrella header "SketchIconsFramework.h"
+
+  export *
+  module * { export * }
+}
