@@ -1678,216 +1678,6 @@ exports['default'] = function () {
 /* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(console, process, global) {/* globals log */
-if (!console._skpmEnabled) {
-  if (process.env.NODE_ENV !== 'production') {
-    var sketchDebugger = __webpack_require__(135)
-    var actions = __webpack_require__(137)
-
-    function getStack() {
-      return sketchDebugger.prepareStackTrace(new Error().stack)
-    }
-  }
-
-  console._skpmPrefix = 'console> '
-
-  function logEverywhere(type, args) {
-    var values = Array.prototype.slice.call(args)
-
-    // log to the System logs
-    values.forEach(function(v) {
-      try {
-        log(console._skpmPrefix + indentString() + v)
-      } catch (e) {
-        log(v)
-      }
-    })
-
-    if (process.env.NODE_ENV !== 'production') {
-      if (!sketchDebugger.isDebuggerPresent()) {
-        return
-      }
-
-      var payload = {
-        ts: Date.now(),
-        type: type,
-        plugin: String(context.scriptPath),
-        values: values.map(sketchDebugger.prepareValue),
-        stack: getStack(),
-      }
-
-      sketchDebugger.sendToDebugger(actions.ADD_LOG, payload)
-    }
-  }
-
-  var indentLevel = 0
-  function indentString() {
-    var indent = ''
-    for (var i = 0; i < indentLevel; i++) {
-      indent += '  '
-    }
-    if (indentLevel > 0) {
-      indent += '| '
-    }
-    return indent
-  }
-
-  var oldGroup = console.group
-
-  console.group = function() {
-    // log to the JS context
-    oldGroup && oldGroup.apply(this, arguments)
-    indentLevel += 1
-    if (process.env.NODE_ENV !== 'production') {
-      sketchDebugger.sendToDebugger(actions.GROUP, {
-        plugin: String(context.scriptPath),
-        collapsed: false,
-      })
-    }
-  }
-
-  var oldGroupCollapsed = console.groupCollapsed
-
-  console.groupCollapsed = function() {
-    // log to the JS context
-    oldGroupCollapsed && oldGroupCollapsed.apply(this, arguments)
-    indentLevel += 1
-    if (process.env.NODE_ENV !== 'production') {
-      sketchDebugger.sendToDebugger(actions.GROUP, {
-        plugin: String(context.scriptPath),
-        collapsed: true
-      })
-    }
-  }
-
-  var oldGroupEnd = console.groupEnd
-
-  console.groupEnd = function() {
-    // log to the JS context
-    oldGroupEnd && oldGroupEnd.apply(this, arguments)
-    indentLevel -= 1
-    if (indentLevel < 0) {
-      indentLevel = 0
-    }
-    if (process.env.NODE_ENV !== 'production') {
-      sketchDebugger.sendToDebugger(actions.GROUP_END, {
-        plugin: context.scriptPath,
-      })
-    }
-  }
-
-  var counts = {}
-  var oldCount = console.count
-
-  console.count = function(label) {
-    label = typeof label !== 'undefined' ? label : 'Global'
-    counts[label] = (counts[label] || 0) + 1
-
-    // log to the JS context
-    oldCount && oldCount.apply(this, arguments)
-    return logEverywhere('log', [label + ': ' + counts[label]])
-  }
-
-  var timers = {}
-  var oldTime = console.time
-
-  console.time = function(label) {
-    // log to the JS context
-    oldTime && oldTime.apply(this, arguments)
-
-    label = typeof label !== 'undefined' ? label : 'default'
-    if (timers[label]) {
-      return logEverywhere('warn', ['Timer "' + label + '" already exists'])
-    }
-
-    timers[label] = Date.now()
-    return
-  }
-
-  var oldTimeEnd = console.timeEnd
-
-  console.timeEnd = function(label) {
-    // log to the JS context
-    oldTimeEnd && oldTimeEnd.apply(this, arguments)
-
-    label = typeof label !== 'undefined' ? label : 'default'
-    if (!timers[label]) {
-      return logEverywhere('warn', ['Timer "' + label + '" does not exist'])
-    }
-
-    var duration = Date.now() - timers[label]
-    delete timers[label]
-    return logEverywhere('log', [label + ': ' + (duration / 1000) + 'ms'])
-  }
-
-  var oldLog = console.log
-
-  console.log = function() {
-    // log to the JS context
-    oldLog && oldLog.apply(this, arguments)
-    return logEverywhere('log', arguments)
-  }
-
-  var oldWarn = console.warn
-
-  console.warn = function() {
-    // log to the JS context
-    oldWarn && oldWarn.apply(this, arguments)
-    return logEverywhere('warn', arguments)
-  }
-
-  var oldError = console.error
-
-  console.error = function() {
-    // log to the JS context
-    oldError && oldError.apply(this, arguments)
-    return logEverywhere('error', arguments)
-  }
-
-  var oldAssert = console.assert
-
-  console.assert = function(condition, text) {
-    // log to the JS context
-    oldAssert && oldAssert.apply(this, arguments)
-    if (!condition) {
-      return logEverywhere('assert', [text])
-    }
-    return undefined
-  }
-
-  var oldInfo = console.info
-
-  console.info = function() {
-    // log to the JS context
-    oldInfo && oldInfo.apply(this, arguments)
-    return logEverywhere('info', arguments)
-  }
-
-  var oldClear = console.clear
-
-  console.clear = function() {
-    oldClear && oldClear()
-    if (process.env.NODE_ENV !== 'production') {
-      return sketchDebugger.sendToDebugger(actions.CLEAR_LOGS)
-    }
-  }
-
-  console._skpmEnabled = true
-
-  // polyfill the global object
-  var commonjsGlobal = typeof global !== 'undefined' ? global : this
-
-  commonjsGlobal.console = console
-}
-
-module.exports = console
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6), __webpack_require__(13), __webpack_require__(8)))
-
-/***/ }),
-/* 7 */
-/***/ (function(module, exports, __webpack_require__) {
-
 "use strict";
 /* WEBPACK VAR INJECTION */(function(console) {/* global a2c */
 
@@ -2861,7 +2651,217 @@ function a2c(x1, y1, rx, ry, angle, large_arc_flag, sweep_flag, x2, y2, recursiv
     }
 }
 // jshint ignore: end
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(console, process, global) {/* globals log */
+if (!console._skpmEnabled) {
+  if (process.env.NODE_ENV !== 'production') {
+    var sketchDebugger = __webpack_require__(135)
+    var actions = __webpack_require__(137)
+
+    function getStack() {
+      return sketchDebugger.prepareStackTrace(new Error().stack)
+    }
+  }
+
+  console._skpmPrefix = 'console> '
+
+  function logEverywhere(type, args) {
+    var values = Array.prototype.slice.call(args)
+
+    // log to the System logs
+    values.forEach(function(v) {
+      try {
+        log(console._skpmPrefix + indentString() + v)
+      } catch (e) {
+        log(v)
+      }
+    })
+
+    if (process.env.NODE_ENV !== 'production') {
+      if (!sketchDebugger.isDebuggerPresent()) {
+        return
+      }
+
+      var payload = {
+        ts: Date.now(),
+        type: type,
+        plugin: String(context.scriptPath),
+        values: values.map(sketchDebugger.prepareValue),
+        stack: getStack(),
+      }
+
+      sketchDebugger.sendToDebugger(actions.ADD_LOG, payload)
+    }
+  }
+
+  var indentLevel = 0
+  function indentString() {
+    var indent = ''
+    for (var i = 0; i < indentLevel; i++) {
+      indent += '  '
+    }
+    if (indentLevel > 0) {
+      indent += '| '
+    }
+    return indent
+  }
+
+  var oldGroup = console.group
+
+  console.group = function() {
+    // log to the JS context
+    oldGroup && oldGroup.apply(this, arguments)
+    indentLevel += 1
+    if (process.env.NODE_ENV !== 'production') {
+      sketchDebugger.sendToDebugger(actions.GROUP, {
+        plugin: String(context.scriptPath),
+        collapsed: false,
+      })
+    }
+  }
+
+  var oldGroupCollapsed = console.groupCollapsed
+
+  console.groupCollapsed = function() {
+    // log to the JS context
+    oldGroupCollapsed && oldGroupCollapsed.apply(this, arguments)
+    indentLevel += 1
+    if (process.env.NODE_ENV !== 'production') {
+      sketchDebugger.sendToDebugger(actions.GROUP, {
+        plugin: String(context.scriptPath),
+        collapsed: true
+      })
+    }
+  }
+
+  var oldGroupEnd = console.groupEnd
+
+  console.groupEnd = function() {
+    // log to the JS context
+    oldGroupEnd && oldGroupEnd.apply(this, arguments)
+    indentLevel -= 1
+    if (indentLevel < 0) {
+      indentLevel = 0
+    }
+    if (process.env.NODE_ENV !== 'production') {
+      sketchDebugger.sendToDebugger(actions.GROUP_END, {
+        plugin: context.scriptPath,
+      })
+    }
+  }
+
+  var counts = {}
+  var oldCount = console.count
+
+  console.count = function(label) {
+    label = typeof label !== 'undefined' ? label : 'Global'
+    counts[label] = (counts[label] || 0) + 1
+
+    // log to the JS context
+    oldCount && oldCount.apply(this, arguments)
+    return logEverywhere('log', [label + ': ' + counts[label]])
+  }
+
+  var timers = {}
+  var oldTime = console.time
+
+  console.time = function(label) {
+    // log to the JS context
+    oldTime && oldTime.apply(this, arguments)
+
+    label = typeof label !== 'undefined' ? label : 'default'
+    if (timers[label]) {
+      return logEverywhere('warn', ['Timer "' + label + '" already exists'])
+    }
+
+    timers[label] = Date.now()
+    return
+  }
+
+  var oldTimeEnd = console.timeEnd
+
+  console.timeEnd = function(label) {
+    // log to the JS context
+    oldTimeEnd && oldTimeEnd.apply(this, arguments)
+
+    label = typeof label !== 'undefined' ? label : 'default'
+    if (!timers[label]) {
+      return logEverywhere('warn', ['Timer "' + label + '" does not exist'])
+    }
+
+    var duration = Date.now() - timers[label]
+    delete timers[label]
+    return logEverywhere('log', [label + ': ' + (duration / 1000) + 'ms'])
+  }
+
+  var oldLog = console.log
+
+  console.log = function() {
+    // log to the JS context
+    oldLog && oldLog.apply(this, arguments)
+    return logEverywhere('log', arguments)
+  }
+
+  var oldWarn = console.warn
+
+  console.warn = function() {
+    // log to the JS context
+    oldWarn && oldWarn.apply(this, arguments)
+    return logEverywhere('warn', arguments)
+  }
+
+  var oldError = console.error
+
+  console.error = function() {
+    // log to the JS context
+    oldError && oldError.apply(this, arguments)
+    return logEverywhere('error', arguments)
+  }
+
+  var oldAssert = console.assert
+
+  console.assert = function(condition, text) {
+    // log to the JS context
+    oldAssert && oldAssert.apply(this, arguments)
+    if (!condition) {
+      return logEverywhere('assert', [text])
+    }
+    return undefined
+  }
+
+  var oldInfo = console.info
+
+  console.info = function() {
+    // log to the JS context
+    oldInfo && oldInfo.apply(this, arguments)
+    return logEverywhere('info', arguments)
+  }
+
+  var oldClear = console.clear
+
+  console.clear = function() {
+    oldClear && oldClear()
+    if (process.env.NODE_ENV !== 'production') {
+      return sketchDebugger.sendToDebugger(actions.CLEAR_LOGS)
+    }
+  }
+
+  console._skpmEnabled = true
+
+  // polyfill the global object
+  var commonjsGlobal = typeof global !== 'undefined' ? global : this
+
+  commonjsGlobal.console = console
+}
+
+module.exports = console
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7), __webpack_require__(13), __webpack_require__(8)))
 
 /***/ }),
 /* 8 */
@@ -6986,7 +6986,7 @@ module.exports = bind.call(Function.call, Object.prototype.hasOwnProperty);
 /* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(console) {Object.defineProperty(exports, "__esModule", {
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
@@ -7077,7 +7077,7 @@ function removeMask(artboard) {
 async function addMask(context, currentArtboard, params) {
   var mask = void 0;
 
-  registerMask(context, currentArtboard, params);
+  // registerMask(context, currentArtboard, params)
 
   if (_utils2['default'].svgHasStroke(currentArtboard)) {
     return applyColor(currentArtboard, params);
@@ -7099,21 +7099,24 @@ async function addMask(context, currentArtboard, params) {
   return applyMask(currentArtboard, mask);
 }
 
-function registerMask(context, currentArtboard, params) {
-  if (params.color) {
-    var libraryId = params.colorLib ? params.colorLib.libraryID() : null;
-    context.command.setValue_forKey_onLayer(libraryId, "colorLib", currentArtboard);
-    context.command.setValue_forKey_onLayer(params.color.symbolID(), "color", currentArtboard);
-    context.command.setValue_forKey_onLayer(null, "colorPicker", currentArtboard);
-  } else if (params.colorPicker) {
-    console.log('>>>>>>>>>>>', params.colorPicker.red());
-    var color = MSImmutableColor.colorWithIntegerRed_green_blue_alpha(parseFloat(params.colorPicker.red()), parseFloat(params.colorPicker.green()), parseFloat(params.colorPicker.blue()), params.colorPicker.alpha());
-    console.log('>>>>>>>>>>>', color.hexValue());
-    context.command.setValue_forKey_onLayer(params.colorPicker, "colorPicker", currentArtboard);
-    context.command.setValue_forKey_onLayer(null, "colorLib", currentArtboard);
-    context.command.setValue_forKey_onLayer(null, "color", currentArtboard);
-  }
-}
+// function registerMask(context, currentArtboard, params){
+//   if (params.color) {
+//     const libraryId = (params.colorLib) ? params.colorLib.libraryID() : null
+//     context.command.setValue_forKey_onLayer(libraryId, "colorLib", currentArtboard)
+//     context.command.setValue_forKey_onLayer(params.color.symbolID(), "color", currentArtboard)
+//     context.command.setValue_forKey_onLayer(null, "colorPicker", currentArtboard)
+//   } else if (params.colorPicker) {
+//     const color = MSImmutableColor.colorWithIntegerRed_green_blue_alpha(
+//       parseFloat(params.colorPicker.red()),
+//       parseFloat(params.colorPicker.green()),
+//       parseFloat(params.colorPicker.blue()),
+//       params.colorPicker.alpha())
+//     context.command.setValue_forKey_onLayer(params.colorPicker, "colorPicker", currentArtboard)
+//     context.command.setValue_forKey_onLayer(null, "colorLib", currentArtboard)
+//     context.command.setValue_forKey_onLayer(null, "color", currentArtboard)
+//   }
+// }
+
 
 /**
  * @name createMaskFromNean
@@ -7167,7 +7170,6 @@ function applyMask(currentArtboard, mask) {
   iconLayer.hasClippingMask = true;
   iconLayer.clippingMaskMode = 0;
 }
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
 
 /***/ }),
 /* 31 */
@@ -8681,7 +8683,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
 
 /***/ }),
 /* 39 */
@@ -10110,8 +10112,8 @@ module.exports = Array.isArray || function (arr) {
 var map = {
 	"./_collections": 3,
 	"./_collections.js": 3,
-	"./_path": 7,
-	"./_path.js": 7,
+	"./_path": 6,
+	"./_path.js": 6,
 	"./_transforms": 9,
 	"./_transforms.js": 9,
 	"./addAttributesToSVGElement": 51,
@@ -10295,7 +10297,7 @@ exports.fn = function (data, params) {
 
     return data;
 };
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
 
 /***/ }),
 /* 52 */
@@ -10340,7 +10342,7 @@ exports.fn = function (data, params) {
 
     return data;
 };
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
 
 /***/ }),
 /* 53 */
@@ -11220,9 +11222,9 @@ exports.params = {
 };
 
 var pathElems = __webpack_require__(3).pathElems,
-    path2js = __webpack_require__(7).path2js,
-    js2path = __webpack_require__(7).js2path,
-    applyTransforms = __webpack_require__(7).applyTransforms,
+    path2js = __webpack_require__(6).path2js,
+    js2path = __webpack_require__(6).js2path,
+    applyTransforms = __webpack_require__(6).applyTransforms,
     cleanupOutData = __webpack_require__(11).cleanupOutData,
     roundData,
     precision,
@@ -15033,9 +15035,9 @@ exports.params = {
     negativeExtraSpace: true
 };
 
-var path2js = __webpack_require__(7).path2js,
-    js2path = __webpack_require__(7).js2path,
-    intersects = __webpack_require__(7).intersects;
+var path2js = __webpack_require__(6).path2js,
+    js2path = __webpack_require__(6).js2path,
+    intersects = __webpack_require__(6).intersects;
 
 /**
  * Merge multiple Paths into one.
@@ -15104,9 +15106,9 @@ exports.params = {
   negativeExtraSpace: true
 };
 
-var path2js = __webpack_require__(7).path2js,
-    js2path = __webpack_require__(7).js2path,
-    intersects = __webpack_require__(7).intersects;
+var path2js = __webpack_require__(6).path2js,
+    js2path = __webpack_require__(6).js2path,
+    intersects = __webpack_require__(6).intersects;
 
 /**
  * Merge multiple Paths into one.
@@ -15768,7 +15770,7 @@ exports.fn = function (node, opts, extra) {
 
     return node;
 };
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
 
 /***/ }),
 /* 88 */
@@ -19825,7 +19827,7 @@ function removeMaskOnSelectedArtboards(context) {
     _mask2['default'].removeMask(rootElement.object);
   });
 }
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
 
 /***/ }),
 /* 135 */
@@ -39595,7 +39597,7 @@ module.exports = {
     syntax: csstree
 };
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
 
 /***/ }),
 /* 260 */
@@ -44642,7 +44644,7 @@ function config (name) {
   return String(val).toLowerCase() === 'true';
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6), __webpack_require__(8)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7), __webpack_require__(8)))
 
 /***/ }),
 /* 305 */
@@ -48935,7 +48937,7 @@ CSSStyleDeclaration.prototype.setProperty = function (propertyName, value, prior
 };
 
 module.exports = CSSStyleDeclaration;
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
 
 /***/ }),
 /* 354 */

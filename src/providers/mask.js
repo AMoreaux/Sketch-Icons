@@ -72,7 +72,7 @@ function removeMask(artboard) {
 async function addMask(context, currentArtboard, params) {
   let mask
 
-  registerMask(context, currentArtboard, params)
+  // registerMask(context, currentArtboard, params)
 
   if (utils.svgHasStroke(currentArtboard)) {
     return applyColor(currentArtboard, params);
@@ -94,25 +94,23 @@ async function addMask(context, currentArtboard, params) {
   return applyMask(currentArtboard, mask)
 }
 
-function registerMask(context, currentArtboard, params){
-  if (params.color) {
-    const libraryId = (params.colorLib) ? params.colorLib.libraryID() : null
-    context.command.setValue_forKey_onLayer(libraryId, "colorLib", currentArtboard)
-    context.command.setValue_forKey_onLayer(params.color.symbolID(), "color", currentArtboard)
-    context.command.setValue_forKey_onLayer(null, "colorPicker", currentArtboard)
-  } else if (params.colorPicker) {
-    console.log('>>>>>>>>>>>', params.colorPicker.red());
-    const color = MSImmutableColor.colorWithIntegerRed_green_blue_alpha(
-      parseFloat(params.colorPicker.red()),
-      parseFloat(params.colorPicker.green()),
-      parseFloat(params.colorPicker.blue()),
-      params.colorPicker.alpha())
-    console.log('>>>>>>>>>>>', color.hexValue());
-    context.command.setValue_forKey_onLayer(params.colorPicker, "colorPicker", currentArtboard)
-    context.command.setValue_forKey_onLayer(null, "colorLib", currentArtboard)
-    context.command.setValue_forKey_onLayer(null, "color", currentArtboard)
-  }
-}
+// function registerMask(context, currentArtboard, params){
+//   if (params.color) {
+//     const libraryId = (params.colorLib) ? params.colorLib.libraryID() : null
+//     context.command.setValue_forKey_onLayer(libraryId, "colorLib", currentArtboard)
+//     context.command.setValue_forKey_onLayer(params.color.symbolID(), "color", currentArtboard)
+//     context.command.setValue_forKey_onLayer(null, "colorPicker", currentArtboard)
+//   } else if (params.colorPicker) {
+//     const color = MSImmutableColor.colorWithIntegerRed_green_blue_alpha(
+//       parseFloat(params.colorPicker.red()),
+//       parseFloat(params.colorPicker.green()),
+//       parseFloat(params.colorPicker.blue()),
+//       params.colorPicker.alpha())
+//     context.command.setValue_forKey_onLayer(params.colorPicker, "colorPicker", currentArtboard)
+//     context.command.setValue_forKey_onLayer(null, "colorLib", currentArtboard)
+//     context.command.setValue_forKey_onLayer(null, "color", currentArtboard)
+//   }
+// }
 
 
 /**
