@@ -33,15 +33,15 @@ function initUpdateIconsSelectedArtboards(context, artboards, listIcon) {
     await replaceSVG(context, artboard.object, svgData, isMasked, true)
     artboard.object.setName(utils.getIconNameByNSUrl(listIcon[index]))
 
-    if (isMasked) {
-      maskProvider.applyMask(artboard.object, color)
-    } else if (isMasked && utils.svgHasStroke(artboard.object)) {
-      const params = {
-        colorPicker: context.command.valueForKey_onLayer("colorPicker", artboard),
-        color: context.command.valueForKey_onLayer("color", artboard),
-        colorLib: context.command.valueForKey_onLayer("colorLib", artboard)
-      }
+    console.log('>>>>>>>>>>>', isMasked);
+    console.log('>>>>>>>>>>>', utils.svgHasStroke(artboard.object));
+    if (isMasked && utils.svgHasStroke(artboard.object)) {
+      console.log('>>>>>>>>>>> ici cool');
+      const params = maskProvider.getMaskPropertiesFromArtboard(context,artboard.object)
+      console.log('>>>>>>>>>>>', params);
       maskProvider.applyColor(artboard, params);
+    } else if (isMasked) {
+      maskProvider.applyMask(artboard.object, color)
     }
 
   })

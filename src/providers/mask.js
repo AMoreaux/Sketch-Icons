@@ -8,7 +8,8 @@ export default {
   addMask,
   removeMask,
   applyMask,
-  applyColor
+  applyColor,
+  getMaskPropertiesFromArtboard
 }
 
 /**
@@ -76,8 +77,6 @@ function removeMask(artboard) {
 async function addMask(context, currentArtboard, params) {
   let mask
 
-  const currentArtboardProperties = getMaskPropertiesFromArtboard(context, currentArtboard)
-
   registerMask(context, currentArtboard, params)
 
   if (utils.svgHasStroke(currentArtboard)) {
@@ -91,10 +90,10 @@ async function addMask(context, currentArtboard, params) {
     await svgProvider.replaceSVG(context, currentArtboard, svgData, true, false)
   }
 
-  if (currentArtboardProperties.color) {
-    mask = getMaskSymbolFromLib(context, currentArtboard, currentArtboardProperties.color, currentArtboardProperties.colorLib)
-  } else if (currentArtboardProperties.colorPicker) {
-    mask = createMaskFromNean(context, currentArtboard, currentArtboardProperties.colorPicker)
+  if (params.color) {
+    mask = getMaskSymbolFromLib(context, currentArtboard, params.color, params.colorLib)
+  } else if (params.colorPicker) {
+    mask = createMaskFromNean(context, currentArtboard, params.colorPicker)
   }
 
   return applyMask(context, currentArtboard, mask)
@@ -114,6 +113,11 @@ function registerMask(context, artboard, params){
 }
 
 function getMaskPropertiesFromArtboard(context, artboard){
+  console.log('>>>>>>>>>>>', JSON.stringify({
+    colorLib : context.command.valueForKey_onLayer("colorLib", artboard),
+    color : context.command.valueForKey_onLayer("color", artboard),
+    colorPicker : context.command.valueForKey_onLayer("colorPicker", artboard)
+  }));
   return{
     colorLib : context.command.valueForKey_onLayer("colorLib", artboard),
     color : context.command.valueForKey_onLayer("color", artboard),
@@ -173,5 +177,4 @@ function applyMask(context, currentArtboard, mask) {
   const iconLayer = currentArtboard.firstLayer()
   iconLayer.hasClippingMask = true
   iconLayer.clippingMaskMode = 0
-  console.log('>>>>>>>>>>> step final', getMaskPropertiesFromArtboard(context, currentArtboard).colorPicker)
 }
