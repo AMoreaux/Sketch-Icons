@@ -3229,9 +3229,11 @@ function multiplyTransformMatrices(a, b) {
 /* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
-Object.defineProperty(exports, "__esModule", {
+/* WEBPACK VAR INJECTION */(function(console) {Object.defineProperty(exports, "__esModule", {
   value: true
 });
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var _MochaJSDelegate = __webpack_require__(138);
 
@@ -3258,7 +3260,9 @@ exports['default'] = {
   networkRequest: networkRequest,
   layerToSvg: layerToSvg,
   svgHasStroke: svgHasStroke,
-  iconHasBorderColor: iconHasBorderColor
+  iconHasBorderColor: iconHasBorderColor,
+  convertMSColorToString: convertMSColorToString,
+  convertStringToMSColor: convertStringToMSColor
 
   /**
    * @name clearSelection
@@ -3385,11 +3389,16 @@ function createWebview(context, pickerButton, setColor) {
       function webViewDidChangeLocationWithinPageForFrame(webView, webFrame) {
         var query = windowObject.evaluateWebScript('window.location.hash');
         var color = JSON.parse(decodeURIComponent(query).split('color=')[1]);
+        color.r = parseInt(color.r) / 255;
+        color.g = parseInt(color.g) / 255;
+        color.b = parseInt(color.b) / 255;
+        color.a = parseFloat(color.a);
 
-        var newColor = MSImmutableColor.colorWithIntegerRed_green_blue_alpha(parseInt(color.r) / 255, parseInt(color.g) / 255, parseInt(color.b) / 255, parseFloat(color.a));
-        _logger2['default'].log(newColor);
-        pickerButton.setImage(getImageByColor(NSColor.colorWithRed_green_blue_alpha(parseInt(color.r) / 255, parseInt(color.g) / 255, parseInt(color.b) / 255, parseFloat(color.a)), { width: 40, height: 30 }));
-        setColor(newColor);
+        var colorNS = NSColor.colorWithRed_green_blue_alpha(color.r, color.g, color.b, color.a);
+        var colorMS = MSImmutableColor.colorWithNSColor(colorNS);
+
+        pickerButton.setImage(getImageByColor(colorNS, { width: 40, height: 30 }));
+        setColor(colorMS);
       }
 
       return webViewDidChangeLocationWithinPageForFrame;
@@ -3498,6 +3507,18 @@ function iconHasBorderColor(artboard) {
   return color;
 }
 
+function convertMSColorToString(colorMS) {
+  return JSON.stringify({ r: colorMS.red(), g: colorMS.green(), b: colorMS.blue(), a: colorMS.alpha() });
+}
+
+function convertStringToMSColor(string) {
+  var color = (typeof string === 'undefined' ? 'undefined' : _typeof(string)) !== 'object' ? string : JSON.parse(string);
+  var colorNS = NSColor.colorWithRed_green_blue_alpha(color.r, color.g, color.b, color.a);
+  console.log('>>>>>>>>>>>', MSImmutableColor.colorWithNSColor(colorNS));
+
+  return MSImmutableColor.colorWithNSColor(colorNS);
+}
+
 function networkRequest(svg) {
   // var task = NSTask.alloc().init();
   // task.setLaunchPath("/usr/bin/curl");
@@ -3528,6 +3549,7 @@ function networkRequest(svg) {
   // }
   return '';
 }
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
 
 /***/ }),
 /* 11 */
@@ -6986,7 +7008,7 @@ module.exports = bind.call(Function.call, Object.prototype.hasOwnProperty);
 /* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
-Object.defineProperty(exports, "__esModule", {
+/* WEBPACK VAR INJECTION */(function(console) {Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
@@ -7027,7 +7049,11 @@ function initAddMaskOnSelectedArtboards(context, params, artboards) {
   artboards.some(function (artboard) {
     try {
       if (_utils2['default'].iconHasColor(artboard.object) && !_utils2['default'].svgHasStroke(artboard.object)) removeMask(artboard.object);
-      addMask(context, artboard.object, params);
+      try {
+        addMask(context, artboard.object, params);
+      } catch (e) {
+        console.log('>>>>>>>>>>>', e);
+      }
     } catch (e) {
       _logger2['default'].error(e);
     }
@@ -7077,7 +7103,9 @@ function removeMask(artboard) {
 async function addMask(context, currentArtboard, params) {
   var mask = void 0;
 
-  // registerMask(context, currentArtboard, params)
+  var currentArtboardProperties = getMaskPropertiesFromArtboard(context, currentArtboard);
+
+  registerMask(context, currentArtboard, params);
 
   if (_utils2['default'].svgHasStroke(currentArtboard)) {
     return applyColor(currentArtboard, params);
@@ -7090,33 +7118,35 @@ async function addMask(context, currentArtboard, params) {
     await _svg2['default'].replaceSVG(context, currentArtboard, svgData, true, false);
   }
 
-  if (params.color) {
-    mask = getMaskSymbolFromLib(context, currentArtboard, params.color, params.colorLib);
-  } else if (params.colorPicker) {
-    mask = createMaskFromNean(context, currentArtboard, params.colorPicker);
+  if (currentArtboardProperties.color) {
+    mask = getMaskSymbolFromLib(context, currentArtboard, currentArtboardProperties.color, currentArtboardProperties.colorLib);
+  } else if (currentArtboardProperties.colorPicker) {
+    mask = createMaskFromNean(context, currentArtboard, currentArtboardProperties.colorPicker);
   }
 
-  return applyMask(currentArtboard, mask);
+  return applyMask(context, currentArtboard, mask);
 }
 
-// function registerMask(context, currentArtboard, params){
-//   if (params.color) {
-//     const libraryId = (params.colorLib) ? params.colorLib.libraryID() : null
-//     context.command.setValue_forKey_onLayer(libraryId, "colorLib", currentArtboard)
-//     context.command.setValue_forKey_onLayer(params.color.symbolID(), "color", currentArtboard)
-//     context.command.setValue_forKey_onLayer(null, "colorPicker", currentArtboard)
-//   } else if (params.colorPicker) {
-//     const color = MSImmutableColor.colorWithIntegerRed_green_blue_alpha(
-//       parseFloat(params.colorPicker.red()),
-//       parseFloat(params.colorPicker.green()),
-//       parseFloat(params.colorPicker.blue()),
-//       params.colorPicker.alpha())
-//     context.command.setValue_forKey_onLayer(params.colorPicker, "colorPicker", currentArtboard)
-//     context.command.setValue_forKey_onLayer(null, "colorLib", currentArtboard)
-//     context.command.setValue_forKey_onLayer(null, "color", currentArtboard)
-//   }
-// }
+function registerMask(context, artboard, params) {
+  if (params.color) {
+    var libraryId = params.colorLib ? params.colorLib.libraryID() : null;
+    context.command.setValue_forKey_onLayer(libraryId, "colorLib", artboard);
+    context.command.setValue_forKey_onLayer(params.color.symbolID(), "color", artboard);
+    context.command.setValue_forKey_onLayer(null, "colorPicker", artboard);
+  } else if (params.colorPicker) {
+    context.command.setValue_forKey_onLayer(_utils2['default'].convertMSColorToString(params.colorPicker), "colorPicker", artboard);
+    context.command.setValue_forKey_onLayer(null, "colorLib", artboard);
+    context.command.setValue_forKey_onLayer(null, "color", artboard);
+  }
+}
 
+function getMaskPropertiesFromArtboard(context, artboard) {
+  return {
+    colorLib: context.command.valueForKey_onLayer("colorLib", artboard),
+    color: context.command.valueForKey_onLayer("color", artboard),
+    colorPicker: _utils2['default'].convertStringToMSColor(context.command.valueForKey_onLayer("colorPicker", artboard))
+  };
+}
 
 /**
  * @name createMaskFromNean
@@ -7160,7 +7190,7 @@ function getMaskSymbolFromLib(context, currentArtboard, colorSymbolMaster, color
  * @param currentArtboard
  * @param mask
  */
-function applyMask(currentArtboard, mask) {
+function applyMask(context, currentArtboard, mask) {
   var currentArtboardSize = currentArtboard.rect();
   mask.setHeightRespectingProportions(currentArtboardSize.size.height);
   mask.setWidthRespectingProportions(currentArtboardSize.size.width);
@@ -7169,7 +7199,9 @@ function applyMask(currentArtboard, mask) {
   var iconLayer = currentArtboard.firstLayer();
   iconLayer.hasClippingMask = true;
   iconLayer.clippingMaskMode = 0;
+  console.log('>>>>>>>>>>> step final', getMaskPropertiesFromArtboard(context, currentArtboard).colorPicker);
 }
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
 
 /***/ }),
 /* 31 */

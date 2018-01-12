@@ -22,7 +22,11 @@ function initAddMaskOnSelectedArtboards(context, params, artboards) {
   artboards.some(function (artboard) {
     try {
       if (utils.iconHasColor(artboard.object) && !utils.svgHasStroke(artboard.object)) removeMask(artboard.object)
-      addMask(context, artboard.object, params)
+      try{
+        addMask(context, artboard.object, params)
+      }catch (e){
+        console.log('>>>>>>>>>>>', e);
+      }
     } catch (e) {
       logger.error(e)
     }
@@ -72,7 +76,9 @@ function removeMask(artboard) {
 async function addMask(context, currentArtboard, params) {
   let mask
 
-  // registerMask(context, currentArtboard, params)
+  const currentArtboardProperties = getMaskPropertiesFromArtboard(context, currentArtboard)
+
+  registerMask(context, currentArtboard, params)
 
   if (utils.svgHasStroke(currentArtboard)) {
     return applyColor(currentArtboard, params);
@@ -85,32 +91,35 @@ async function addMask(context, currentArtboard, params) {
     await svgProvider.replaceSVG(context, currentArtboard, svgData, true, false)
   }
 
-  if (params.color) {
-    mask = getMaskSymbolFromLib(context, currentArtboard, params.color, params.colorLib)
-  } else if (params.colorPicker) {
-    mask = createMaskFromNean(context, currentArtboard, params.colorPicker)
+  if (currentArtboardProperties.color) {
+    mask = getMaskSymbolFromLib(context, currentArtboard, currentArtboardProperties.color, currentArtboardProperties.colorLib)
+  } else if (currentArtboardProperties.colorPicker) {
+    mask = createMaskFromNean(context, currentArtboard, currentArtboardProperties.colorPicker)
   }
 
-  return applyMask(currentArtboard, mask)
+  return applyMask(context, currentArtboard, mask)
 }
 
-// function registerMask(context, currentArtboard, params){
-//   if (params.color) {
-//     const libraryId = (params.colorLib) ? params.colorLib.libraryID() : null
-//     context.command.setValue_forKey_onLayer(libraryId, "colorLib", currentArtboard)
-//     context.command.setValue_forKey_onLayer(params.color.symbolID(), "color", currentArtboard)
-//     context.command.setValue_forKey_onLayer(null, "colorPicker", currentArtboard)
-//   } else if (params.colorPicker) {
-//     const color = MSImmutableColor.colorWithIntegerRed_green_blue_alpha(
-//       parseFloat(params.colorPicker.red()),
-//       parseFloat(params.colorPicker.green()),
-//       parseFloat(params.colorPicker.blue()),
-//       params.colorPicker.alpha())
-//     context.command.setValue_forKey_onLayer(params.colorPicker, "colorPicker", currentArtboard)
-//     context.command.setValue_forKey_onLayer(null, "colorLib", currentArtboard)
-//     context.command.setValue_forKey_onLayer(null, "color", currentArtboard)
-//   }
-// }
+function registerMask(context, artboard, params){
+  if (params.color) {
+    const libraryId = (params.colorLib) ? params.colorLib.libraryID() : null
+    context.command.setValue_forKey_onLayer(libraryId, "colorLib", artboard)
+    context.command.setValue_forKey_onLayer(params.color.symbolID(), "color", artboard)
+    context.command.setValue_forKey_onLayer(null, "colorPicker", artboard)
+  } else if (params.colorPicker) {
+    context.command.setValue_forKey_onLayer(utils.convertMSColorToString(params.colorPicker), "colorPicker", artboard)
+    context.command.setValue_forKey_onLayer(null, "colorLib", artboard)
+    context.command.setValue_forKey_onLayer(null, "color", artboard)
+  }
+}
+
+function getMaskPropertiesFromArtboard(context, artboard){
+  return{
+    colorLib : context.command.valueForKey_onLayer("colorLib", artboard),
+    color : context.command.valueForKey_onLayer("color", artboard),
+    colorPicker : utils.convertStringToMSColor(context.command.valueForKey_onLayer("colorPicker", artboard))
+  }
+}
 
 
 /**
@@ -155,7 +164,7 @@ function getMaskSymbolFromLib(context, currentArtboard, colorSymbolMaster, color
  * @param currentArtboard
  * @param mask
  */
-function applyMask(currentArtboard, mask) {
+function applyMask(context, currentArtboard, mask) {
   const currentArtboardSize = currentArtboard.rect()
   mask.setHeightRespectingProportions(currentArtboardSize.size.height)
   mask.setWidthRespectingProportions(currentArtboardSize.size.width)
@@ -164,4 +173,5 @@ function applyMask(currentArtboard, mask) {
   const iconLayer = currentArtboard.firstLayer()
   iconLayer.hasClippingMask = true
   iconLayer.clippingMaskMode = 0
+  console.log('>>>>>>>>>>> step final', getMaskPropertiesFromArtboard(context, currentArtboard).colorPicker)
 }

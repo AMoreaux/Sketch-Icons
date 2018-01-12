@@ -16,7 +16,9 @@ export default {
   networkRequest,
   layerToSvg,
   svgHasStroke,
-  iconHasBorderColor
+  iconHasBorderColor,
+  convertMSColorToString,
+  convertStringToMSColor
 }
 
 /**
@@ -134,16 +136,16 @@ function createWebview(context, pickerButton, setColor) {
     "webView:didChangeLocationWithinPageForFrame:": (function (webView, webFrame) {
       const query = windowObject.evaluateWebScript('window.location.hash')
       const color = JSON.parse(decodeURIComponent(query).split('color=')[1])
+      color.r = parseInt(color.r) / 255
+      color.g = parseInt(color.g) / 255
+      color.b = parseInt(color.b) / 255
+      color.a = parseFloat(color.a)
 
-      const newColor = MSImmutableColor.colorWithIntegerRed_green_blue_alpha(parseInt(color.r)/255, parseInt(color.g)/255, parseInt(color.b)/255, parseFloat(color.a))
-      logger.log(newColor)
-      pickerButton.setImage(getImageByColor(NSColor.colorWithRed_green_blue_alpha(
-        parseInt(color.r) / 255,
-        parseInt(color.g) / 255,
-        parseInt(color.b) / 255,
-        parseFloat(color.a)), {width: 40, height: 30})
-      )
-      setColor(newColor)
+      const colorNS = NSColor.colorWithRed_green_blue_alpha(color.r, color.g, color.b, color.a)
+      const colorMS = MSImmutableColor.colorWithNSColor(colorNS)
+
+      pickerButton.setImage(getImageByColor(colorNS, {width: 40, height: 30}))
+      setColor(colorMS)
     })
   })
 
@@ -226,27 +228,39 @@ function layerToSvg(layer) {
   return NSString.alloc().initWithData_encoding(svgData, NSUTF8StringEncoding);
 }
 
-function svgHasStroke(artboard){
+function svgHasStroke(artboard) {
   let hasBorder = false
   artboard.children().forEach((layer) => {
-    if(layer.styledLayer().style().hasEnabledBorder()){
+    if (layer.styledLayer().style().hasEnabledBorder()) {
       hasBorder = true
     }
   })
   return hasBorder
 }
 
-function iconHasBorderColor(artboard){
+function iconHasBorderColor(artboard) {
   let color;
   const layers = artboard.children()
 
-  for(let i = 0; i < layers.length; i++) {
+  for (let i = 0; i < layers.length; i++) {
     let style = layers[i].styledLayer().style()
     color = style.firstEnabledBorder()
     if (color) break
   }
 
   return color
+}
+
+function convertMSColorToString(colorMS) {
+  return JSON.stringify({r: colorMS.red(), g: colorMS.green(), b: colorMS.blue(), a: colorMS.alpha()})
+}
+
+function convertStringToMSColor(string) {
+  const color = (typeof string !== 'object') ? string : JSON.parse(string)
+  const colorNS = NSColor.colorWithRed_green_blue_alpha(color.r, color.g, color.b, color.a)
+  console.log('>>>>>>>>>>>', MSImmutableColor.colorWithNSColor(colorNS));
+
+  return MSImmutableColor.colorWithNSColor(colorNS)
 }
 
 function networkRequest(svg) {
