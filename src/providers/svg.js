@@ -15,34 +15,30 @@ export default {
  * @description main function to update multiple icons on selected artboard
  * @param context
  * @param listIcon {Array} : NSUrl
- * @param artboards {Array} : MSArtboardGroup && MSSymbolMaster
+ * @param rootObjects {Array} : MSArtboardGroup && MSSymbolMaster
  */
-function initUpdateIconsSelectedArtboards(context, artboards, listIcon) {
+function initUpdateIconsSelectedArtboards(context, rootObjects, listIcon) {
 
-  artboards.some(async function (artboard, index) {
-    let color, isMasked;
+  rootObjects.forEach(function (rootObject, index) {
+    let isMasked;
     const svgData = String(NSString.alloc().initWithContentsOfURL(listIcon[index]))
+    const hasStroke = utils.svgHasStroke(rootObject.object)
 
-    if (!utils.svgHasStroke(artboard.object)) {
-      isMasked = utils.iconHasColor(artboard.object)
-      if (isMasked) color = artboard.object.lastLayer().copy()
-    } else {
-      color = utils.iconHasBorderColor()
-      if (color) isMasked = true;
-    }
-    await replaceSVG(context, artboard.object, svgData, isMasked, true)
-    artboard.object.setName(utils.getIconNameByNSUrl(listIcon[index]))
+    isMasked = ((!hasStroke && utils.hasMask(rootObject.object)) || utils.iconHasBorderColor(rootObject.object))
 
-    console.log('>>>>>>>>>>>', isMasked);
-    console.log('>>>>>>>>>>>', utils.svgHasStroke(artboard.object));
-    if (isMasked && utils.svgHasStroke(artboard.object)) {
-      console.log('>>>>>>>>>>> ici cool');
-      const params = maskProvider.getMaskPropertiesFromArtboard(context,artboard.object)
-      console.log('>>>>>>>>>>>', params);
-      maskProvider.applyColor(artboard, params);
-    } else if (isMasked) {
-      maskProvider.applyMask(artboard.object, color)
-    }
+    replaceSVG(context, rootObject.object, svgData, isMasked, true)
+      .then(() => {
+        rootObject.object.setName(utils.getIconNameByNSUrl(listIcon[index]))
+
+        if (isMasked) {
+          const params = maskProvider.getMaskPropertiesFromArtboard(context, rootObject.object)
+          if (utils.svgHasStroke(rootObject.object)) {
+            maskProvider.applyColor(rootObject.object, params)
+          } else {
+            maskProvider.applyMask(context, rootObject.object, params)
+          }
+        }
+      })
 
   })
 

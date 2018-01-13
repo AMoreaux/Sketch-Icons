@@ -1,8 +1,7 @@
 import logger from '../utils/logger'
 
 export default {
-  selectIconsFiles,
-  getFilesByUrls
+  selectIconsFiles
 }
 
 /**

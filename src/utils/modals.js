@@ -134,7 +134,7 @@ function createMaskFields(context, modal, checkboxFields) {
   colorLibsMenu.setEnabled(false)
   colorMenu.setEnabled(false)
 
-  colorLibsMenu.menu = libraries.initLibsSelectList(libraries.getLibs(), colorMenu);
+  colorLibsMenu.menu = libraries.initLibsSelectList(AppController.sharedInstance().librariesController().userLibraries(), colorMenu);
 
   if (checkboxFields) {
     checkboxFields[1].item.setCOSJSTargetFunction(function (mask) {

@@ -8,8 +8,6 @@ import mask from '../providers/mask'
 import svg from '../providers/svg'
 
 export default {
-  createArtboard,
-  initArtboardsParams,
   initImportIcons,
   getPaddingAndSize
 }
@@ -86,10 +84,10 @@ function initImportIcons(context, params) {
   params.listIcon.some((icon, index) => {
     try{
       const newArtboard = createArtboard(context, index, icon)
-      const svgData = String(NSString.alloc().initWithContentsOfURL(icon))
-      svg.addSVG(context, newArtboard, params.iconPadding, params.artboardSize, svgData, params.withMask, true)
-      if (params.withMask) mask.addMask(context, newArtboard, params)
       const newRootObject = (params.convertSymbol) ? MSSymbolMaster.convertArtboardToSymbol(newArtboard) : newArtboard
+      const svgData = String(NSString.alloc().initWithContentsOfURL(icon))
+      svg.addSVG(context, newRootObject, params.iconPadding, params.artboardSize, svgData, params.withMask, true)
+      if (params.withMask) mask.addMask(context, newRootObject, params)
       context.command.setValue_forKey_onLayer(params.iconPadding, "padding", newRootObject)
     }catch (e){
       logger.error(e)

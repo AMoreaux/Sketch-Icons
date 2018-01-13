@@ -3,23 +3,11 @@ import utils from "../utils/utils"
 import {setEnabledColorMenu} from "../modals/modals"
 
 export default {
-  getLibs,
   getLibById,
-  loadColorFromSelectedLib,
   initLibsSelectList,
-  initColorSelectList,
-  getColorFromSymbol
-}
-
-/**
- * @name getLibs
- * @description get all libraries
- * @returns {Array}
- */
-function getLibs() {
-  return AppController.sharedInstance().librariesController().userLibraries().slice().map(function (lib) {
-    return lib
-  })
+  getColorFromSymbol,
+  getSymbolFromDocument,
+  loadLibrary
 }
 
 /**
@@ -29,66 +17,79 @@ function getLibs() {
  * @returns {Object} : MSAssetLibrary
  */
 function getLibById(libraryId) {
-  return AppController.sharedInstance().librariesController().userLibraries().slice().filter(function (lib) {
-    return (String(libraryId) === String(lib.libraryID()))
-  })[0]
+
+  let library, userLibraries = AppController.sharedInstance().librariesController().userLibraries()
+
+  for(let i = 0; i < userLibraries.length; i++){
+    if(String(libraryId) === String(userLibraries[i].libraryID())){
+      library = userLibraries[i]
+      break;
+    }
+  }
+
+  return library
 }
 
 /**
  * @name loadColorFromSelectedLib
- * @description get colors form lib selected
- * @param lib
+ * @description get colors form library selected
+ * @param library
  * @param colorMenu
  * @returns {Array}
  */
-function loadColorFromSelectedLib(lib, colorMenu) {
+function loadColorFromSelectedLib(library, colorMenu) {
+  
   colorMenu.removeAllItems()
+  library = library.representedObject()
+  loadLibrary(library)
 
-  const libraryInstance = lib.representedObject()
-  libraryInstance.loadSynchronously()
+  return getColorSymbolsFromDocument(library.document())
+}
 
-  return getColorSymbolsFromDocument(libraryInstance.document())
+function loadLibrary(library){
+  return library.loadSynchronously()
 }
 
 /**
  * @name initLibsSelectList
  * @description get list of library in NSMenu
- * @param libs  {Array}
+ * @param context
+ * @param libraries  {Array}
  * @param colorMenu {Object} : NSPopUpButton
  * @returns {Object} : NSMenu
  */
-function initLibsSelectList(context, libs, colorMenu) {
+function initLibsSelectList(context, libraries, colorMenu) {
 
   function addListener(item) {
-    item.setCOSJSTargetFunction(function (lib) {
-      updateColorMenu(context, lib, colorMenu)
+    item.setCOSJSTargetFunction(function (library) {
+      updateColorMenu(context, library, colorMenu)
     })
   }
 
   const colorLibsMenu = NSMenu.alloc().init()
-  const currentFile = NSMenuItem.alloc().init()
-  currentFile.title = 'Current file'
-  addListener(currentFile)
-  colorLibsMenu.addItem(currentFile)
-  libs.some(function(lib){
+  const currentDocument = NSMenuItem.alloc().init()
+  currentDocument.title = 'Current file'
+  addListener(currentDocument)
+  colorLibsMenu.addItem(currentDocument)
+  libraries.some(function(library){
     let item = NSMenuItem.alloc().init()
-    item.title = lib.name()
-    item.representedObject = lib
+    item.title = library.name()
+    item.representedObject = library
     colorLibsMenu.addItem(item)
     addListener(item)
   })
 
-  updateColorMenu(context, currentFile, colorMenu)
+  updateColorMenu(context, currentDocument, colorMenu)
 
   return colorLibsMenu
 }
 
-function updateColorMenu(context, lib, colorMenu){
+function updateColorMenu(context, library, colorMenu){
   let colors = []
-  if(String(lib.title()) === 'Current file'){
+  if(!library.representedObject()){
     colors = getColorSymbolsFromDocument(context.document.documentData())
   }else{
-    colors = loadColorFromSelectedLib(lib, colorMenu)
+    colors = loadColorFromSelectedLib(library, colorMenu)
   }
   if(colors.length > 0){
     initColorSelectList(colorMenu, colors);
@@ -131,12 +132,26 @@ function initColorSelectList(popColorMenu, colors) {
  */
 function getColorSymbolsFromDocument(document){
   const result = []
+
   document.localSymbols().some(function(symbol){
     const color = getColorFromSymbol(symbol)
     if(color)result.push(color)
   })
 
   return result
+}
+
+function getSymbolFromDocument(document, symbolId){
+  let symbol, localSymbols = document.localSymbols();
+
+  for(let i = 0; i < localSymbols.length; i++){
+    if(String(localSymbols[i].symbolID())=== String(symbolId)){
+      symbol = localSymbols[i]
+      break
+    }
+  }
+
+  return symbol
 }
 
 function getColorFromSymbol(symbol){

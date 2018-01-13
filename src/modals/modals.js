@@ -229,7 +229,7 @@ function makeMaskLibraryParams(context) {
   this.colorLibsMenuParamsLabel = colorLibsLabel
   this.colorsMenuParamsLabel = colorMenuLabel
 
-  colorLibsMenu.menu = libraries.initLibsSelectList(context, libraries.getLibs(), colorMenu);
+  colorLibsMenu.menu = libraries.initLibsSelectList(context, AppController.sharedInstance().librariesController().userLibraries(), colorMenu);
 }
 
 function makeMaskColorPickerParams(context) {

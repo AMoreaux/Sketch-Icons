@@ -6,14 +6,11 @@ export default {
   getIconNameByNSUrl,
   createLabel,
   getSelectedArtboardsAndSymbols,
-  flatten,
-  getDocumentColors,
   createWebview,
   createDivider,
   runFramework,
   getImageByColor,
-  iconHasColor,
-  networkRequest,
+  hasMask,
   layerToSvg,
   svgHasStroke,
   iconHasBorderColor,
@@ -97,25 +94,25 @@ function getSelectedArtboardsAndSymbols(context) {
   return selectedArtboardsAndSymbols
 }
 
-/**
- * @name flatten
- * @description flatten array
- * @param list
- * @return {Array}
- */
-function flatten(list) {
-  return list.reduce((a, b) => a.concat(Array.isArray(b) ? flatten(b) : b), [])
-}
+// /**
+//  * @name flatten
+//  * @description flatten array
+//  * @param list
+//  * @return {Array}
+//  */
+// function flatten(list) {
+//   return list.reduce((a, b) => a.concat(Array.isArray(b) ? flatten(b) : b), [])
+// }
 
-/**
- * @name getDocumentColors
- * @description return list of document colors
- * @param context
- * @return {Array}
- */
-function getDocumentColors(context) {
-  return context.document.documentData().assets().colors()
-}
+// /**
+//  * @name getDocumentColors
+//  * @description return list of document colors
+//  * @param context
+//  * @return {Array}
+//  */
+// function getDocumentColors(context) {
+//   return context.document.documentData().assets().colors()
+// }
 
 /**
  * @name createWebview
@@ -218,7 +215,7 @@ function getImageByColor(color, colorSize = {width: 14, height: 14}) {
  * @param artboard
  * @return {Boolean}
  */
-function iconHasColor(artboard) {
+function hasMask(artboard) {
   return !!artboard.firstLayer().hasClippingMask()
 }
 
@@ -258,12 +255,11 @@ function convertMSColorToString(colorMS) {
 function convertStringToMSColor(string) {
   const color = (typeof string !== 'object') ? string : JSON.parse(string)
   const colorNS = NSColor.colorWithRed_green_blue_alpha(color.r, color.g, color.b, color.a)
-  console.log('>>>>>>>>>>>', MSImmutableColor.colorWithNSColor(colorNS));
 
   return MSImmutableColor.colorWithNSColor(colorNS)
 }
 
-function networkRequest(svg) {
+// function networkRequest(svg) {
   // var task = NSTask.alloc().init();
   // task.setLaunchPath("/usr/bin/curl");
   // task.setArguments(args);
@@ -291,5 +287,5 @@ function networkRequest(svg) {
   //   log(responseString);
   //   throw "Error communicating with server"
   // }
-  return '';
-}
+//   return '';
+// }

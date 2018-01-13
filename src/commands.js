@@ -55,20 +55,6 @@ export function addMaskOnSelectedArtboards(context) {
 }
 
 /**
- * @name updateMaskOnSelectedArtboards
- * @description trigger to start feature to update mask
- * @param context
- */
-export function updateMaskOnSelectedArtboards(context) {
-  utils.runFramework(context)
-  const selectedArtboardsAndSymbols = utils.getSelectedArtboardsAndSymbols(context);
-  if (selectedArtboardsAndSymbols.length === 0) return modals.newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.')
-  const params = maskModal(context)
-  if (params.button !== 1000) return
-  maskProvider.initAddMaskOnSelectedArtboards(context, params, selectedArtboardsAndSymbols)
-}
-
-/**
  * @name removeMaskOnSelectedArtboards
  * @description remove masks layer
  * @param context
@@ -77,6 +63,6 @@ export function removeMaskOnSelectedArtboards(context) {
   const selectedArtboardsAndSymbols = utils.getSelectedArtboardsAndSymbols(context);
   if (selectedArtboardsAndSymbols.length === 0) return modals.newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.')
   selectedArtboardsAndSymbols.forEach((rootElement) => {
-    maskProvider.removeMask(rootElement.object)
+    maskProvider.removeMask(context, rootElement.object)
   })
 }
