@@ -14,7 +14,7 @@ function selectIconsFiles() {
   const panel = NSOpenPanel.openPanel();
   panel.setAllowsMultipleSelection(true);
   panel.setCanChooseDirectories(true);
-  panel.setAllowedFileTypes(["svg"]);
+  panel.setAllowedFileTypes(["svg", "pdf"]);
   panel.setCanChooseFiles(true);
   panel.setPrompt("Select");
 
@@ -31,11 +31,13 @@ function selectIconsFiles() {
  */
 function getFilesByUrls(urls) {
   return [].concat(...urls.slice().map(function (path) {
-    if (path.toString().split('.').pop() === 'svg') {
+    let ext = path.toString().split('.').pop()
+    if (ext === 'svg' || ext === 'pdf') {
       return path
     } else {
       return NSFileManager.defaultManager().contentsOfDirectoryAtURL_includingPropertiesForKeys_options_error(path, null, null, null).slice().filter(function (path) {
-        if (path.toString().split('.').pop() === 'svg') {
+        let ext = path.toString().split('.').pop()
+        if (ext === 'svg' || ext === 'pdf') {
           return true
         }
       })

@@ -81,13 +81,17 @@ function initImportIcons(context, params) {
   artboardParams.size.height = artboardParams.size.width = params.artboardSize
   initArtboardsParams(context)
 
-  params.listIcon.some((icon, index) => {
+  params.listIcon.forEach((icon, index) => {
     try{
       const newArtboard = createArtboard(context, index, icon)
       const newRootObject = (params.convertSymbol) ? MSSymbolMaster.convertArtboardToSymbol(newArtboard) : newArtboard
-      const svgData = String(NSString.alloc().initWithContentsOfURL(icon))
-      svg.addSVG(context, newRootObject, params.iconPadding, params.artboardSize, svgData, params.withMask, true)
-      if (params.withMask) mask.addMask(context, newRootObject, params)
+      if(String(icon.toString().split('.').pop()) === 'pdf'){
+        return svg.addPDF(context, newRootObject, params.iconPadding, params.artboardSize, icon)
+      }else{
+        const svgData = String(NSString.alloc().initWithContentsOfURL(icon))
+        svg.addSVG(context, newRootObject, params.iconPadding, params.artboardSize, svgData, params.withMask, true)
+        if (params.withMask) mask.addMask(context, newRootObject, params)
+      }
       context.command.setValue_forKey_onLayer(params.iconPadding, "padding", newRootObject)
     }catch (e){
       logger.error(e)

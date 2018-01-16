@@ -133,7 +133,7 @@ function initColorSelectList(popColorMenu, colors) {
 function getColorSymbolsFromDocument(document){
   const result = []
 
-  document.localSymbols().some(function(symbol){
+  document.localSymbols().forEach(function(symbol){
     const color = getColorFromSymbol(symbol)
     if(color)result.push(color)
   })

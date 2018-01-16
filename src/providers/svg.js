@@ -7,7 +7,8 @@ import svgo from '../svgo/lib/svgo'
 export default {
   initUpdateIconsSelectedArtboards,
   addSVG,
-  replaceSVG
+  replaceSVG,
+  addPDF
 }
 
 /**
@@ -62,9 +63,11 @@ async function addSVG(context, artboard, iconPadding, artboardSize, svgData, wit
   svgData = NSString.stringWithString(svgData)
   const viewBox = getViewBox(svgData)
   if (withResize) svgData = addRectToResize(svgData, viewBox)
+
   const svgImporter = MSSVGImporter.svgImporter()
   svgImporter.prepareToImportFromData(svgData.dataUsingEncoding(NSUTF8StringEncoding))
   const svgLayer = svgImporter.importAsLayer()
+
   removeTxt(svgLayer)
   artboard.addLayer(svgLayer)
   if (utils.svgHasStroke(artboard)) {
@@ -75,6 +78,15 @@ async function addSVG(context, artboard, iconPadding, artboardSize, svgData, wit
   if (withResize) resizeSVG(artboard.firstLayer(), artboard, iconPadding)
   if (withResize) removeDeleteMeRect(artboard)
   artboard.firstLayer().resizeToFitChildrenWithOption(1)
+  center(artboardSize, artboard.firstLayer())
+}
+
+async function addPDF(context, artboard, iconPadding, artboardSize, icon){
+  const pdfImporter = MSPDFImporter.pdfImporter()
+  pdfImporter.prepareToImportFromURL(icon)
+  const pdfLayer = pdfImporter.importAsLayer()
+  artboard.addLayer(pdfLayer)
+  resizeSVG(artboard.firstLayer(), artboard, iconPadding)
   center(artboardSize, artboard.firstLayer())
 }
 
