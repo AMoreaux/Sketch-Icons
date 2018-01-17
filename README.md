@@ -6,6 +6,10 @@ A Sketch plugin that allows you to import a set of icons and automatically apply
 
 📣 <a href="https://blog.prototypr.io/introducing-sketch-icons-2074d9dc9ed2" target="_blank">Read our Medium article to use Sketch Icons efficiently</a>
 
+⚠️ If you have some troubles with Sketch Icons, here are some recommendations:
+- Sketch Icons is not compatible with MacOS El Capitan
+- It seems that Sketch Focus plugin is preventing Sketch Icons from working properly, so please disable it
+
 ## Features
 
 Since the arrival of nested symbols and Sketch libraries, our worfklow has been incredibly improved.
