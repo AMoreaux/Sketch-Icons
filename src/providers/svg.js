@@ -23,22 +23,15 @@ function initUpdateIconsSelectedArtboards(context, rootObjects, listIcon) {
   rootObjects.forEach(function (rootObject, index) {
     let isMasked;
     const svgData = String(NSString.alloc().initWithContentsOfURL(listIcon[index]))
-    const hasStroke = utils.svgHasStroke(rootObject.object)
 
-    isMasked = ((!hasStroke && utils.hasMask(rootObject.object)) || utils.iconHasBorderColor(rootObject.object))
+    const params = maskProvider.getMaskPropertiesFromArtboard(context, rootObject.object)
+
+    isMasked = (params)
 
     replaceSVG(context, rootObject.object, svgData, isMasked, true)
       .then(() => {
         rootObject.object.setName(utils.getIconNameByNSUrl(listIcon[index]))
-
-        if (isMasked) {
-          const params = maskProvider.getMaskPropertiesFromArtboard(context, rootObject.object)
-          if (utils.svgHasStroke(rootObject.object)) {
-            maskProvider.applyColor(rootObject.object, params)
-          } else {
-            maskProvider.applyMask(context, rootObject.object, params)
-          }
-        }
+        if (isMasked) maskProvider.addColor(context, rootObject.object, params)
       })
 
   })
@@ -70,10 +63,10 @@ async function addSVG(context, artboard, iconPadding, artboardSize, svgData, wit
 
   removeTxt(svgLayer)
   artboard.addLayer(svgLayer)
-  if (utils.svgHasStroke(artboard)) {
-    const diagContainer = artboardSize - iconPadding
-    setThicknessProportionnally(svgLayer, diagContainer, viewBox)
-  }
+  // if (utils.svgHasStroke(artboard)) {
+  //   const diagContainer = artboardSize - iconPadding * 2
+  //   setThicknessProportionnally(svgLayer, diagContainer, viewBox)
+  // }
   if (withMask) cleanSvg(svgLayer, artboard)
   if (withResize) resizeSVG(artboard.firstLayer(), artboard, iconPadding)
   if (withResize) removeDeleteMeRect(artboard)
@@ -88,6 +81,7 @@ async function addPDF(context, artboard, iconPadding, artboardSize, icon){
   artboard.addLayer(pdfLayer)
   resizeSVG(artboard.firstLayer(), artboard, iconPadding)
   center(artboardSize, artboard.firstLayer())
+  artboard.firstLayer().setName(artboard.name())
 }
 
 /**
@@ -295,17 +289,17 @@ async function replaceSVG(context, artboard, svgData, withMask, withResize) {
   }
 }
 
-function setThicknessProportionnally(svgLayer, diagContainer, viewBox) {
-
-  const diagViewbox = Math.sqrt(Math.pow(viewBox.width, 2) + Math.pow(viewBox.height, 2))
-  const diagArtboard = Math.sqrt(Math.pow(diagContainer, 2) * 2)
-  const ratio = diagArtboard / diagViewbox
-
-  svgLayer.children().forEach((layer) => {
-    if (layer.styledLayer().style().hasEnabledBorder() && String(layer.class()) === 'MSShapePathLayer') {
-      const style = layer.styledLayer().style()
-      const thickness = style.firstEnabledBorder().thickness()
-      style.firstEnabledBorder().thickness = Math.round(thickness * ratio)
-    }
-  })
-}
+// function setThicknessProportionnally(svgLayer, diagContainer, viewBox) {
+//
+//   const diagViewbox = Math.sqrt(Math.pow(viewBox.width, 2) + Math.pow(viewBox.height, 2))
+//   const diagArtboard = Math.sqrt(Math.pow(diagContainer, 2) * 2)
+//   const ratio = diagArtboard / diagViewbox
+//
+//   svgLayer.children().forEach((layer) => {
+//     if (layer.styledLayer().style().hasEnabledBorder() && String(layer.class()) === 'MSShapePathLayer') {
+//       const style = layer.styledLayer().style()
+//       const thickness = style.firstEnabledBorder().thickness()
+//       style.firstEnabledBorder().thickness = Math.round(thickness * ratio)
+//     }
+//   })
+// }

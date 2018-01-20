@@ -2,8 +2,8 @@
   "compatibleVersion": 47,
   "bundleVersion": 1,
   "version": "3.0.14",
-  "name": "Sketch-Icons",
-  "identifier": "com.amoreaux.sketch-icons",
+  "name": "Sketch-Icons-v4",
+  "identifier": "com.amoreaux.sketch-icons.v4",
   "description": "Import your icons, apply a color mask and create a dynamic icons library.",
   "authorEmail": "moreaux.antoine@gmail.com",
   "author": "Valentin Chrétien, Antoine Moreaux",
@@ -54,7 +54,7 @@
     }
   ],
   "menu" : {
-    "title" : "Sketch Icons",
+    "title" : "Sketch Icons v4",
     "items" : [
       "import.icons",
       "update.icons.selected.artboard",

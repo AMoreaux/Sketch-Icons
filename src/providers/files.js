@@ -7,7 +7,7 @@ export default {
 /**
  * @name selectIconsFiles
  * @description display modal selection file and return them
- * @returns {Array.NSFile}
+ * @returns {Array}
  */
 function selectIconsFiles() {
 
@@ -20,27 +20,30 @@ function selectIconsFiles() {
 
   if (panel.runModal() !== NSFileHandlingPanelOKButton) return []
 
-  return getFilesByUrls(panel.URLs())
+  const result = []
+
+  getFilesByUrls(panel.URLs(), result)
+  
+  return result
 }
 
 /**
  * @name getFilesByUrls
  * @description get file from list of folder and path
- * @param urls {Array.NSurl}
- * @returns {Array.NSFile}
+ * @param urls {Array}
+ * @param result {Array}
+ * @returns {Array}
  */
-function getFilesByUrls(urls) {
-  return [].concat(...urls.slice().map(function (path) {
-    let ext = path.toString().split('.').pop()
-    if (ext === 'svg' || ext === 'pdf') {
-      return path
-    } else {
-      return NSFileManager.defaultManager().contentsOfDirectoryAtURL_includingPropertiesForKeys_options_error(path, null, null, null).slice().filter(function (path) {
-        let ext = path.toString().split('.').pop()
-        if (ext === 'svg' || ext === 'pdf') {
-          return true
-        }
-      })
+function getFilesByUrls(urls, result) {
+
+  for(let i = 0; i < urls.length; i++){
+    if(!!(urls[i].hasDirectoryPath())){
+      getFilesByUrls(NSFileManager.defaultManager().contentsOfDirectoryAtURL_includingPropertiesForKeys_options_error(urls[i], null, null, null), result)
+    }else{
+      const ext = String(urls[i].pathExtension())
+      if (ext === 'svg' || ext === 'pdf'){
+        result.push(urls[i])
+      }
     }
-  }))
+  }
 }

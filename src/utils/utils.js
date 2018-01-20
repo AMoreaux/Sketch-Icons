@@ -94,26 +94,6 @@ function getSelectedArtboardsAndSymbols(context) {
   return selectedArtboardsAndSymbols
 }
 
-// /**
-//  * @name flatten
-//  * @description flatten array
-//  * @param list
-//  * @return {Array}
-//  */
-// function flatten(list) {
-//   return list.reduce((a, b) => a.concat(Array.isArray(b) ? flatten(b) : b), [])
-// }
-
-// /**
-//  * @name getDocumentColors
-//  * @description return list of document colors
-//  * @param context
-//  * @return {Array}
-//  */
-// function getDocumentColors(context) {
-//   return context.document.documentData().assets().colors()
-// }
-
 /**
  * @name createWebview
  * @param context

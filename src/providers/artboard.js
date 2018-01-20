@@ -4,8 +4,8 @@
 
 import utils from '../utils/utils'
 import logger from '../utils/logger'
-import mask from '../providers/mask'
 import svg from '../providers/svg'
+import maskProvider from "./mask";
 
 export default {
   initImportIcons,
@@ -90,7 +90,9 @@ function initImportIcons(context, params) {
       }else{
         const svgData = String(NSString.alloc().initWithContentsOfURL(icon))
         svg.addSVG(context, newRootObject, params.iconPadding, params.artboardSize, svgData, params.withMask, true)
-        if (params.withMask) mask.addMask(context, newRootObject, params)
+        if (params.withMask){
+          maskProvider.addColor(context, newRootObject, params)
+        }
       }
       context.command.setValue_forKey_onLayer(params.iconPadding, "padding", newRootObject)
     }catch (e){
@@ -110,7 +112,7 @@ function initImportIcons(context, params) {
  */
 function getPaddingAndSize(context, artboard){
   return {
-    iconPadding: parseInt(context.command.valueForKey_onLayer("padding", artboard)),
+    iconPadding: parseInt(context.command.valueForKey_onLayer("padding", artboard) || 4),
     artboardSize: parseInt(artboard.rect().size.width)
   }
 }

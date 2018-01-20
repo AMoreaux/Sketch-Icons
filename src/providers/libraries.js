@@ -126,7 +126,7 @@ function initColorSelectList(popColorMenu, colors) {
 }
 
 /**
- * @name getColorSymbolsFromCurrentDocument
+ * @name getColorSymbolsFromDocument
  * @param document
  * @return {Array}
  */
@@ -142,6 +142,8 @@ function getColorSymbolsFromDocument(document){
 }
 
 function getSymbolFromDocument(document, symbolId){
+
+
   let symbol, localSymbols = document.localSymbols();
 
   for(let i = 0; i < localSymbols.length; i++){
@@ -152,6 +154,8 @@ function getSymbolFromDocument(document, symbolId){
   }
 
   return symbol
+
+  // return document.symbolWithID(symbolId)
 }
 
 function getColorFromSymbol(symbol){

@@ -1678,6 +1678,216 @@ exports['default'] = function () {
 /* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
+/* WEBPACK VAR INJECTION */(function(console, process, global) {/* globals log */
+if (!console._skpmEnabled) {
+  if (process.env.NODE_ENV !== 'production') {
+    var sketchDebugger = __webpack_require__(135)
+    var actions = __webpack_require__(137)
+
+    function getStack() {
+      return sketchDebugger.prepareStackTrace(new Error().stack)
+    }
+  }
+
+  console._skpmPrefix = 'console> '
+
+  function logEverywhere(type, args) {
+    var values = Array.prototype.slice.call(args)
+
+    // log to the System logs
+    values.forEach(function(v) {
+      try {
+        log(console._skpmPrefix + indentString() + v)
+      } catch (e) {
+        log(v)
+      }
+    })
+
+    if (process.env.NODE_ENV !== 'production') {
+      if (!sketchDebugger.isDebuggerPresent()) {
+        return
+      }
+
+      var payload = {
+        ts: Date.now(),
+        type: type,
+        plugin: String(context.scriptPath),
+        values: values.map(sketchDebugger.prepareValue),
+        stack: getStack(),
+      }
+
+      sketchDebugger.sendToDebugger(actions.ADD_LOG, payload)
+    }
+  }
+
+  var indentLevel = 0
+  function indentString() {
+    var indent = ''
+    for (var i = 0; i < indentLevel; i++) {
+      indent += '  '
+    }
+    if (indentLevel > 0) {
+      indent += '| '
+    }
+    return indent
+  }
+
+  var oldGroup = console.group
+
+  console.group = function() {
+    // log to the JS context
+    oldGroup && oldGroup.apply(this, arguments)
+    indentLevel += 1
+    if (process.env.NODE_ENV !== 'production') {
+      sketchDebugger.sendToDebugger(actions.GROUP, {
+        plugin: String(context.scriptPath),
+        collapsed: false,
+      })
+    }
+  }
+
+  var oldGroupCollapsed = console.groupCollapsed
+
+  console.groupCollapsed = function() {
+    // log to the JS context
+    oldGroupCollapsed && oldGroupCollapsed.apply(this, arguments)
+    indentLevel += 1
+    if (process.env.NODE_ENV !== 'production') {
+      sketchDebugger.sendToDebugger(actions.GROUP, {
+        plugin: String(context.scriptPath),
+        collapsed: true
+      })
+    }
+  }
+
+  var oldGroupEnd = console.groupEnd
+
+  console.groupEnd = function() {
+    // log to the JS context
+    oldGroupEnd && oldGroupEnd.apply(this, arguments)
+    indentLevel -= 1
+    if (indentLevel < 0) {
+      indentLevel = 0
+    }
+    if (process.env.NODE_ENV !== 'production') {
+      sketchDebugger.sendToDebugger(actions.GROUP_END, {
+        plugin: context.scriptPath,
+      })
+    }
+  }
+
+  var counts = {}
+  var oldCount = console.count
+
+  console.count = function(label) {
+    label = typeof label !== 'undefined' ? label : 'Global'
+    counts[label] = (counts[label] || 0) + 1
+
+    // log to the JS context
+    oldCount && oldCount.apply(this, arguments)
+    return logEverywhere('log', [label + ': ' + counts[label]])
+  }
+
+  var timers = {}
+  var oldTime = console.time
+
+  console.time = function(label) {
+    // log to the JS context
+    oldTime && oldTime.apply(this, arguments)
+
+    label = typeof label !== 'undefined' ? label : 'default'
+    if (timers[label]) {
+      return logEverywhere('warn', ['Timer "' + label + '" already exists'])
+    }
+
+    timers[label] = Date.now()
+    return
+  }
+
+  var oldTimeEnd = console.timeEnd
+
+  console.timeEnd = function(label) {
+    // log to the JS context
+    oldTimeEnd && oldTimeEnd.apply(this, arguments)
+
+    label = typeof label !== 'undefined' ? label : 'default'
+    if (!timers[label]) {
+      return logEverywhere('warn', ['Timer "' + label + '" does not exist'])
+    }
+
+    var duration = Date.now() - timers[label]
+    delete timers[label]
+    return logEverywhere('log', [label + ': ' + (duration / 1000) + 'ms'])
+  }
+
+  var oldLog = console.log
+
+  console.log = function() {
+    // log to the JS context
+    oldLog && oldLog.apply(this, arguments)
+    return logEverywhere('log', arguments)
+  }
+
+  var oldWarn = console.warn
+
+  console.warn = function() {
+    // log to the JS context
+    oldWarn && oldWarn.apply(this, arguments)
+    return logEverywhere('warn', arguments)
+  }
+
+  var oldError = console.error
+
+  console.error = function() {
+    // log to the JS context
+    oldError && oldError.apply(this, arguments)
+    return logEverywhere('error', arguments)
+  }
+
+  var oldAssert = console.assert
+
+  console.assert = function(condition, text) {
+    // log to the JS context
+    oldAssert && oldAssert.apply(this, arguments)
+    if (!condition) {
+      return logEverywhere('assert', [text])
+    }
+    return undefined
+  }
+
+  var oldInfo = console.info
+
+  console.info = function() {
+    // log to the JS context
+    oldInfo && oldInfo.apply(this, arguments)
+    return logEverywhere('info', arguments)
+  }
+
+  var oldClear = console.clear
+
+  console.clear = function() {
+    oldClear && oldClear()
+    if (process.env.NODE_ENV !== 'production') {
+      return sketchDebugger.sendToDebugger(actions.CLEAR_LOGS)
+    }
+  }
+
+  console._skpmEnabled = true
+
+  // polyfill the global object
+  var commonjsGlobal = typeof global !== 'undefined' ? global : this
+
+  commonjsGlobal.console = console
+}
+
+module.exports = console
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6), __webpack_require__(13), __webpack_require__(8)))
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
 "use strict";
 /* WEBPACK VAR INJECTION */(function(console) {/* global a2c */
 
@@ -2651,217 +2861,7 @@ function a2c(x1, y1, rx, ry, angle, large_arc_flag, sweep_flag, x2, y2, recursiv
     }
 }
 // jshint ignore: end
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
-
-/***/ }),
-/* 7 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(console, process, global) {/* globals log */
-if (!console._skpmEnabled) {
-  if (process.env.NODE_ENV !== 'production') {
-    var sketchDebugger = __webpack_require__(135)
-    var actions = __webpack_require__(137)
-
-    function getStack() {
-      return sketchDebugger.prepareStackTrace(new Error().stack)
-    }
-  }
-
-  console._skpmPrefix = 'console> '
-
-  function logEverywhere(type, args) {
-    var values = Array.prototype.slice.call(args)
-
-    // log to the System logs
-    values.forEach(function(v) {
-      try {
-        log(console._skpmPrefix + indentString() + v)
-      } catch (e) {
-        log(v)
-      }
-    })
-
-    if (process.env.NODE_ENV !== 'production') {
-      if (!sketchDebugger.isDebuggerPresent()) {
-        return
-      }
-
-      var payload = {
-        ts: Date.now(),
-        type: type,
-        plugin: String(context.scriptPath),
-        values: values.map(sketchDebugger.prepareValue),
-        stack: getStack(),
-      }
-
-      sketchDebugger.sendToDebugger(actions.ADD_LOG, payload)
-    }
-  }
-
-  var indentLevel = 0
-  function indentString() {
-    var indent = ''
-    for (var i = 0; i < indentLevel; i++) {
-      indent += '  '
-    }
-    if (indentLevel > 0) {
-      indent += '| '
-    }
-    return indent
-  }
-
-  var oldGroup = console.group
-
-  console.group = function() {
-    // log to the JS context
-    oldGroup && oldGroup.apply(this, arguments)
-    indentLevel += 1
-    if (process.env.NODE_ENV !== 'production') {
-      sketchDebugger.sendToDebugger(actions.GROUP, {
-        plugin: String(context.scriptPath),
-        collapsed: false,
-      })
-    }
-  }
-
-  var oldGroupCollapsed = console.groupCollapsed
-
-  console.groupCollapsed = function() {
-    // log to the JS context
-    oldGroupCollapsed && oldGroupCollapsed.apply(this, arguments)
-    indentLevel += 1
-    if (process.env.NODE_ENV !== 'production') {
-      sketchDebugger.sendToDebugger(actions.GROUP, {
-        plugin: String(context.scriptPath),
-        collapsed: true
-      })
-    }
-  }
-
-  var oldGroupEnd = console.groupEnd
-
-  console.groupEnd = function() {
-    // log to the JS context
-    oldGroupEnd && oldGroupEnd.apply(this, arguments)
-    indentLevel -= 1
-    if (indentLevel < 0) {
-      indentLevel = 0
-    }
-    if (process.env.NODE_ENV !== 'production') {
-      sketchDebugger.sendToDebugger(actions.GROUP_END, {
-        plugin: context.scriptPath,
-      })
-    }
-  }
-
-  var counts = {}
-  var oldCount = console.count
-
-  console.count = function(label) {
-    label = typeof label !== 'undefined' ? label : 'Global'
-    counts[label] = (counts[label] || 0) + 1
-
-    // log to the JS context
-    oldCount && oldCount.apply(this, arguments)
-    return logEverywhere('log', [label + ': ' + counts[label]])
-  }
-
-  var timers = {}
-  var oldTime = console.time
-
-  console.time = function(label) {
-    // log to the JS context
-    oldTime && oldTime.apply(this, arguments)
-
-    label = typeof label !== 'undefined' ? label : 'default'
-    if (timers[label]) {
-      return logEverywhere('warn', ['Timer "' + label + '" already exists'])
-    }
-
-    timers[label] = Date.now()
-    return
-  }
-
-  var oldTimeEnd = console.timeEnd
-
-  console.timeEnd = function(label) {
-    // log to the JS context
-    oldTimeEnd && oldTimeEnd.apply(this, arguments)
-
-    label = typeof label !== 'undefined' ? label : 'default'
-    if (!timers[label]) {
-      return logEverywhere('warn', ['Timer "' + label + '" does not exist'])
-    }
-
-    var duration = Date.now() - timers[label]
-    delete timers[label]
-    return logEverywhere('log', [label + ': ' + (duration / 1000) + 'ms'])
-  }
-
-  var oldLog = console.log
-
-  console.log = function() {
-    // log to the JS context
-    oldLog && oldLog.apply(this, arguments)
-    return logEverywhere('log', arguments)
-  }
-
-  var oldWarn = console.warn
-
-  console.warn = function() {
-    // log to the JS context
-    oldWarn && oldWarn.apply(this, arguments)
-    return logEverywhere('warn', arguments)
-  }
-
-  var oldError = console.error
-
-  console.error = function() {
-    // log to the JS context
-    oldError && oldError.apply(this, arguments)
-    return logEverywhere('error', arguments)
-  }
-
-  var oldAssert = console.assert
-
-  console.assert = function(condition, text) {
-    // log to the JS context
-    oldAssert && oldAssert.apply(this, arguments)
-    if (!condition) {
-      return logEverywhere('assert', [text])
-    }
-    return undefined
-  }
-
-  var oldInfo = console.info
-
-  console.info = function() {
-    // log to the JS context
-    oldInfo && oldInfo.apply(this, arguments)
-    return logEverywhere('info', arguments)
-  }
-
-  var oldClear = console.clear
-
-  console.clear = function() {
-    oldClear && oldClear()
-    if (process.env.NODE_ENV !== 'production') {
-      return sketchDebugger.sendToDebugger(actions.CLEAR_LOGS)
-    }
-  }
-
-  console._skpmEnabled = true
-
-  // polyfill the global object
-  var commonjsGlobal = typeof global !== 'undefined' ? global : this
-
-  commonjsGlobal.console = console
-}
-
-module.exports = console
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7), __webpack_require__(13), __webpack_require__(8)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
 
 /***/ }),
 /* 8 */
@@ -3340,26 +3340,6 @@ function getSelectedArtboardsAndSymbols(context) {
   return selectedArtboardsAndSymbols;
 }
 
-// /**
-//  * @name flatten
-//  * @description flatten array
-//  * @param list
-//  * @return {Array}
-//  */
-// function flatten(list) {
-//   return list.reduce((a, b) => a.concat(Array.isArray(b) ? flatten(b) : b), [])
-// }
-
-// /**
-//  * @name getDocumentColors
-//  * @description return list of document colors
-//  * @param context
-//  * @return {Array}
-//  */
-// function getDocumentColors(context) {
-//   return context.document.documentData().assets().colors()
-// }
-
 /**
  * @name createWebview
  * @param context
@@ -3723,7 +3703,7 @@ var removeLeadingZero = exports.removeLeadingZero = function (num) {
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(27);
+var processNextTick = __webpack_require__(28);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -6701,6 +6681,255 @@ module.exports = {
 /* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _utils = __webpack_require__(10);
+
+var _utils2 = _interopRequireDefault(_utils);
+
+var _svg = __webpack_require__(31);
+
+var _svg2 = _interopRequireDefault(_svg);
+
+var _libraries = __webpack_require__(45);
+
+var _libraries2 = _interopRequireDefault(_libraries);
+
+var _logger = __webpack_require__(5);
+
+var _logger2 = _interopRequireDefault(_logger);
+
+var _switchV3ToV = __webpack_require__(358);
+
+var _switchV3ToV2 = _interopRequireDefault(_switchV3ToV);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+exports['default'] = {
+  initAddMaskOnSelectedArtboards: initAddMaskOnSelectedArtboards,
+  addColor: addColor,
+  removeMask: removeMask,
+  getMaskPropertiesFromArtboard: getMaskPropertiesFromArtboard,
+  registerMask: registerMask
+
+  /**
+   * @name initAddMaskOnSelectedArtboards
+   * @description main function to add mask on selected artboards
+   * @param context {Object}
+   * @param params {Object}
+   * @param rootObjects {Array} : MSArtboardGroup
+   */
+};
+function initAddMaskOnSelectedArtboards(context, params, rootObjects) {
+  rootObjects.forEach(async function (rootObject) {
+    if (_utils2['default'].hasMask(rootObject.object) && !_utils2['default'].svgHasStroke(rootObject.object)) removeMask(context, rootObject.object);
+    await addColor(context, rootObject.object, params);
+  });
+  _utils2['default'].clearSelection(context);
+}
+
+/**
+ * @name applyColor
+ * @description apply border color on svg with stroke
+ * @param rootObject
+ * @param params
+ */
+function applyColor(rootObject, params) {
+  var color = params.colorPicker ? params.colorPicker : _libraries2['default'].getColorFromSymbol(params.color).color;
+  rootObject.children().forEach(function (layer) {
+    if (layer.styledLayer().style().hasEnabledBorder()) {
+      var style = layer.styledLayer().style();
+      style.enabledBorders().forEach(function (border) {
+        border.color = color;
+      });
+    }
+  });
+}
+
+/**
+ * @name removeMask
+ * @description remove all mask from artboard
+ * @param context
+ * @param rootObject {Object} : MSArtboardGroup
+ */
+function removeMask(context, rootObject) {
+
+  context.command.setValue_forKey_onLayer(null, "colorLib", rootObject);
+  context.command.setValue_forKey_onLayer(null, "color", rootObject);
+  context.command.setValue_forKey_onLayer(null, "colorPicker", rootObject);
+
+  if (_utils2['default'].svgHasStroke(rootObject)) {
+    return applyColor(rootObject, { colorPicker: MSImmutableColor.blackColor() });
+  }
+
+  var iconLayer = rootObject.firstLayer();
+
+  if (iconLayer.hasClippingMask()) {
+    iconLayer.hasClippingMask = false;
+    iconLayer.clippingMaskMode = 1;
+    var style = rootObject.firstLayer().style();
+    var fillColor = style.fills()[0].color();
+    style.removeAllStyleFills();
+    style.addStylePartOfType(0).color = fillColor;
+
+    rootObject.lastLayer().removeFromParent();
+  }
+}
+
+/**
+ * @name addColor
+ * @description index function for all step to add mask and convert artboard to symbol at end
+ * @param context {Object}
+ * @param rootObject {Object} : MSArtboardGroup && MSSymbolMaster
+ * @param params {Object}
+ */
+async function addColor(context, rootObject, params) {
+
+  if (_utils2['default'].svgHasStroke(rootObject)) {
+    return applyColor(rootObject, params);
+  } else {
+
+    if (_utils2['default'].hasMask(rootObject)) {
+      removeMask(context, rootObject);
+    } else {
+      var svgData = _utils2['default'].layerToSvg(rootObject.firstLayer());
+      await _svg2['default'].replaceSVG(context, rootObject, svgData, true, false);
+    }
+
+    applyMask(context, rootObject, params);
+  }
+
+  return registerMask(context, rootObject, params);
+}
+
+/**
+ * @name registerMask
+ * @description register properties of mask in artboard metadata
+ * @param context
+ * @param rootObject
+ * @param params
+ */
+function registerMask(context, rootObject, params) {
+  if (params.color) {
+    var libraryId = params.colorLib ? params.colorLib.libraryID() : null;
+    var colorId = typeof params.color === 'string' ? params.color : params.color.symbolID();
+
+    context.command.setValue_forKey_onLayer(libraryId, "colorLib", rootObject);
+    context.command.setValue_forKey_onLayer(colorId, "color", rootObject);
+    context.command.setValue_forKey_onLayer(null, "colorPicker", rootObject);
+  } else if (params.colorPicker) {
+    context.command.setValue_forKey_onLayer(_utils2['default'].convertMSColorToString(params.colorPicker), "colorPicker", rootObject);
+    context.command.setValue_forKey_onLayer(null, "colorLib", rootObject);
+    context.command.setValue_forKey_onLayer(null, "color", rootObject);
+  }
+}
+
+function getMaskPropertiesFromArtboard(context, rootObject) {
+
+  var params = getColorParams(context, rootObject);
+
+  var maskLayer = rootObject.firstLayer();
+  if (!params.colorLibraryId && !params.colorSymbolId && !params.colorString && maskLayer && maskLayer.hasClippingMask()) {
+    _switchV3ToV2['default'].switchToV4(context, rootObject);
+    params = getColorParams(context, rootObject);
+  }
+
+  if (!params.colorLibraryId && params.colorSymbolId) {
+    params.colorSymbol = _libraries2['default'].getSymbolFromDocument(context.document.documentData(), params.colorSymbolId);
+  } else if (params.colorLibraryId) {
+    params.colorLibrary = _libraries2['default'].getLibById(params.colorLibraryId);
+    _libraries2['default'].loadLibrary(params.colorLibrary);
+    params.colorSymbol = _libraries2['default'].getSymbolFromDocument(params.colorLibrary.document(), params.colorSymbolId);
+  }
+
+  params.colorPicker = params.colorString ? _utils2['default'].convertStringToMSColor(params.colorString) : null;
+
+  var result = {
+    colorLib: params.colorLibraryId ? params.colorLibrary : null,
+    color: params.colorSymbolId ? params.colorSymbol : null,
+    colorPicker: params.colorPicker
+  };
+
+  return !result.colorLib && !result.color && !result.colorPicker ? null : result;
+}
+
+function getColorParams(context, rootObject) {
+  return {
+    colorLibraryId: context.command.valueForKey_onLayer("colorLib", rootObject),
+    colorSymbolId: context.command.valueForKey_onLayer("color", rootObject),
+    colorString: context.command.valueForKey_onLayer("colorPicker", rootObject)
+  };
+}
+
+/**
+ * @name createMaskFromNean
+ * @param context
+ * @param rootObject
+ * @param color
+ * @return {Object} : MSShapeGroup
+ */
+function createMaskFromNean(context, rootObject, color) {
+  var currentRootObjectSize = rootObject.rect();
+
+  var mask = MSShapeGroup.shapeWithRect({
+    origin: { x: 0, y: 0 },
+    size: { width: currentRootObjectSize.size.width, height: currentRootObjectSize.size.height }
+  });
+
+  var fill = mask.style().addStylePartOfType(0);
+  fill.color = color;
+
+  return mask;
+}
+
+/**
+ * @name createMask
+ * @description add mask from symbol master colors library to one artboard
+ * @param context {Object}
+ * @param colorSymbolMaster {Object}
+ * @param colorLibrary {Object} : MSAssetLibrary
+ * @return symbol {Object} : MSSymbolInstance
+ */
+function getMaskSymbolFromLib(context, colorSymbolMaster, colorLibrary) {
+  _utils2['default'].clearSelection(context);
+  var librairiesController = AppController.sharedInstance().librariesController();
+  var symbolMaster = colorLibrary ? librairiesController.importForeignSymbol_fromLibrary_intoDocument(colorSymbolMaster, colorLibrary, context.document.documentData()).symbolMaster() : colorSymbolMaster;
+  return symbolMaster.newSymbolInstance();
+}
+
+/**
+ * @name applyMask
+ * @param context
+ * @param rootObject {Object} : MSArtboardGroup && MSSymbolMaster
+ * @param params
+ */
+function applyMask(context, rootObject, params) {
+
+  var mask = void 0;
+
+  if (params.color) {
+    mask = getMaskSymbolFromLib(context, params.color, params.colorLib);
+  } else if (params.colorPicker) {
+    mask = createMaskFromNean(context, rootObject, params.colorPicker);
+  }
+
+  var currentArtboardSize = rootObject.rect();
+  mask.setHeightRespectingProportions(currentArtboardSize.size.height);
+  mask.setWidthRespectingProportions(currentArtboardSize.size.width);
+  mask.setName('🎨 color');
+  rootObject.firstLayer().style().disableAllFills();
+  rootObject.addLayers([mask]);
+  var iconLayer = rootObject.firstLayer();
+  iconLayer.hasClippingMask = true;
+  iconLayer.clippingMaskMode = 0;
+}
+
+/***/ }),
+/* 25 */
+/***/ (function(module, exports, __webpack_require__) {
+
 "use strict";
 // JS-YAML's default schema for `load` function.
 // It is not described in the YAML specification.
@@ -6730,7 +6959,7 @@ module.exports = Schema.DEFAULT = new Schema({
 
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6825,7 +7054,7 @@ module.exports = {
 
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports) {
 
 var OMIT_PLUSSIGN = /^(?:\+|(-))?0*(\d*)(?:\.0*|(\.\d*?)0*)?$/;
@@ -6870,7 +7099,7 @@ module.exports.pack = packNumber;
 
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6921,7 +7150,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(13)))
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* eslint-disable node/no-deprecated-api */
@@ -6989,238 +7218,13 @@ SafeBuffer.allocUnsafeSlow = function (size) {
 
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var bind = __webpack_require__(43);
 
 module.exports = bind.call(Function.call, Object.prototype.hasOwnProperty);
 
-
-/***/ }),
-/* 30 */
-/***/ (function(module, exports, __webpack_require__) {
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _utils = __webpack_require__(10);
-
-var _utils2 = _interopRequireDefault(_utils);
-
-var _svg = __webpack_require__(31);
-
-var _svg2 = _interopRequireDefault(_svg);
-
-var _libraries = __webpack_require__(45);
-
-var _libraries2 = _interopRequireDefault(_libraries);
-
-var _logger = __webpack_require__(5);
-
-var _logger2 = _interopRequireDefault(_logger);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-exports['default'] = {
-  initAddMaskOnSelectedArtboards: initAddMaskOnSelectedArtboards,
-  addMask: addMask,
-  removeMask: removeMask,
-  applyMask: applyMask,
-  applyColor: applyColor,
-  getMaskPropertiesFromArtboard: getMaskPropertiesFromArtboard
-
-  /**
-   * @name initAddMaskOnSelectedArtboards
-   * @description main function to add mask on selected artboards
-   * @param context {Object}
-   * @param params {Object}
-   * @param rootObjects {Array} : MSArtboardGroup
-   */
-};
-function initAddMaskOnSelectedArtboards(context, params, rootObjects) {
-  rootObjects.forEach(async function (rootObject) {
-    if (_utils2['default'].hasMask(rootObject.object) && !_utils2['default'].svgHasStroke(rootObject.object)) removeMask(context, rootObject.object);
-    await addMask(context, rootObject.object, params);
-    registerMask(context, rootObject.object, params);
-  });
-  _utils2['default'].clearSelection(context);
-}
-
-/**
- * @name applyColor
- * @description apply border color on svg with stroke
- * @param rootObject
- * @param params
- */
-function applyColor(rootObject, params) {
-  var color = params.colorPicker ? params.colorPicker : _libraries2['default'].getColorFromSymbol(params.color).color;
-  rootObject.children().forEach(function (layer) {
-    if (layer.styledLayer().style().hasEnabledBorder()) {
-      var style = layer.styledLayer().style();
-      style.enabledBorders().forEach(function (border) {
-        border.color = color;
-      });
-    }
-  });
-}
-
-/**
- * @name removeMask
- * @description remove all mask from artboard
- * @param context
- * @param rootObject {Object} : MSArtboardGroup
- */
-function removeMask(context, rootObject) {
-
-  context.command.setValue_forKey_onLayer(null, "colorLib", rootObject);
-  context.command.setValue_forKey_onLayer(null, "color", rootObject);
-  context.command.setValue_forKey_onLayer(null, "colorPicker", rootObject);
-
-  if (_utils2['default'].svgHasStroke(rootObject)) {
-    return applyColor(rootObject, { colorPicker: MSImmutableColor.blackColor() });
-  }
-
-  var iconLayer = rootObject.firstLayer();
-
-  if (iconLayer.hasClippingMask()) {
-    iconLayer.hasClippingMask = false;
-    iconLayer.clippingMaskMode = 1;
-    rootObject.lastLayer().removeFromParent();
-  }
-}
-
-/**
- * @name addMask
- * @description index function for all step to add mask and convert artboard to symbol at end
- * @param context {Object}
- * @param rootObject {Object} : MSArtboardGroup && MSSymbolMaster
- * @param params {Object}
- */
-async function addMask(context, rootObject, params) {
-
-  if (_utils2['default'].svgHasStroke(rootObject)) {
-    return applyColor(rootObject, params);
-  }
-
-  if (_utils2['default'].hasMask(rootObject)) {
-    removeMask(context, rootObject);
-  } else {
-    var svgData = _utils2['default'].layerToSvg(rootObject.firstLayer());
-    await _svg2['default'].replaceSVG(context, rootObject, svgData, true, false);
-  }
-
-  return applyMask(context, rootObject, params);
-}
-
-/**
- * @name registerMask
- * @description register properties of mask in artboard metadata
- * @param context
- * @param rootObject
- * @param params
- */
-function registerMask(context, rootObject, params) {
-  if (params.color) {
-    var libraryId = params.colorLib ? params.colorLib.libraryID() : null;
-    context.command.setValue_forKey_onLayer(libraryId, "colorLib", rootObject);
-    context.command.setValue_forKey_onLayer(params.color.symbolID(), "color", rootObject);
-    context.command.setValue_forKey_onLayer(null, "colorPicker", rootObject);
-  } else if (params.colorPicker) {
-    context.command.setValue_forKey_onLayer(_utils2['default'].convertMSColorToString(params.colorPicker), "colorPicker", rootObject);
-    context.command.setValue_forKey_onLayer(null, "colorLib", rootObject);
-    context.command.setValue_forKey_onLayer(null, "color", rootObject);
-  }
-}
-
-function getMaskPropertiesFromArtboard(context, rootObject) {
-  var colorSymbol = void 0,
-      colorLibrary = void 0,
-      colorPicker = void 0;
-
-  var colorLibraryId = context.command.valueForKey_onLayer("colorLib", rootObject);
-  var colorSymbolId = context.command.valueForKey_onLayer("color", rootObject);
-  var colorString = context.command.valueForKey_onLayer("colorPicker", rootObject);
-
-  if (!colorLibraryId && colorSymbolId) {
-    colorSymbol = _libraries2['default'].getSymbolFromDocument(context.document.documentData(), colorSymbolId);
-  } else if (colorLibraryId) {
-    colorLibrary = _libraries2['default'].getLibById(colorLibraryId);
-    _libraries2['default'].loadLibrary(colorLibrary);
-    colorSymbol = _libraries2['default'].getSymbolFromDocument(colorLibrary.document(), colorSymbolId);
-  }
-
-  colorPicker = colorString ? _utils2['default'].convertStringToMSColor(colorString) : null;
-
-  return {
-    colorLib: colorLibraryId ? colorLibrary : null,
-    color: colorSymbolId ? colorSymbol : null,
-    colorPicker: colorPicker
-  };
-}
-
-/**
- * @name createMaskFromNean
- * @param context
- * @param rootObject
- * @param color
- * @return {Object} : MSShapeGroup
- */
-function createMaskFromNean(context, rootObject, color) {
-  var currentRootObjectSize = rootObject.rect();
-
-  var mask = MSShapeGroup.shapeWithRect({
-    origin: { x: 0, y: 0 },
-    size: { width: currentRootObjectSize.size.width, height: currentRootObjectSize.size.height }
-  });
-
-  var fill = mask.style().addStylePartOfType(0);
-  fill.color = color;
-
-  return mask;
-}
-
-/**
- * @name createMask
- * @description add mask from symbol master colors library to one artboard
- * @param context {Object}
- * @param colorSymbolMaster {Object}
- * @param colorLibrary {Object} : MSAssetLibrary
- * @return symbol {Object} : MSSymbolInstance
- */
-function getMaskSymbolFromLib(context, colorSymbolMaster, colorLibrary) {
-  _utils2['default'].clearSelection(context);
-  var librairiesController = AppController.sharedInstance().librariesController();
-  var symbolMaster = colorLibrary ? librairiesController.importForeignSymbol_fromLibrary_intoDocument(colorSymbolMaster, colorLibrary, context.document.documentData()).symbolMaster() : colorSymbolMaster;
-  return symbolMaster.newSymbolInstance();
-}
-
-/**
- * @name applyMask
- * @param context
- * @param rootObject {Object} : MSArtboardGroup && MSSymbolMaster
- * @param params
- */
-function applyMask(context, rootObject, params) {
-
-  var mask = void 0;
-
-  if (params.color) {
-    mask = getMaskSymbolFromLib(context, params.color, params.colorLib);
-  } else if (params.colorPicker) {
-    mask = createMaskFromNean(context, rootObject, params.colorPicker);
-  }
-
-  var currentArtboardSize = rootObject.rect();
-  mask.setHeightRespectingProportions(currentArtboardSize.size.height);
-  mask.setWidthRespectingProportions(currentArtboardSize.size.width);
-  mask.setName('🎨 color');
-  rootObject.addLayers([mask]);
-  var iconLayer = rootObject.firstLayer();
-  iconLayer.hasClippingMask = true;
-  iconLayer.clippingMaskMode = 0;
-}
 
 /***/ }),
 /* 31 */
@@ -7230,7 +7234,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _mask = __webpack_require__(30);
+var _mask = __webpack_require__(24);
 
 var _mask2 = _interopRequireDefault(_mask);
 
@@ -7271,21 +7275,14 @@ function initUpdateIconsSelectedArtboards(context, rootObjects, listIcon) {
   rootObjects.forEach(function (rootObject, index) {
     var isMasked = void 0;
     var svgData = String(NSString.alloc().initWithContentsOfURL(listIcon[index]));
-    var hasStroke = _utils2['default'].svgHasStroke(rootObject.object);
 
-    isMasked = !hasStroke && _utils2['default'].hasMask(rootObject.object) || _utils2['default'].iconHasBorderColor(rootObject.object);
+    var params = _mask2['default'].getMaskPropertiesFromArtboard(context, rootObject.object);
+
+    isMasked = params;
 
     replaceSVG(context, rootObject.object, svgData, isMasked, true).then(function () {
       rootObject.object.setName(_utils2['default'].getIconNameByNSUrl(listIcon[index]));
-
-      if (isMasked) {
-        var params = _mask2['default'].getMaskPropertiesFromArtboard(context, rootObject.object);
-        if (_utils2['default'].svgHasStroke(rootObject.object)) {
-          _mask2['default'].applyColor(rootObject.object, params);
-        } else {
-          _mask2['default'].applyMask(context, rootObject.object, params);
-        }
-      }
+      if (isMasked) _mask2['default'].addColor(context, rootObject.object, params);
     });
   });
 
@@ -7316,10 +7313,10 @@ async function addSVG(context, artboard, iconPadding, artboardSize, svgData, wit
 
   removeTxt(svgLayer);
   artboard.addLayer(svgLayer);
-  if (_utils2['default'].svgHasStroke(artboard)) {
-    var diagContainer = artboardSize - iconPadding;
-    setThicknessProportionnally(svgLayer, diagContainer, viewBox);
-  }
+  // if (utils.svgHasStroke(artboard)) {
+  //   const diagContainer = artboardSize - iconPadding * 2
+  //   setThicknessProportionnally(svgLayer, diagContainer, viewBox)
+  // }
   if (withMask) cleanSvg(svgLayer, artboard);
   if (withResize) resizeSVG(artboard.firstLayer(), artboard, iconPadding);
   if (withResize) removeDeleteMeRect(artboard);
@@ -7334,6 +7331,7 @@ async function addPDF(context, artboard, iconPadding, artboardSize, icon) {
   artboard.addLayer(pdfLayer);
   resizeSVG(artboard.firstLayer(), artboard, iconPadding);
   center(artboardSize, artboard.firstLayer());
+  artboard.firstLayer().setName(artboard.name());
 }
 
 /**
@@ -7537,20 +7535,20 @@ async function replaceSVG(context, artboard, svgData, withMask, withResize) {
   }
 }
 
-function setThicknessProportionnally(svgLayer, diagContainer, viewBox) {
-
-  var diagViewbox = Math.sqrt(Math.pow(viewBox.width, 2) + Math.pow(viewBox.height, 2));
-  var diagArtboard = Math.sqrt(Math.pow(diagContainer, 2) * 2);
-  var ratio = diagArtboard / diagViewbox;
-
-  svgLayer.children().forEach(function (layer) {
-    if (layer.styledLayer().style().hasEnabledBorder() && String(layer['class']()) === 'MSShapePathLayer') {
-      var style = layer.styledLayer().style();
-      var thickness = style.firstEnabledBorder().thickness();
-      style.firstEnabledBorder().thickness = Math.round(thickness * ratio);
-    }
-  });
-}
+// function setThicknessProportionnally(svgLayer, diagContainer, viewBox) {
+//
+//   const diagViewbox = Math.sqrt(Math.pow(viewBox.width, 2) + Math.pow(viewBox.height, 2))
+//   const diagArtboard = Math.sqrt(Math.pow(diagContainer, 2) * 2)
+//   const ratio = diagArtboard / diagViewbox
+//
+//   svgLayer.children().forEach((layer) => {
+//     if (layer.styledLayer().style().hasEnabledBorder() && String(layer.class()) === 'MSShapePathLayer') {
+//       const style = layer.styledLayer().style()
+//       const thickness = style.firstEnabledBorder().thickness()
+//       style.firstEnabledBorder().thickness = Math.round(thickness * ratio)
+//     }
+//   })
+// }
 
 /***/ }),
 /* 32 */
@@ -7765,7 +7763,7 @@ module.exports = {
 /***/ (function(module, exports, __webpack_require__) {
 
 var lexer = __webpack_require__(1).lexer;
-var packNumber = __webpack_require__(26).pack;
+var packNumber = __webpack_require__(27).pack;
 
 // http://www.w3.org/TR/css3-color/#svg-color
 var NAME_TO_HEX = {
@@ -8740,7 +8738,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
 
 /***/ }),
 /* 39 */
@@ -8789,7 +8787,7 @@ exports.PassThrough = __webpack_require__(305);
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(27);
+var processNextTick = __webpack_require__(28);
 /*</replacement>*/
 
 module.exports = Writable;
@@ -8841,7 +8839,7 @@ var Stream = __webpack_require__(115);
 /*</replacement>*/
 
 /*<replacement>*/
-var Buffer = __webpack_require__(28).Buffer;
+var Buffer = __webpack_require__(29).Buffer;
 var OurUint8Array = global.Uint8Array || function () {};
 function _uint8ArrayToBuffer(chunk) {
   return Buffer.from(chunk);
@@ -9433,7 +9431,7 @@ Writable.prototype._destroy = function (err, cb) {
 "use strict";
 
 
-var Buffer = __webpack_require__(28).Buffer;
+var Buffer = __webpack_require__(29).Buffer;
 
 var isEncoding = Buffer.isEncoding || function (encoding) {
   encoding = '' + encoding;
@@ -9928,7 +9926,7 @@ function initColorSelectList(popColorMenu, colors) {
 }
 
 /**
- * @name getColorSymbolsFromCurrentDocument
+ * @name getColorSymbolsFromDocument
  * @param document
  * @return {Array}
  */
@@ -9944,6 +9942,7 @@ function getColorSymbolsFromDocument(document) {
 }
 
 function getSymbolFromDocument(document, symbolId) {
+
   var symbol = void 0,
       localSymbols = document.localSymbols();
 
@@ -9955,6 +9954,8 @@ function getSymbolFromDocument(document, symbolId) {
   }
 
   return symbol;
+
+  // return document.symbolWithID(symbolId)
 }
 
 function getColorFromSymbol(symbol) {
@@ -9991,13 +9992,13 @@ var _logger = __webpack_require__(5);
 
 var _logger2 = _interopRequireDefault(_logger);
 
-var _mask = __webpack_require__(30);
-
-var _mask2 = _interopRequireDefault(_mask);
-
 var _svg = __webpack_require__(31);
 
 var _svg2 = _interopRequireDefault(_svg);
+
+var _mask = __webpack_require__(24);
+
+var _mask2 = _interopRequireDefault(_mask);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
@@ -10088,7 +10089,9 @@ function initImportIcons(context, params) {
       } else {
         var svgData = String(NSString.alloc().initWithContentsOfURL(icon));
         _svg2['default'].addSVG(context, newRootObject, params.iconPadding, params.artboardSize, svgData, params.withMask, true);
-        if (params.withMask) _mask2['default'].addMask(context, newRootObject, params);
+        if (params.withMask) {
+          _mask2['default'].addColor(context, newRootObject, params);
+        }
       }
       context.command.setValue_forKey_onLayer(params.iconPadding, "padding", newRootObject);
     } catch (e) {
@@ -10108,7 +10111,7 @@ function initImportIcons(context, params) {
  */
 function getPaddingAndSize(context, artboard) {
   return {
-    iconPadding: parseInt(context.command.valueForKey_onLayer("padding", artboard)),
+    iconPadding: parseInt(context.command.valueForKey_onLayer("padding", artboard) || 4),
     artboardSize: parseInt(artboard.rect().size.width)
   };
 }
@@ -10188,8 +10191,8 @@ module.exports = Array.isArray || function (arr) {
 var map = {
 	"./_collections": 3,
 	"./_collections.js": 3,
-	"./_path": 6,
-	"./_path.js": 6,
+	"./_path": 7,
+	"./_path.js": 7,
 	"./_transforms": 9,
 	"./_transforms.js": 9,
 	"./addAttributesToSVGElement": 51,
@@ -10373,7 +10376,7 @@ exports.fn = function (data, params) {
 
     return data;
 };
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
 
 /***/ }),
 /* 52 */
@@ -10418,7 +10421,7 @@ exports.fn = function (data, params) {
 
     return data;
 };
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
 
 /***/ }),
 /* 53 */
@@ -11298,9 +11301,9 @@ exports.params = {
 };
 
 var pathElems = __webpack_require__(3).pathElems,
-    path2js = __webpack_require__(6).path2js,
-    js2path = __webpack_require__(6).js2path,
-    applyTransforms = __webpack_require__(6).applyTransforms,
+    path2js = __webpack_require__(7).path2js,
+    js2path = __webpack_require__(7).js2path,
+    applyTransforms = __webpack_require__(7).applyTransforms,
     cleanupOutData = __webpack_require__(11).cleanupOutData,
     roundData,
     precision,
@@ -15111,9 +15114,9 @@ exports.params = {
     negativeExtraSpace: true
 };
 
-var path2js = __webpack_require__(6).path2js,
-    js2path = __webpack_require__(6).js2path,
-    intersects = __webpack_require__(6).intersects;
+var path2js = __webpack_require__(7).path2js,
+    js2path = __webpack_require__(7).js2path,
+    intersects = __webpack_require__(7).intersects;
 
 /**
  * Merge multiple Paths into one.
@@ -15182,9 +15185,9 @@ exports.params = {
   negativeExtraSpace: true
 };
 
-var path2js = __webpack_require__(6).path2js,
-    js2path = __webpack_require__(6).js2path,
-    intersects = __webpack_require__(6).intersects;
+var path2js = __webpack_require__(7).path2js,
+    js2path = __webpack_require__(7).js2path,
+    intersects = __webpack_require__(7).intersects;
 
 /**
  * Merge multiple Paths into one.
@@ -15846,7 +15849,7 @@ exports.fn = function (node, opts, extra) {
 
     return node;
 };
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
 
 /***/ }),
 /* 88 */
@@ -17350,7 +17353,7 @@ exports.fn = function (item, params) {
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(27);
+var processNextTick = __webpack_require__(28);
 /*</replacement>*/
 
 module.exports = Readable;
@@ -17380,7 +17383,7 @@ var Stream = __webpack_require__(115);
 // TODO(bmeurer): Change this back to const once hole checks are
 // properly optimized away early in Ignition+TurboFan.
 /*<replacement>*/
-var Buffer = __webpack_require__(28).Buffer;
+var Buffer = __webpack_require__(29).Buffer;
 var OurUint8Array = global.Uint8Array || function () {};
 function _uint8ArrayToBuffer(chunk) {
   return Buffer.from(chunk);
@@ -18350,7 +18353,7 @@ module.exports = __webpack_require__(38).EventEmitter;
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(27);
+var processNextTick = __webpack_require__(28);
 /*</replacement>*/
 
 // undocumented cb() API, needed for core, not for public API
@@ -19320,7 +19323,7 @@ module.exports = defineProperties;
 
 
 var ES = __webpack_require__(341);
-var has = __webpack_require__(29);
+var has = __webpack_require__(30);
 var bind = __webpack_require__(43);
 var isEnumerable = bind.call(Function.call, Object.prototype.propertyIsEnumerable);
 
@@ -19509,7 +19512,6 @@ function importModal(context) {
   setEnabledColorMenu(false);
   setEnabledRadioButton(false);
   makeMaskColorPickerParams(context);
-  // test(context)
   addListenerOnMaskCheckbox();
 
   var result = {
@@ -19531,7 +19533,6 @@ function importModal(context) {
   } else if (result.withMask) {
     result.colorPicker = this.colorPickerColor || MSColor.blackColor();
   }
-
   return result;
 }
 
@@ -19565,7 +19566,7 @@ function makeArtboardParams() {
   var paddingBoxLabel = _utils2['default'].createLabel('Artboard Padding', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 150, 20);
   this.view.addSubview(paddingBoxLabel);
   var paddingBox = NSTextField.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 50, 20));
-  paddingBox.setStringValue('3');
+  paddingBox.setStringValue('4');
   this.view.addSubview(paddingBox);
   var paddingBoxUnit = _utils2['default'].createLabel('px', 205, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 50, 20);
   this.view.addSubview(paddingBoxUnit);
@@ -19661,51 +19662,6 @@ function makeMaskLibraryParams(context) {
   colorLibsMenu.menu = _libraries2['default'].initLibsSelectList(context, AppController.sharedInstance().librariesController().userLibraries(), colorMenu);
 }
 
-// function test(context){
-//
-//   const colorPickerLabel = utils.createLabel('Color picker', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight + 20, 150, 20)
-//   const pickerView = NSView.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 130, 60));
-//   pickerView.setWantsLayer(true)
-//   pickerView.layer().setBackgroundColor(CGColorCreateGenericRGB(1, 1, 1, 1.0))
-//   pickerView.layer().setBorderColor(CGColorCreateGenericRGB(186 / 255, 186 / 255, 186 / 255, 1))
-//   pickerView.layer().borderWidth = 1
-//
-//   const hexLabel = utils.createLabel('#000000', 60, 20, 100, 20)
-//   pickerView.addSubview(hexLabel)
-//
-//   const pickerButton = NSButton.alloc().initWithFrame(NSMakeRect(5, 15, 50, 30));
-//   pickerButton.setButtonType(NSMomentaryChangeButton)
-//   pickerButton.setImage(utils.getImageByColor(NSColor.colorWithRed_green_blue_alpha(0, 0, 0, 1), {
-//     width: 40,
-//     height: 30
-//   }))
-//
-//
-//   const main = AMOMain.alloc().init();
-//
-//   const colorInspector = MSColorInspector.alloc()
-//     .initWithSender_document_handlerManager_globalAssets(
-//       this,
-//       MSDocument.currentDocument(),
-//       MSDocument.currentDocument().eventHandlerManager(),
-//       AppController.sharedInstance().globalAssets());
-//
-//
-//   this.popover = BCPopover.alloc().init();
-//   this.popover.setContentViewController(colorInspector);
-//   pickerButton.setCOSJSTargetFunction((obj) => {
-//     this.popover.showRelativeToView_preferredEdge(this.view, NSMinYEdge); // where `view` is an NSView
-//
-//     // main.openPopoverCustomCtrl_onView_withController(pickerButton, this.view, colorInspector)
-//   });
-//
-//   pickerView.addSubview(pickerButton)
-//
-//   this.pickerView = pickerView
-//   this.colorPickerLabel = colorPickerLabel
-//
-// }
-
 function makeMaskColorPickerParams(context) {
   var _this = this;
 
@@ -19732,14 +19688,19 @@ function makeMaskColorPickerParams(context) {
   var main = AMOMain.alloc().init();
 
   pickerButton.setCOSJSTargetFunction(function () {
-    var colorInspector = MSColorInspector.alloc().initWithSender_document_handlerManager_globalAssets(_this, MSDocument.currentDocument(), MSDocument.currentDocument().eventHandlerManager(), AppController.sharedInstance().globalAssets());
-    _this.popover = BCPopover.alloc().init();
-    _this.popover.setContentViewController(colorInspector);
-    _this.popover.showRelativeToView_preferredEdge(_this.view, NSMinYEdge); // where `view` is an NSView
-    // main.openPopover_onView_withWebview(pickerButton, this.view, utils.createWebview(context, pickerButton, (color) => {
-    //   this.colorPickerColor = color
-    //   hexLabel.setStringValue_(`#${color.immutableModelObject().hexValue()}`)
-    // }))
+    // const colorInspector = MSColorInspector.alloc()
+    //   .initWithSender_document_handlerManager_globalAssets(
+    //     this,
+    //     MSDocument.currentDocument(),
+    //     MSDocument.currentDocument().eventHandlerManager(),
+    //     AppController.sharedInstance().globalAssets());
+    // this.popover = BCPopover.alloc().init();
+    // this.popover.setContentViewController(colorInspector);
+    // this.popover.showRelativeToView_preferredEdge(this.view, NSMinYEdge); // where `view` is an NSView
+    main.openPopover_onView_withWebview(pickerButton, _this.view, _utils2['default'].createWebview(context, pickerButton, function (color) {
+      _this.colorPickerColor = color;
+      hexLabel.setStringValue_('#' + String(color.immutableModelObject().hexValue()));
+    }));
   });
 
   pickerView.addSubview(pickerButton);
@@ -19859,7 +19820,7 @@ var _artboard = __webpack_require__(46);
 
 var _artboard2 = _interopRequireDefault(_artboard);
 
-var _mask = __webpack_require__(30);
+var _mask = __webpack_require__(24);
 
 var _mask2 = _interopRequireDefault(_mask);
 
@@ -19938,7 +19899,7 @@ function removeMaskOnSelectedArtboards(context) {
     _mask2['default'].removeMask(context, rootElement.object);
   });
 }
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
 
 /***/ }),
 /* 135 */
@@ -20645,7 +20606,7 @@ module.exports.FAILSAFE_SCHEMA     = __webpack_require__(32);
 module.exports.JSON_SCHEMA         = __webpack_require__(48);
 module.exports.CORE_SCHEMA         = __webpack_require__(47);
 module.exports.DEFAULT_SAFE_SCHEMA = __webpack_require__(19);
-module.exports.DEFAULT_FULL_SCHEMA = __webpack_require__(24);
+module.exports.DEFAULT_FULL_SCHEMA = __webpack_require__(25);
 module.exports.load                = loader.load;
 module.exports.loadAll             = loader.loadAll;
 module.exports.safeLoad            = loader.safeLoad;
@@ -20657,7 +20618,7 @@ module.exports.YAMLException       = __webpack_require__(18);
 // Deprecated schema names from JS-YAML 2.0.x
 module.exports.MINIMAL_SCHEMA = __webpack_require__(32);
 module.exports.SAFE_SCHEMA    = __webpack_require__(19);
-module.exports.DEFAULT_SCHEMA = __webpack_require__(24);
+module.exports.DEFAULT_SCHEMA = __webpack_require__(25);
 
 // Deprecated functions from JS-YAML 1.x.x
 module.exports.scan           = deprecated('scan');
@@ -20679,7 +20640,7 @@ var common              = __webpack_require__(14);
 var YAMLException       = __webpack_require__(18);
 var Mark                = __webpack_require__(144);
 var DEFAULT_SAFE_SCHEMA = __webpack_require__(19);
-var DEFAULT_FULL_SCHEMA = __webpack_require__(24);
+var DEFAULT_FULL_SCHEMA = __webpack_require__(25);
 
 
 var _hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -30310,7 +30271,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 var common              = __webpack_require__(14);
 var YAMLException       = __webpack_require__(18);
-var DEFAULT_FULL_SCHEMA = __webpack_require__(24);
+var DEFAULT_FULL_SCHEMA = __webpack_require__(25);
 var DEFAULT_SAFE_SCHEMA = __webpack_require__(19);
 
 var _toString       = Object.prototype.toString;
@@ -31164,7 +31125,7 @@ var createGenerator = __webpack_require__(179);
 var createConvertor = __webpack_require__(187);
 var createWalker = __webpack_require__(188);
 var clone = __webpack_require__(189);
-var names = __webpack_require__(25);
+var names = __webpack_require__(26);
 var mix = __webpack_require__(190);
 
 function assign(dest, src) {
@@ -32239,7 +32200,7 @@ module.exports = {
 
 var SyntaxReferenceError = __webpack_require__(66).SyntaxReferenceError;
 var MatchError = __webpack_require__(66).MatchError;
-var names = __webpack_require__(25);
+var names = __webpack_require__(26);
 var generic = __webpack_require__(171);
 var parse = __webpack_require__(67);
 var translate = __webpack_require__(34);
@@ -32591,7 +32552,7 @@ module.exports = Lexer;
 "use strict";
 
 
-var names = __webpack_require__(25);
+var names = __webpack_require__(26);
 
 // https://www.w3.org/TR/css-values-3/#lengths
 var LENGTH = {
@@ -32819,7 +32780,7 @@ module.exports = {
 "use strict";
 
 
-var names = __webpack_require__(25);
+var names = __webpack_require__(26);
 var MULTIPLIER_DEFAULT = {
     comma: false,
     min: 1,
@@ -39708,7 +39669,7 @@ module.exports = {
     syntax: csstree
 };
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
 
 /***/ }),
 /* 260 */
@@ -40282,7 +40243,7 @@ var handlers = {
     Value: __webpack_require__(274),
     Dimension: __webpack_require__(278),
     Percentage: __webpack_require__(279),
-    Number: __webpack_require__(26),
+    Number: __webpack_require__(27),
     String: __webpack_require__(280),
     Url: __webpack_require__(281),
     HexColor: __webpack_require__(36).compressHex,
@@ -40564,7 +40525,7 @@ module.exports = function compressBackground(node) {
 /* 278 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var packNumber = __webpack_require__(26).pack;
+var packNumber = __webpack_require__(27).pack;
 var LENGTH_UNIT = {
     // absolute length units
     'px': true,
@@ -40626,7 +40587,7 @@ module.exports = function compressDimension(node, item) {
 /* 279 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var packNumber = __webpack_require__(26).pack;
+var packNumber = __webpack_require__(27).pack;
 var PERCENTAGE_LENGTH_PROPERTY = {
     'margin': true,
     'margin-top': true,
@@ -44361,7 +44322,7 @@ Stream.prototype.pipe = function(dest, options) {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Buffer = __webpack_require__(28).Buffer;
+var Buffer = __webpack_require__(29).Buffer;
 /*</replacement>*/
 
 function copyBuffer(src, target, offset) {
@@ -44755,7 +44716,7 @@ function config (name) {
   return String(val).toLowerCase() === 'true';
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7), __webpack_require__(8)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6), __webpack_require__(8)))
 
 /***/ }),
 /* 305 */
@@ -47669,7 +47630,7 @@ module.exports = ES2016;
 "use strict";
 
 
-var has = __webpack_require__(29);
+var has = __webpack_require__(30);
 var toPrimitive = __webpack_require__(345);
 
 var toStr = Object.prototype.toString;
@@ -48460,7 +48421,7 @@ var mod = __webpack_require__(131);
 var IsCallable = __webpack_require__(44);
 var toPrimitive = __webpack_require__(350);
 
-var has = __webpack_require__(29);
+var has = __webpack_require__(30);
 
 // https://es5.github.io/#x9
 var ES5 = {
@@ -48738,7 +48699,7 @@ module.exports = function ToPrimitive(input, PreferredType) {
 "use strict";
 
 
-var has = __webpack_require__(29);
+var has = __webpack_require__(30);
 var regexExec = RegExp.prototype.exec;
 var gOPD = Object.getOwnPropertyDescriptor;
 
@@ -49048,7 +49009,7 @@ CSSStyleDeclaration.prototype.setProperty = function (propertyName, value, prior
 };
 
 module.exports = CSSStyleDeclaration;
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
 
 /***/ }),
 /* 354 */
@@ -49731,15 +49692,13 @@ var _logger2 = _interopRequireDefault(_logger);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
 exports["default"] = {
   selectIconsFiles: selectIconsFiles
 
   /**
    * @name selectIconsFiles
    * @description display modal selection file and return them
-   * @returns {Array.NSFile}
+   * @returns {Array}
    */
 };
 function selectIconsFiles() {
@@ -49753,31 +49712,84 @@ function selectIconsFiles() {
 
   if (panel.runModal() !== NSFileHandlingPanelOKButton) return [];
 
-  return getFilesByUrls(panel.URLs());
+  var result = [];
+
+  getFilesByUrls(panel.URLs(), result);
+
+  return result;
 }
 
 /**
  * @name getFilesByUrls
  * @description get file from list of folder and path
- * @param urls {Array.NSurl}
- * @returns {Array.NSFile}
+ * @param urls {Array}
+ * @param result {Array}
+ * @returns {Array}
  */
-function getFilesByUrls(urls) {
-  var _ref;
+function getFilesByUrls(urls, result) {
 
-  return (_ref = []).concat.apply(_ref, _toConsumableArray(urls.slice().map(function (path) {
-    var ext = path.toString().split('.').pop();
-    if (ext === 'svg' || ext === 'pdf') {
-      return path;
+  for (var i = 0; i < urls.length; i++) {
+    if (!!urls[i].hasDirectoryPath()) {
+      getFilesByUrls(NSFileManager.defaultManager().contentsOfDirectoryAtURL_includingPropertiesForKeys_options_error(urls[i], null, null, null), result);
     } else {
-      return NSFileManager.defaultManager().contentsOfDirectoryAtURL_includingPropertiesForKeys_options_error(path, null, null, null).slice().filter(function (path) {
-        var ext = path.toString().split('.').pop();
-        if (ext === 'svg' || ext === 'pdf') {
-          return true;
-        }
-      });
+      var ext = String(urls[i].pathExtension());
+      if (ext === 'svg' || ext === 'pdf') {
+        result.push(urls[i]);
+      }
     }
-  })));
+  }
+}
+
+/***/ }),
+/* 358 */
+/***/ (function(module, exports, __webpack_require__) {
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _mask = __webpack_require__(24);
+
+var _mask2 = _interopRequireDefault(_mask);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+exports['default'] = {
+  switchToV4: switchToV4
+
+  // function isV3(context, rootObject) {
+  //   // context.document.artboards().forEach(function (rootObject) {
+  //     const hasMaskV4 = maskProvider.getMaskPropertiesFromArtboard(context, rootObject)
+  //     const maskLayer = rootObject.firstLayer()
+  //     if (!hasMaskV4.color && !hasMaskV4.colorLib && !hasMaskV4.colorPicker && maskLayer && maskLayer.hasClippingMask()) {
+  //       switchToV4(context, rootObject)
+  //     }
+  //   // })
+  // }
+
+};
+function switchToV4(context, rootObject) {
+  var mask = rootObject.lastLayer();
+  var params = { color: null, colorLib: null, colorPicker: null };
+  if (String(mask['class']()) === 'MSSymbolInstance') {
+    var color = mask.symbolMaster();
+    var foreign = color.foreignSymbol();
+    params.color = color;
+    if (foreign) {
+      params.color = String(foreign.originalMaster().symbolID());
+      params.colorLib = foreign;
+    }
+  } else {
+    params.colorPicker = mask.style().fills()[0].color();
+  }
+
+  _mask2['default'].registerMask(context, rootObject, params);
+
+  // const test = maskProvider.getMaskPropertiesFromArtboard(context, rootObject)
+  //
+  // console.log('>>>>>>>>>>>', test.colorLib);
+  // console.log('>>>>>>>>>>>', test.color);
+  // console.log('>>>>>>>>>>>', test.colorPicker);
 }
 
 /***/ })

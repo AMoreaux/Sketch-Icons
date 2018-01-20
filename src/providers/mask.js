@@ -2,14 +2,14 @@ import utils from '../utils/utils'
 import svgProvider from './svg'
 import librariesProvider from './libraries'
 import logger from '../utils/logger'
+import switchVersion from '../utils/switchV3ToV4';
 
 export default {
   initAddMaskOnSelectedArtboards,
-  addMask,
+  addColor,
   removeMask,
-  applyMask,
-  applyColor,
-  getMaskPropertiesFromArtboard
+  getMaskPropertiesFromArtboard,
+  registerMask
 }
 
 /**
@@ -22,8 +22,7 @@ export default {
 function initAddMaskOnSelectedArtboards(context, params, rootObjects) {
   rootObjects.forEach(async (rootObject) => {
     if (utils.hasMask(rootObject.object) && !utils.svgHasStroke(rootObject.object)) removeMask(context, rootObject.object)
-    await addMask(context, rootObject.object, params)
-    registerMask(context, rootObject.object, params)
+    await addColor(context, rootObject.object, params)
   })
   utils.clearSelection(context)
 }
@@ -58,7 +57,7 @@ function removeMask(context, rootObject) {
   context.command.setValue_forKey_onLayer(null, "color", rootObject)
   context.command.setValue_forKey_onLayer(null, "colorPicker", rootObject)
 
-  if(utils.svgHasStroke(rootObject)){
+  if (utils.svgHasStroke(rootObject)) {
     return applyColor(rootObject, {colorPicker: MSImmutableColor.blackColor()})
   }
 
@@ -67,31 +66,39 @@ function removeMask(context, rootObject) {
   if (iconLayer.hasClippingMask()) {
     iconLayer.hasClippingMask = false;
     iconLayer.clippingMaskMode = 1
+    const style = rootObject.firstLayer().style()
+    const fillColor = style.fills()[0].color()
+    style.removeAllStyleFills()
+    style.addStylePartOfType(0).color = fillColor
+
     rootObject.lastLayer().removeFromParent()
   }
 }
 
 /**
- * @name addMask
+ * @name addColor
  * @description index function for all step to add mask and convert artboard to symbol at end
  * @param context {Object}
  * @param rootObject {Object} : MSArtboardGroup && MSSymbolMaster
  * @param params {Object}
  */
-async function addMask(context, rootObject, params) {
+async function addColor(context, rootObject, params) {
 
   if (utils.svgHasStroke(rootObject)) {
     return applyColor(rootObject, params);
-  }
-
-  if (utils.hasMask(rootObject)) {
-    removeMask(context, rootObject)
   } else {
-    const svgData = utils.layerToSvg(rootObject.firstLayer())
-    await svgProvider.replaceSVG(context, rootObject, svgData, true, false)
+
+    if (utils.hasMask(rootObject)) {
+      removeMask(context, rootObject)
+    } else {
+      const svgData = utils.layerToSvg(rootObject.firstLayer())
+      await svgProvider.replaceSVG(context, rootObject, svgData, true, false)
+    }
+
+    applyMask(context, rootObject, params)
   }
 
-  return applyMask(context, rootObject, params)
+  return registerMask(context, rootObject, params)
 }
 
 
@@ -105,8 +112,10 @@ async function addMask(context, rootObject, params) {
 function registerMask(context, rootObject, params) {
   if (params.color) {
     const libraryId = (params.colorLib) ? params.colorLib.libraryID() : null
+    const colorId = (typeof params.color === 'string') ? params.color : params.color.symbolID()
+
     context.command.setValue_forKey_onLayer(libraryId, "colorLib", rootObject)
-    context.command.setValue_forKey_onLayer(params.color.symbolID(), "color", rootObject)
+    context.command.setValue_forKey_onLayer(colorId, "color", rootObject)
     context.command.setValue_forKey_onLayer(null, "colorPicker", rootObject)
   } else if (params.colorPicker) {
     context.command.setValue_forKey_onLayer(utils.convertMSColorToString(params.colorPicker), "colorPicker", rootObject)
@@ -116,26 +125,40 @@ function registerMask(context, rootObject, params) {
 }
 
 function getMaskPropertiesFromArtboard(context, rootObject) {
-  let colorSymbol, colorLibrary, colorPicker
 
-  const colorLibraryId = context.command.valueForKey_onLayer("colorLib", rootObject)
-  const colorSymbolId = context.command.valueForKey_onLayer("color", rootObject)
-  const colorString = context.command.valueForKey_onLayer("colorPicker", rootObject)
+  let params = getColorParams(context, rootObject)
 
-  if (!colorLibraryId && colorSymbolId) {
-    colorSymbol = librariesProvider.getSymbolFromDocument(context.document.documentData(), colorSymbolId)
-  } else if (colorLibraryId) {
-    colorLibrary = librariesProvider.getLibById(colorLibraryId)
-    librariesProvider.loadLibrary(colorLibrary)
-    colorSymbol = librariesProvider.getSymbolFromDocument(colorLibrary.document(), colorSymbolId)
+  const maskLayer = rootObject.firstLayer()
+  if (!params.colorLibraryId && !params.colorSymbolId && !params.colorString && maskLayer && maskLayer.hasClippingMask()) {
+    switchVersion.switchToV4(context, rootObject)
+    params = getColorParams(context, rootObject)
   }
 
-  colorPicker = (colorString) ? utils.convertStringToMSColor(colorString) : null
+  if (!params.colorLibraryId && params.colorSymbolId) {
+    params.colorSymbol = librariesProvider.getSymbolFromDocument(context.document.documentData(), params.colorSymbolId)
+  } else if (params.colorLibraryId) {
+    params.colorLibrary = librariesProvider.getLibById(params.colorLibraryId)
+    librariesProvider.loadLibrary(params.colorLibrary)
+    params.colorSymbol = librariesProvider.getSymbolFromDocument(params.colorLibrary.document(), params.colorSymbolId)
+  }
 
+  params.colorPicker = (params.colorString) ? utils.convertStringToMSColor(params.colorString) : null
+
+
+  const result = {
+    colorLib: (params.colorLibraryId) ? params.colorLibrary : null,
+    color: (params.colorSymbolId) ? params.colorSymbol : null,
+    colorPicker: params.colorPicker
+  }
+
+  return (!result.colorLib && !result.color && !result.colorPicker) ? null : result
+}
+
+function getColorParams(context, rootObject) {
   return {
-    colorLib: (colorLibraryId) ? colorLibrary : null,
-    color: (colorSymbolId) ? colorSymbol : null,
-    colorPicker: colorPicker
+    colorLibraryId: context.command.valueForKey_onLayer("colorLib", rootObject),
+    colorSymbolId: context.command.valueForKey_onLayer("color", rootObject),
+    colorString: context.command.valueForKey_onLayer("colorPicker", rootObject)
   }
 }
 
@@ -196,6 +219,7 @@ function applyMask(context, rootObject, params) {
   mask.setHeightRespectingProportions(currentArtboardSize.size.height)
   mask.setWidthRespectingProportions(currentArtboardSize.size.width)
   mask.setName('🎨 color')
+  rootObject.firstLayer().style().disableAllFills()
   rootObject.addLayers([mask])
   const iconLayer = rootObject.firstLayer()
   iconLayer.hasClippingMask = true
