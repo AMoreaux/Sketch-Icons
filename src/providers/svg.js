@@ -68,7 +68,7 @@ async function addSVG(context, artboard, iconPadding, artboardSize, svgData, wit
   //   setThicknessProportionnally(svgLayer, diagContainer, viewBox)
   // }
   if (withMask) cleanSvg(svgLayer, artboard)
-  if (withResize) resizeSVG(artboard.firstLayer(), artboard, iconPadding)
+  if (withResize) resizeIcon(artboard.firstLayer(), artboard, iconPadding)
   if (withResize) removeDeleteMeRect(artboard)
   artboard.firstLayer().resizeToFitChildrenWithOption(1)
   center(artboardSize, artboard.firstLayer())
@@ -79,7 +79,7 @@ async function addPDF(context, artboard, iconPadding, artboardSize, icon){
   pdfImporter.prepareToImportFromURL(icon)
   const pdfLayer = pdfImporter.importAsLayer()
   artboard.addLayer(pdfLayer)
-  resizeSVG(artboard.firstLayer(), artboard, iconPadding)
+  resizeIcon(artboard.firstLayer(), artboard, iconPadding)
   center(artboardSize, artboard.firstLayer())
   artboard.firstLayer().setName(artboard.name())
 }
@@ -139,14 +139,17 @@ function center(artboardSize, svgLayer) {
 
 
 /**
- * @name resizeSVG
+ * @name resizeIcon
  * @description resize layer by artboard
  * @param svgLayer {Object} : MSLayer
  * @param artboard {Object} : MSArtboardGroup
  * @param iconPadding {Number}
  */
-function resizeSVG(svgLayer, artboard, iconPadding) {
+function resizeIcon(svgLayer, artboard, iconPadding) {
+
   const svgLayerFrame = svgLayer.frame()
+
+  artboard.firstLayer().resizeToFitChildrenWithOption(1)
 
   const currentArtboardRect = artboard.rect()
   const currentArtboardSize = {
@@ -155,8 +158,7 @@ function resizeSVG(svgLayer, artboard, iconPadding) {
   }
   const width = svgLayerFrame.width()
   const height = svgLayerFrame.height()
-
-
+  
   svgLayerFrame.constrainProportions = true
 
   if (width >= height) {

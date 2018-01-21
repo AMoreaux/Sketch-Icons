@@ -23,7 +23,7 @@ function selectIconsFiles() {
   const result = []
 
   getFilesByUrls(panel.URLs(), result)
-  
+
   return result
 }
 

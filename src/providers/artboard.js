@@ -61,7 +61,7 @@ function initArtboardsParams(context) {
     artboardParams.position.x = artboardParams.position.y = artboardParams.size.width * 2
   } else {
     const Y = []
-    currentPage.sketchObject.layers().some(function(layer){
+    currentPage.sketchObject.layers().some(function (layer) {
       Y.push(layer.origin().y)
     })
     artboardParams.position.x = artboardParams.size.width * 2
@@ -82,20 +82,20 @@ function initImportIcons(context, params) {
   initArtboardsParams(context)
 
   params.listIcon.forEach((icon, index) => {
-    try{
+    try {
       const newArtboard = createArtboard(context, index, icon)
       const newRootObject = (params.convertSymbol) ? MSSymbolMaster.convertArtboardToSymbol(newArtboard) : newArtboard
-      if(String(icon.toString().split('.').pop()) === 'pdf'){
+      if (String(icon.toString().split('.').pop()) === 'pdf') {
         return svg.addPDF(context, newRootObject, params.iconPadding, params.artboardSize, icon)
-      }else{
+      } else {
         const svgData = String(NSString.alloc().initWithContentsOfURL(icon))
         svg.addSVG(context, newRootObject, params.iconPadding, params.artboardSize, svgData, params.withMask, true)
-        if (params.withMask){
+        if (params.withMask) {
           maskProvider.addColor(context, newRootObject, params)
         }
       }
       context.command.setValue_forKey_onLayer(params.iconPadding, "padding", newRootObject)
-    }catch (e){
+    } catch (e) {
       logger.error(e)
     }
   })
@@ -110,9 +110,16 @@ function initImportIcons(context, params) {
  * @param artboard {Object} : MSArtboardGroup
  * @returns {{iconPadding: Number, artboardSize: Number}}
  */
-function getPaddingAndSize(context, artboard){
+function getPaddingAndSize(context, artboard) {
+  let iconPadding = context.command.valueForKey_onLayer("padding", artboard)
+
+  if (!iconPadding) {
+    const icon = artboard.layers()[0].rect()
+    iconPadding = Math.min(icon.origin.x, icon.origin.y)
+  }
+
   return {
-    iconPadding: parseInt(context.command.valueForKey_onLayer("padding", artboard) || 4),
+    iconPadding: parseInt(iconPadding),
     artboardSize: parseInt(artboard.rect().size.width)
   }
 }

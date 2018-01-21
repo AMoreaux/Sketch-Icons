@@ -13,9 +13,9 @@ export default {
   hasMask,
   layerToSvg,
   svgHasStroke,
-  iconHasBorderColor,
   convertMSColorToString,
-  convertStringToMSColor
+  convertStringToMSColor,
+  getBorderColor
 }
 
 /**
@@ -205,9 +205,9 @@ function layerToSvg(layer) {
   return NSString.alloc().initWithData_encoding(svgData, NSUTF8StringEncoding);
 }
 
-function svgHasStroke(artboard) {
+function svgHasStroke(rootObject) {
   let hasBorder = false
-  artboard.children().forEach((layer) => {
+  rootObject.children().forEach((layer) => {
     if (layer.styledLayer().style().hasEnabledBorder()) {
       hasBorder = true
     }
@@ -215,9 +215,9 @@ function svgHasStroke(artboard) {
   return hasBorder
 }
 
-function iconHasBorderColor(artboard) {
+function getBorderColor(rootObject) {
   let color;
-  const layers = artboard.children()
+  const layers = rootObject.children()
 
   for (let i = 0; i < layers.length; i++) {
     let style = layers[i].styledLayer().style()
