@@ -85,7 +85,7 @@ function removeMask(context, rootObject) {
 async function addColor(context, rootObject, params) {
 
   if (utils.svgHasStroke(rootObject)) {
-    return applyColor(rootObject, params);
+    applyColor(rootObject, params);
   } else {
 
     if (utils.hasMask(rootObject)) {

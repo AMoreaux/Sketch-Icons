@@ -271,11 +271,12 @@ function mergeLayer(artboard) {
  * @returns {{width: number, height: number}}
  */
 function getViewBox(svg) {
-  let viewBox = svg.match(/viewBox="[0-9]+ [0-9]+ [0-9]+ [0-9]+"/)
+
+  let viewBox = svg.match(/viewBox="[+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+"/)
   let size;
   let result;
   if (Array.isArray(viewBox)) {
-    size = viewBox[0].match(/[0-9]+/g)
+    size = viewBox[0].match(/[+-]?([0-9]*[.])?[0-9]+/g)
     result = {width: parseFloat(size[2]), height: parseFloat(size[3])}
   }
   return result
@@ -290,6 +291,7 @@ async function replaceSVG(context, artboard, svgData, withMask, withResize) {
     logger.error(e)
   }
 }
+
 
 // function setThicknessProportionnally(svgLayer, diagContainer, viewBox) {
 //

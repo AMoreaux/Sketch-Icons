@@ -6788,7 +6788,7 @@ function removeMask(context, rootObject) {
 async function addColor(context, rootObject, params) {
 
   if (_utils2['default'].svgHasStroke(rootObject)) {
-    return applyColor(rootObject, params);
+    applyColor(rootObject, params);
   } else {
 
     if (_utils2['default'].hasMask(rootObject)) {
@@ -7518,11 +7518,12 @@ function mergeLayer(artboard) {
  * @returns {{width: number, height: number}}
  */
 function getViewBox(svg) {
-  var viewBox = svg.match(/viewBox="[0-9]+ [0-9]+ [0-9]+ [0-9]+"/);
+
+  var viewBox = svg.match(/viewBox="[+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+"/);
   var size = void 0;
   var result = void 0;
   if (Array.isArray(viewBox)) {
-    size = viewBox[0].match(/[0-9]+/g);
+    size = viewBox[0].match(/[+-]?([0-9]*[.])?[0-9]+/g);
     result = { width: parseFloat(size[2]), height: parseFloat(size[3]) };
   }
   return result;
