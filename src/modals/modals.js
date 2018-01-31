@@ -1,13 +1,16 @@
 import utils from '../utils/utils'
 import logger from '../utils/logger'
-import libraries from "../providers/libraries";
+import libraries from '../providers/libraries'
+import settingsProvider from '../providers/settings'
 
 const disabledColor = NSColor.colorWithCalibratedRed_green_blue_alpha(170 / 255, 170 / 255, 170 / 255, 1)
 
 export {
   setEnabledColorMenu,
   importModal,
-  maskModal
+  maskModal,
+  constructBase,
+  artboardModal
 }
 
 function maskModal(context){
@@ -24,7 +27,7 @@ function maskModal(context){
   this.isLibrarySource = true
   this.adjustHeight = 0
 
-  constructBase(this.modalParams)
+  constructBase()
 
   makeMaskRadioButtonParams()
   makeMaskLibraryParams(context)
@@ -49,10 +52,12 @@ function maskModal(context){
 
 function importModal(context) {
 
+  this.settingsValues = settingsProvider.getSettings(context)
+
   this.modalParams = {
     messageText: 'Configure your import',
     informativeText: 'Your icons will be arranged in artboards. Set size and padding of your artboards.',
-    height: 300,
+    height: (this.settingsValues.viewBoxParams) ? 330 : 300,
     width: 300,
     lineHeight: 35
   }
@@ -61,8 +66,9 @@ function importModal(context) {
   this.isLibrarySource = true
   this.adjustHeight = 0
 
-  constructBase(this.modalParams)
+  constructBase()
   makeArtboardParams()
+  if(!!this.settingsValues.viewBoxParams) makeViewBoxParams()
   this.view.addSubview(utils.createDivider(NSMakeRect(0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - 10, this.modalParams.width, 1)));
   this.adjustHeight = 5
   makeSymbolParams()
@@ -85,6 +91,11 @@ function importModal(context) {
     withMask: !!this.checkboxMaskParams.state()
   }
 
+  if(this.settingsValues.viewBoxParams){
+    result.viewBoxWidth = this.viewBoxWidth.stringValue()
+    result.viewBoxHeight = this.viewBoxHeight.stringValue()
+  }
+
   if (result.withMask && this.isLibrarySource) {
     let colorMenu = this.colorsMenuParams.selectedItem()
     result.color = (colorMenu) ? this.colorsMenuParams.representedObject() : null
@@ -99,7 +110,32 @@ function importModal(context) {
   return result
 }
 
-function constructBase(){
+function artboardModal(context){
+
+  this.settingsValues = settingsProvider.getSettings(context)
+
+  this.modalParams = {
+    messageText: 'Configure your icons',
+    informativeText: 'Your icons will be moved in artboards. Set size and padding of your artboards.',
+    height: 100,
+    width: 300,
+    lineHeight: 35
+  }
+
+  this.coeffCurrentHeight = 0
+  this.adjustHeight = 0
+
+  constructBase()
+  makeArtboardParams()
+
+  return {
+    button: this.modal.runModal(),
+    artboardSize: parseInt(this.artboardSize.stringValue()),
+    iconPadding: parseInt(this.artboardPadding.stringValue()),
+  }
+}
+
+function constructBase(button1 = 'continue'){
 
   this.modal = COSAlertWindow.new();
 
@@ -108,7 +144,7 @@ function constructBase(){
   this.modal.addAccessoryView(this.view);
   this.modal.setMessageText(this.modalParams.messageText);
   this.modal.setInformativeText(this.modalParams.informativeText);
-  this.modal.addButtonWithTitle('Continue');
+  this.modal.addButtonWithTitle(button1);
   this.modal.addButtonWithTitle('Cancel');
 }
 
@@ -119,7 +155,7 @@ function makeArtboardParams() {
   const textBoxLabel = utils.createLabel('Artboard size', 0, this.modalParams.height - this.modalParams.lineHeight, 150, 20)
   this.view.addSubview(textBoxLabel)
   const textBox = NSTextField.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight, 50, 20));
-  textBox.setStringValue('24');
+  textBox.setStringValue(this.settingsValues.artboardSize);
   this.view.addSubview(textBox)
   const textBoxUnit = utils.createLabel('px', 205, this.modalParams.height - this.modalParams.lineHeight, 50, 20)
   this.view.addSubview(textBoxUnit)
@@ -129,7 +165,7 @@ function makeArtboardParams() {
   const paddingBoxLabel = utils.createLabel('Artboard Padding', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 150, 20)
   this.view.addSubview(paddingBoxLabel)
   const paddingBox = NSTextField.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 50, 20));
-  paddingBox.setStringValue('4');
+  paddingBox.setStringValue(this.settingsValues.iconPadding);
   this.view.addSubview(paddingBox)
   const paddingBoxUnit = utils.createLabel('px', 205, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 50, 20)
   this.view.addSubview(paddingBoxUnit)
@@ -138,6 +174,25 @@ function makeArtboardParams() {
   this.artboardSize = textBox
 
   this.artboardSize.setNextKeyView(this.artboardPadding)
+}
+
+function makeViewBoxParams() {
+
+  this.coeffCurrentHeight++
+
+  const textBoxLabel = utils.createLabel('Viewbox size', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 150, 20)
+  this.view.addSubview(textBoxLabel)
+  const textBoxWidth = NSTextField.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 35, 20));
+  const multiplicationSymbol = utils.createLabel('✕︎', 190, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - 2, 30, 20)
+  const textBoxHeight = NSTextField.alloc().initWithFrame(NSMakeRect(210, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 35, 20));
+  textBoxWidth.setStringValue(this.settingsValues.artboardSize);
+  textBoxHeight.setStringValue(this.settingsValues.artboardSize);
+  this.view.addSubview(textBoxWidth)
+  this.view.addSubview(multiplicationSymbol)
+  this.view.addSubview(textBoxHeight)
+
+  this.viewBoxWidth = textBoxWidth
+  this.viewBoxHeight = textBoxHeight
 }
 
 function makeSymbolParams() {
@@ -357,11 +412,5 @@ function removePickerButton() {
 }
 
 function getStateColor(enabled){
-  // if (enabled) {
-  //   color = NSColor.controlTextColor()
-  // } else {
-  //   color = disabledColor
-  //   // this.colorsMenuParams.removeAllItems()
-  // }
   return (enabled) ? NSColor.controlTextColor() : disabledColor
 }

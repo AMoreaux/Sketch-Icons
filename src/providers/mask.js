@@ -22,9 +22,41 @@ export default {
 function initAddMaskOnSelectedArtboards(context, params, rootObjects) {
   rootObjects.forEach(async (rootObject) => {
     if (utils.hasMask(rootObject.object) && !utils.svgHasStroke(rootObject.object)) removeMask(context, rootObject.object)
-    await addColor(context, rootObject.object, params)
+    try{
+      await addColor(context, rootObject.object, params)
+    }catch (e){
+      console.log('>>>>>>>>>>>', e);
+    }
   })
   utils.clearSelection(context)
+}
+
+/**
+ * @name addColor
+ * @description index function for all step to add mask and convert artboard to symbol at end
+ * @param context {Object}
+ * @param rootObject {Object} : MSArtboardGroup && MSSymbolMaster
+ * @param params {Object}
+ */
+async function addColor(context, rootObject, params) {
+  console.log('>>>>>>>>>>>', utils.svgHasStroke(rootObject));
+
+  if (utils.svgHasStroke(rootObject)) {
+    applyColor(rootObject, params);
+  } else {
+
+    if (utils.hasMask(rootObject)) {
+      removeMask(context, rootObject)
+    } else {
+      const firstLayer = rootObject.firstLayer()
+      const svgData = utils.layerToSvg(firstLayer)
+      if(rootObject.layers().length > 1 || String(firstLayer.class()) !== "MSShapeGroup" ) await svgProvider.replaceSVG(context, rootObject, svgData, {withMask: true}, false)
+    }
+
+    applyMask(context, rootObject, params)
+  }
+
+  return registerMask(context, rootObject, params)
 }
 
 /**
@@ -74,33 +106,6 @@ function removeMask(context, rootObject) {
     rootObject.lastLayer().removeFromParent()
   }
 }
-
-/**
- * @name addColor
- * @description index function for all step to add mask and convert artboard to symbol at end
- * @param context {Object}
- * @param rootObject {Object} : MSArtboardGroup && MSSymbolMaster
- * @param params {Object}
- */
-async function addColor(context, rootObject, params) {
-
-  if (utils.svgHasStroke(rootObject)) {
-    applyColor(rootObject, params);
-  } else {
-
-    if (utils.hasMask(rootObject)) {
-      removeMask(context, rootObject)
-    } else {
-      const svgData = utils.layerToSvg(rootObject.firstLayer())
-      await svgProvider.replaceSVG(context, rootObject, svgData, true, false)
-    }
-
-    applyMask(context, rootObject, params)
-  }
-
-  return registerMask(context, rootObject, params)
-}
-
 
 /**
  * @name registerMask
@@ -154,6 +159,12 @@ function getMaskPropertiesFromArtboard(context, rootObject) {
   return (!result.colorLib && !result.color && !result.colorPicker) ? null : result
 }
 
+/**
+ * @name getColorParams
+ * @param context
+ * @param rootObject
+ * @returns {{colorLibraryId: *, colorSymbolId: *, colorString: *}}
+ */
 function getColorParams(context, rootObject) {
   return {
     colorLibraryId: context.command.valueForKey_onLayer("colorLib", rootObject),

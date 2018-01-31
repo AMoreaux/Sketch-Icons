@@ -1,9 +1,9 @@
 {
   "compatibleVersion": 47,
   "bundleVersion": 1,
-  "version": "4.0.0",
-  "name": "Sketch-Icons-v4",
-  "identifier": "com.amoreaux.sketch-icons.v4",
+  "version": "5.0.0",
+  "name": "Sketch-Icons-v5",
+  "identifier": "com.amoreaux.sketch-icons.v5",
   "description": "Import your icons, apply a color mask and create a dynamic icons library.",
   "authorEmail": "moreaux.antoine@gmail.com",
   "author": "Valentin Chrétien, Antoine Moreaux",
@@ -51,17 +51,38 @@
       "identifier": "remove.mask.selected.artboard",
       "icon": "icons/icon-square-1.jpg",
       "description": "Remove mask on selected artboard"
+    },
+    {
+      "script": "commands.js",
+      "handler": "setSettings",
+      "name": "settings",
+      "identifier": "settings.sketch.icons",
+      "shortcut": "command shift f",
+      "icon": "icons/icon-square-1.jpg",
+      "description": "Configure sketch icons"
+    },
+    {
+      "script": "commands.js",
+      "handler": "organizeIcons",
+      "name": "Organize icons...",
+      "identifier": "organize.icons.selected.layer",
+      "shortcut": "command shift f",
+      "icon": "icons/icon-square-1.jpg",
+      "description": "Organize selected icons"
     }
   ],
   "menu": {
-    "title": "Sketch Icons v4",
+    "title": "Sketch Icons v5",
     "items": [
       "import.icons",
       "update.icons.selected.artboard",
+      "organize.icons.selected.layer",
       "-",
       "mask.selected.artboard",
       "update.mask.selected.artboard",
-      "remove.mask.selected.artboard"
+      "remove.mask.selected.artboard",
+      "-",
+      "settings.sketch.icons"
     ]
   },
   "disableCocoaScriptPreprocessor": true

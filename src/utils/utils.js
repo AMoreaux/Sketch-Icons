@@ -208,6 +208,9 @@ function layerToSvg(layer) {
 function svgHasStroke(rootObject) {
   let hasBorder = false
   rootObject.children().forEach((layer) => {
+    // layer.styledLayer().style().removeAllStyleBorders()
+    // layer.styledLayer().style().disableAllBorders()
+    // console.log('>>>>>>>>>>>', layer.styledLayer().style().enabledBorders());
     if (layer.styledLayer().style().hasEnabledBorder()) {
       hasBorder = true
     }

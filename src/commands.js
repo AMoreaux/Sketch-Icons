@@ -5,7 +5,9 @@ import maskProvider from './providers/mask';
 import modals from './utils/modals';
 import files from './providers/files';
 import svg from './providers/svg';
-import {importModal, maskModal} from './modals/modals';
+import {importModal, maskModal, artboardModal} from './modals/modals';
+import settingsModal from './modals/settings';
+import settingsProvider from './providers/settings'
 
 /**
  * @name importIcons
@@ -27,17 +29,29 @@ export function importIcons(context) {
  * @param context
  */
 export function updateIconsOnSelectedArtboards(context) {
-  try {
-    const selectedArtboardsAndSymbols = utils.getSelectedArtboardsAndSymbols(context);
-    if (selectedArtboardsAndSymbols.length === 0) return modals.newErrorModal('No artboards selected', 'Please select one or more artboards to replace icons.')
-    const listIcon = files.selectIconsFiles()
-    if (!listIcon.length) return
-    if (selectedArtboardsAndSymbols.length > listIcon.length) return modals.newErrorModal('Too much artboards selected', 'Please select as many artboards as icons.')
-    if (selectedArtboardsAndSymbols.length < listIcon.length) return modals.newErrorModal('Too much icons selected', 'Please select as many icons as artboards.')
-    svg.initUpdateIconsSelectedArtboards(context, selectedArtboardsAndSymbols, listIcon)
-  } catch (e) {
-    console.log('>>>>>>>>>>>', e);
+  const selectedArtboardsAndSymbols = utils.getSelectedArtboardsAndSymbols(context);
+  if (selectedArtboardsAndSymbols.length === 0) return modals.newErrorModal('No artboards selected', 'Please select one or more artboards to replace icons.')
+  const settings = settingsProvider.getSettings(context)
+  let params = {}
+  if(settings.modalReplaceIcon){
+    params = artboardModal(context)
+    if (params.button !== 1000) return
   }
+  params.listIcon = files.selectIconsFiles()
+  if (!params.listIcon.length) return
+  if (selectedArtboardsAndSymbols.length > params.listIcon.length) return modals.newErrorModal('Too much artboards selected', 'Please select as many artboards as icons.')
+  if (selectedArtboardsAndSymbols.length < params.listIcon.length) return modals.newErrorModal('Too much icons selected', 'Please select as many icons as artboards.')
+  svg.initUpdateIconsSelectedArtboards(context, selectedArtboardsAndSymbols, params)
+}
+
+export function organizeIcons(context) {
+  const selectedLayers = context.selection;
+  if (selectedLayers.length === 0) return modals.newErrorModal('No layers selected', 'Please select one or more layers.')
+  utils.runFramework(context)
+  const params = importModal(context)
+  if (params.button !== 1000) return
+  params.listIcon = selectedLayers
+  artboardProvider.initOrganizeIcons(context, params)
 }
 
 /**
@@ -65,4 +79,15 @@ export function removeMaskOnSelectedArtboards(context) {
   selectedArtboardsAndSymbols.forEach((rootElement) => {
     maskProvider.removeMask(context, rootElement.object)
   })
+}
+
+/**
+ * @name setSettings
+ * @description set settings
+ * @param context
+ */
+export function setSettings(context) {
+  const params = settingsModal(context)
+  if (params.button === 1001) return
+  settingsProvider.registerSettings(context, params)
 }
