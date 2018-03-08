@@ -4,6 +4,8 @@ export default {
   selectIconsFiles
 }
 
+const AVAILABLE_EXT = ["svg", "pdf", "png", "jpg", "jpeg"]
+
 /**
  * @name selectIconsFiles
  * @description display modal selection file and return them
@@ -14,7 +16,7 @@ function selectIconsFiles() {
   const panel = NSOpenPanel.openPanel();
   panel.setAllowsMultipleSelection(true);
   panel.setCanChooseDirectories(true);
-  panel.setAllowedFileTypes(["svg", "pdf"]);
+  panel.setAllowedFileTypes(AVAILABLE_EXT);
   panel.setCanChooseFiles(true);
   panel.setPrompt("Select");
 
@@ -40,8 +42,8 @@ function getFilesByUrls(urls, result) {
     if(!!(urls[i].hasDirectoryPath())){
       getFilesByUrls(NSFileManager.defaultManager().contentsOfDirectoryAtURL_includingPropertiesForKeys_options_error(urls[i], null, null, null), result)
     }else{
-      const ext = String(urls[i].pathExtension())
-      if (ext === 'svg' || ext === 'pdf'){
+      const ext = String(urls[i].pathExtension()).toLowerCase()
+      if (AVAILABLE_EXT.indexOf(ext) !== -1){
         result.push(urls[i])
       }
     }

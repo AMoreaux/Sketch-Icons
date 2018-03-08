@@ -37,7 +37,7 @@ plugins:
 #  - removeNonInheritableGroupAttrs: true
   - removeViewBox: false
   - cleanupEnableBackground: true
-  - removeHiddenElems: true
+  - removeHiddenElems: false
   - removeEmptyText
   - removeEmptyRect: true
 #  - collapseGroups: true

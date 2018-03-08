@@ -1,9 +1,9 @@
 {
-  "compatibleVersion": 47,
+  "compatibleVersion": 48,
   "bundleVersion": 1,
-  "version": "5.0.0",
-  "name": "Sketch-Icons-v5",
-  "identifier": "com.amoreaux.sketch-icons.v5",
+  "version": "4.0.0",
+  "name": "Sketch-Icons-Beta",
+  "identifier": "com.amoreaux.sketch-icons.v4",
   "description": "Import your icons, apply a color mask and create a dynamic icons library.",
   "authorEmail": "moreaux.antoine@gmail.com",
   "author": "Valentin Chrétien, Antoine Moreaux",
@@ -55,7 +55,7 @@
     {
       "script": "./commands.js",
       "handler": "setSettings",
-      "name": "settings",
+      "name": "Settings",
       "identifier": "settings.sketch.icons",
       "shortcut": "command shift f",
       "icon": "icons/icon-square-1.jpg",
@@ -66,13 +66,12 @@
       "handler": "organizeIcons",
       "name": "Organize icons...",
       "identifier": "organize.icons.selected.layer",
-      "shortcut": "command shift f",
       "icon": "icons/icon-square-1.jpg",
       "description" : "Organize selected icons"
     }
   ],
   "menu" : {
-    "title" : "Sketch Icons v5",
+    "title" : "Sketch Icons Beta",
     "items" : [
       "import.icons",
       "update.icons.selected.artboard",

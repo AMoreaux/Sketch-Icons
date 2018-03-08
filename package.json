@@ -27,10 +27,9 @@
     "postinstall": "npm run build && skpm-link"
   },
   "devDependencies": {
-    "@skpm/builder": "^0.2.0",
+    "@skpm/builder": "^0.4.1",
     "copy-webpack-plugin": "^4.3.0",
-    "lodash.merge": "^4.6.0",
-    "prettier": "1.10.2"
+    "lodash.merge": "^4.6.0"
   },
   "dependencies": {
     "react": "^16.2.0",

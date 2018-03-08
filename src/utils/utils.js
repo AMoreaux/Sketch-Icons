@@ -1,5 +1,6 @@
 import MochaJSDelegate from './MochaJSDelegate.js'
 import logger from './logger'
+import settingsProvider from "../providers/settings";
 
 export default {
   clearSelection,
@@ -15,8 +16,12 @@ export default {
   svgHasStroke,
   convertMSColorToString,
   convertStringToMSColor,
-  getBorderColor
+  getBorderColor,
+  getRootObject,
+  getSizeBetweenIcon,
+  buildPrefix
 }
+
 
 /**
  * @name clearSelection
@@ -45,18 +50,22 @@ function getIconNameByNSUrl(icon) {
  * @param y {Number}
  * @param w {Number}
  * @param h {Number}
- * @param fontSize {Number}
+ * @param isDescription {Boolean}
  * @returns {Object} : NSTextField
  */
-function createLabel(name, x, y, w, h, fontSize = 13) {
+function createLabel(name, x, y, w, h, isDescription) {
 
   const label = NSTextField.alloc().initWithFrame_(NSMakeRect(x, y, w, h));
+  if (isDescription) {
+    label.setTextColor(NSColor.colorWithCalibratedRed_green_blue_alpha(0 / 255, 0 / 255, 0 / 255, 0.6));
+  }
   label.setEditable_(false);
   label.setSelectable_(false);
   label.setBezeled_(false);
   label.setDrawsBackground_(false);
-  label.setFont(NSFont.systemFontOfSize_(fontSize));
+  label.setFont(NSFont.systemFontOfSize((isDescription) ? 11 : 13));
   label.setStringValue_(name);
+
   return label;
 }
 
@@ -69,14 +78,14 @@ function createLabel(name, x, y, w, h, fontSize = 13) {
 function getSelectedArtboardsAndSymbols(context) {
   let selectedArtboardsAndSymbols = []
 
-  context.selection.some(function (layer) {
+  context.selection.forEach(function (layer) {
     let className = String(layer.class())
     if (className !== 'MSArtboardGroup' || className !== 'MSSymbolMaster') {
       layer = layer.parentRoot()
       className = String(layer.class())
     }
 
-    if (selectedArtboardsAndSymbols.indexOf(String(layer.objectID())) === -1) {
+    if (selectedArtboardsAndSymbols.indexOf(String(layer.objectID())) === -1 && (className === 'MSArtboardGroup' || className === 'MSSymbolMaster')) {
       selectedArtboardsAndSymbols.push({
         'object': layer,
         'type': className,
@@ -121,7 +130,7 @@ function createWebview(context, pickerButton, setColor) {
       const colorNS = NSColor.colorWithRed_green_blue_alpha(color.r, color.g, color.b, color.a)
       const colorMS = MSImmutableColor.colorWithNSColor(colorNS)
 
-      pickerButton.setImage(getImageByColor(colorNS, {width: 40, height: 30}))
+      pickerButton.setImage(getImageByColor(colorNS, { width: 40, height: 30 }))
       setColor(colorMS)
     })
   })
@@ -177,7 +186,7 @@ function runFramework(context) {
  * @param colorSize
  * @return {Object} : NSImage
  */
-function getImageByColor(color, colorSize = {width: 14, height: 14}) {
+function getImageByColor(color, colorSize = { width: 14, height: 14 }) {
   const size = CGSizeMake(colorSize.width, colorSize.height);
   const image = NSImage.alloc().init()
   image.size = size
@@ -208,9 +217,6 @@ function layerToSvg(layer) {
 function svgHasStroke(rootObject) {
   let hasBorder = false
   rootObject.children().forEach((layer) => {
-    // layer.styledLayer().style().removeAllStyleBorders()
-    // layer.styledLayer().style().disableAllBorders()
-    // console.log('>>>>>>>>>>>', layer.styledLayer().style().enabledBorders());
     if (layer.styledLayer().style().hasEnabledBorder()) {
       hasBorder = true
     }
@@ -232,7 +238,7 @@ function getBorderColor(rootObject) {
 }
 
 function convertMSColorToString(colorMS) {
-  return JSON.stringify({r: colorMS.red(), g: colorMS.green(), b: colorMS.blue(), a: colorMS.alpha()})
+  return JSON.stringify({ r: colorMS.red(), g: colorMS.green(), b: colorMS.blue(), a: colorMS.alpha() })
 }
 
 function convertStringToMSColor(string) {
@@ -242,33 +248,40 @@ function convertStringToMSColor(string) {
   return MSImmutableColor.colorWithNSColor(colorNS)
 }
 
-// function networkRequest(svg) {
-  // var task = NSTask.alloc().init();
-  // task.setLaunchPath("/usr/bin/curl");
-  // task.setArguments(args);
-  // var outputPipe = NSPipe.pipe();
-  // task.setStandardOutput(outputPipe);
-  // task.launch();
-  // var responseData = outputPipe.fileHandleForReading().readDataToEndOfFile();
-  // logger.log(responseData)
+function getRootObject(context) {
+  const result = [];
+  context.api().selectedDocument.selectedPage.sketchObject.layers().forEach((layer) => {
+    let className = String(layer.class())
+    if (className === 'MSArtboardGroup' || className === 'MSSymbolMaster') {
+      result.push(layer)
+    }
+  })
 
+  return result;
+}
 
-  // var request = NSMutableURLRequest.alloc().init();
-  // request.setHTTPMethod_("POST");
-  // request.setURL_(NSURL.URLWithString_('http://localhost:1337/'));
-  // request.setHTTPBody(svg)
-  // var responseData = NSURLConnection.sendSynchronousRequest_returningResponse_error_(request,null,null);
+function getSizeBetweenIcon(rootObjectSize, size) {
+  const value = parseInt(size)
+  const unit = size.replace(value, '')
+  return (unit && unit === '%') ? rootObjectSize + rootObjectSize * (value / 100) : rootObjectSize + value;
+}
 
+function buildPrefix(context, rootObjectSize) {
+  const settings = settingsProvider.getSettings(context, 'default')
+  // console.log('>>>>>>>>>>>', (settings.prefixRootObject.data !== 'null'));
+  // console.log('>>>>>>>>>>>', settings.prefixRootObject.data);
+  return (settings.prefixRootObject.data !== 'null') ? settings.prefixRootObject.data.replace('$size', rootObjectSize) : '';
 
-  // var stringResponse = NSString.alloc().initWithData_encoding_(responseData,NSUTF8StringEncoding);
-  // var responseString = NSString.alloc().initWithData_encoding(responseData, NSUTF8StringEncoding);
-  // if(!responseString) {
-  //   log("Error invoking curl");
-  //   log("args:");
-  //   log(args);
-  //   log("responseString");
-  //   log(responseString);
-  //   throw "Error communicating with server"
-  // }
-//   return '';
+}
+
+// function zoomOutOfPage(context){
+//   const currentPage = context.document.currentPage()
+//   const artboards = [];
+//     currentPage.layers().forEach(layer => {
+//       artboards.push(layer)
+//     })
+//   currentPage.changeSelectionBySelectingLayers(artboards);
+//
+//
+//   MSDocument.currentDocument().eventHandlerManager().currentHandler().zoomToSelection()
 // }

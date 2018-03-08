@@ -1,4 +1,4 @@
-import {constructBase} from './modals';
+import { constructBase } from './modals';
 import utils from '../utils/utils';
 import settingsProvider from "../providers/settings";
 
@@ -6,190 +6,177 @@ export default settingsModal;
 
 function settingsModal(context) {
 
-  this.settingsValues = settingsProvider.getSettings(context)
+  this.settingsValues = settingsProvider.getSettings(context, 'placeholder')
 
   this.modalParams = {
-    messageText: 'Configure your plugin',
-    informativeText: 'Define your settings.',
-    height: Object.keys(this.settingsValues).length * 38,
-    width: 300,
-    lineHeight: 35
+    messageText: 'Settings',
+    informativeText: 'Customize your imports using presets and other features.',
+    height: (Object.keys(this.settingsValues).length + 1) * 73,
+    width: 340,
+    lineHeight: 45
   };
 
   this.coeffCurrentHeight = 0;
   this.adjustHeight = 0;
-  this.marginLeftColRight = 175
+  this.marginLeftColRight = 130;
+  this.adjust = -5;
+  this.lineOne = 15;
+  this.lineTwo = 0;
 
-  constructBase('save');
-  // this.modal.addButtonWithTitle('Reset settings');
+  constructBase('Save');
 
-  makeDefaultArtboardParams();
-  displayArtboardModalOnReplaceIconParams();
-  displayViewBoxParams()
-  convertStrokeToFillParams()
-  // otherSizeChecbox()
-  // otherSizeParams()
+  makePresetParams();
+  prefixRootObjectParams()
   quantityIconsByLine()
-  // presets()
+  marginBetweenRootObject()
+  convertStrokeToFillParams()
 
   return {
     button: this.modal.runModal(),
-    artboardSize: parseInt(this.artboardSize.stringValue()),
-    iconPadding: parseInt(this.artboardPadding.stringValue()),
-    iconsByLine: parseInt(this.iconsByLine.stringValue()),
-    modalReplaceIcon: this.modalReplaceIcon.state(),
-    viewBoxParams: this.viewBoxParams.state(),
+    presets: String(this.presets.stringValue()).replace(/ /g, ''),
+    iconsByLine: parseInt(this.iconsByLine.stringValue()) || null,
     convertStroke: this.convertStroke.state(),
-    // otherSize: this.otherSize.state()
+    marginBetweenRootObject: this.marginBetweenRootObject.stringValue().replace(/ /g, ''),
+    prefixRootObject: this.prefixRootObject.stringValue()
   };
 }
 
-function makeDefaultArtboardParams() {
+function makePresetParams() {
   this.coeffCurrentHeight++;
-  let yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight
+  let yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + this.adjust
 
-  const textBoxLabel = utils.createLabel('Artboard size', 0, yAxis, this.marginLeftColRight, 20);
+  const textBoxLabel = utils.createLabel('Size Presets', 0, yAxis, this.marginLeftColRight, 20);
   this.view.addSubview(textBoxLabel);
-  const sizeBox = NSTextField.alloc().initWithFrame(
-    NSMakeRect(this.marginLeftColRight, yAxis, 50, 20)
+
+  const presetsBox = NSTextField.alloc().initWithFrame(
+    NSMakeRect(this.marginLeftColRight, yAxis, 145, 21)
   );
-  sizeBox.setStringValue(String(this.settingsValues.artboardSize));
-  this.view.addSubview(sizeBox);
-  const sizeBoxUnit = utils.createLabel('px', this.marginLeftColRight + 55, yAxis, 50, 20)
-  this.view.addSubview(sizeBoxUnit);
+
+  if (settingsProvider.hasValue(this.settingsValues.presets)) {
+    presetsBox.setStringValue(String(this.settingsValues.presets.value));
+  } else {
+    presetsBox.setPlaceholderString(String(this.settingsValues.presets.placeholder));
+  }
+
+  this.view.addSubview(presetsBox);
 
   this.coeffCurrentHeight++;
-  yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight
+  addDescription('Set your artboard sizes and padding.', this.lineOne)
+  addDescription('Format: size-padding', this.lineTwo)
 
-  const paddingBoxLabel = utils.createLabel('Artboard padding', 0, yAxis, this.marginLeftColRight, 20);
-  this.view.addSubview(paddingBoxLabel);
-  const paddingBox = NSTextField.alloc().initWithFrame(
-    NSMakeRect(this.marginLeftColRight, yAxis, 50, 20)
-  );
-  paddingBox.setStringValue(String(this.settingsValues.iconPadding));
-  this.view.addSubview(paddingBox);
-  const paddingBoxUnit = utils.createLabel('px', this.marginLeftColRight + 55, yAxis, 50, 20)
-  this.view.addSubview(paddingBoxUnit);
+  this.presets = presetsBox
 
-  this.artboardPadding = paddingBox;
-  this.artboardSize = sizeBox;
-
-  this.artboardSize.setNextKeyView(this.artboardPadding);
-}
-
-function displayArtboardModalOnReplaceIconParams() {
-  this.coeffCurrentHeight++;
-  const yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight
-
-  const modalOnReplaceIconCheckboxLabel = utils.createLabel('Replace icon', 0, yAxis, this.marginLeftColRight, 20)
-  this.view.addSubview(modalOnReplaceIconCheckboxLabel);
-
-  const modalReplaceIconCheckBox = NSButton.alloc().initWithFrame(
-    NSMakeRect(this.marginLeftColRight, yAxis, 200, 20)
-  );
-  modalReplaceIconCheckBox.setButtonType(NSSwitchButton);
-  modalReplaceIconCheckBox.setState(this.settingsValues.modalReplaceIcon);
-  modalReplaceIconCheckBox.setFont(NSFont.systemFontOfSize_(13));
-  modalReplaceIconCheckBox.setTitle('Retype params');
-  this.view.addSubview(modalReplaceIconCheckBox);
-
-  this.modalReplaceIcon = modalReplaceIconCheckBox;
-}
-
-function displayViewBoxParams() {
-  this.coeffCurrentHeight++;
-  const yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight
-
-  const viewBoxCheckboxLabel = utils.createLabel('Override viewbox', 0, yAxis, this.marginLeftColRight, 20)
-  this.view.addSubview(viewBoxCheckboxLabel);
-
-  const viewBoxCheckBox = NSButton.alloc().initWithFrame(
-    NSMakeRect(this.marginLeftColRight, yAxis, 200, 20)
-  );
-  viewBoxCheckBox.setButtonType(NSSwitchButton);
-  viewBoxCheckBox.setState(this.settingsValues.viewBoxParams);
-  viewBoxCheckBox.setFont(NSFont.systemFontOfSize_(13));
-  viewBoxCheckBox.setTitle('Display option');
-  this.view.addSubview(viewBoxCheckBox);
-
-  this.viewBoxParams = viewBoxCheckBox;
 }
 
 function convertStrokeToFillParams() {
 
   this.coeffCurrentHeight++;
-  const yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight
+  const yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + 30
 
-  const convertStrokeCheckboxLabel = utils.createLabel('Convert stroke', 0, yAxis, this.marginLeftColRight, 20)
+  const convertStrokeCheckboxLabel = utils.createLabel('Stroke to Fill', 0, yAxis, this.marginLeftColRight, 20)
   this.view.addSubview(convertStrokeCheckboxLabel);
 
   const convertStrokeCheckBox = NSButton.alloc().initWithFrame(
-    NSMakeRect(this.marginLeftColRight, yAxis, 200, 20)
+    NSMakeRect(this.marginLeftColRight, yAxis, 200, 21)
   );
   convertStrokeCheckBox.setButtonType(NSSwitchButton);
-  convertStrokeCheckBox.setState(this.settingsValues.convertStroke);
+  convertStrokeCheckBox.setState(parseInt(this.settingsValues.convertStroke.data));
   convertStrokeCheckBox.setFont(NSFont.systemFontOfSize_(13));
-  convertStrokeCheckBox.setTitle('Convert');
+  convertStrokeCheckBox.setTitle('Auto-Convert');
   this.view.addSubview(convertStrokeCheckBox);
+
+  this.coeffCurrentHeight++;
+  addDescription('This will allow you to add a dynamic color mask ', this.lineOne + 30)
+  addDescription('over your outlined icons.', this.lineTwo + 30)
 
   this.convertStroke = convertStrokeCheckBox;
 }
 
-function otherSizeChecbox() {
-
+function quantityIconsByLine() {
   this.coeffCurrentHeight++;
-  const yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight
+  const yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + this.adjust
 
-  const otherSizeCheckboxLabel = utils.createLabel('Other size', 0, yAxis, this.marginLeftColRight, 20)
-  this.view.addSubview(otherSizeCheckboxLabel);
-
-  const otherSizeCheckBox = NSButton.alloc().initWithFrame(
-    NSMakeRect(this.marginLeftColRight, yAxis, 4000, 20)
-  );
-  otherSizeCheckBox.setButtonType(NSSwitchButton);
-  otherSizeCheckBox.setState(this.settingsValues.otherSize);
-  otherSizeCheckBox.setFont(NSFont.systemFontOfSize_(13));
-  otherSizeCheckBox.setTitle('Add second size');
-  this.view.addSubview(otherSizeCheckBox);
-
-  this.otherSize = otherSizeCheckBox;
-}
-
-function otherSizeParams(){
-  this.coeffCurrentHeight++;
-  const yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight
-
-  const otherSizeParamsLabel = utils.createLabel('Second artboard size', 0, yAxis, this.marginLeftColRight, 20);
-  this.view.addSubview(otherSizeParamsLabel);
-  const sizeBox = NSTextField.alloc().initWithFrame(
-    NSMakeRect(this.marginLeftColRight, yAxis, 50, 20)
-  );
-  sizeBox.setStringValue(String(this.settingsValues.otherSizeParams));
-  this.view.addSubview(sizeBox);
-  const sizeBoxUnit = utils.createLabel('px', this.marginLeftColRight + 55, yAxis, 50, 20)
-  this.view.addSubview(sizeBoxUnit);
-
-  this.otherSizeParams = sizeBox;
-}
-
-
-function quantityIconsByLine(){
-  this.coeffCurrentHeight++;
-  const yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight
-
-  const iconByLineParamsLabel = utils.createLabel('Icons by line', 0, yAxis, this.marginLeftColRight, 20);
+  const iconByLineParamsLabel = utils.createLabel('Icons Grid', 0, yAxis, this.marginLeftColRight, 20);
   this.view.addSubview(iconByLineParamsLabel);
   const sizeBox = NSTextField.alloc().initWithFrame(
-    NSMakeRect(this.marginLeftColRight, yAxis, 50, 20)
+    NSMakeRect(this.marginLeftColRight, yAxis, 50, 21)
   );
-  sizeBox.setStringValue(String(this.settingsValues.iconsByLine));
+
+  if (String(this.settingsValues.iconsByLine.value) === 'null') {
+    sizeBox.setPlaceholderString('10')
+  } else {
+    sizeBox.setStringValue(String(this.settingsValues.iconsByLine.value));
+  }
+
   this.view.addSubview(sizeBox);
-  const sizeBoxUnit = utils.createLabel('icons', this.marginLeftColRight + 55, yAxis, 50, 20)
+  const sizeBoxUnit = utils.createLabel('icons per line', this.marginLeftColRight + 55, yAxis, 100, 20)
   this.view.addSubview(sizeBoxUnit);
+
+  this.coeffCurrentHeight++;
+  addDescription('Set the number of imported icons per line.', this.lineOne)
+  // addDescription('Format: size-padding', this.lineTwo)
 
   this.iconsByLine = sizeBox;
 }
 
-function presets() {
+function marginBetweenRootObject() {
+  this.coeffCurrentHeight++;
+  const yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + 15
 
+  const marginBetweenRootObjectParamsLabel = utils.createLabel('Spacing', 0, yAxis, this.marginLeftColRight, 20);
+  this.view.addSubview(marginBetweenRootObjectParamsLabel);
+  const sizeBox = NSTextField.alloc().initWithFrame(
+    NSMakeRect(this.marginLeftColRight, yAxis, 50, 21)
+  );
+
+  if (settingsProvider.hasValue(this.settingsValues.marginBetweenRootObject)) {
+    sizeBox.setStringValue(String(this.settingsValues.marginBetweenRootObject.value));
+  } else {
+    sizeBox.setPlaceholderString(String(this.settingsValues.marginBetweenRootObject.placeholder));
+  }
+
+  this.view.addSubview(sizeBox);
+  const sizeBoxUnit = utils.createLabel('px or %', this.marginLeftColRight + 55, yAxis, 100, 20)
+  this.view.addSubview(sizeBoxUnit);
+
+  this.coeffCurrentHeight++;
+  addDescription('Set the spacing between the imported icons.', this.lineOne + 15)
+  // addDescription('Format: size-padding', this.lineTwo)
+
+  this.marginBetweenRootObject = sizeBox;
+}
+
+function prefixRootObjectParams() {
+  this.coeffCurrentHeight++;
+  const yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + this.adjust
+
+  const prefixRootObjectParamsLabel = utils.createLabel('Add Prefix ', 0, yAxis, this.marginLeftColRight, 20);
+  this.view.addSubview(prefixRootObjectParamsLabel);
+  const sizeBox = NSTextField.alloc().initWithFrame(
+    NSMakeRect(this.marginLeftColRight, yAxis, 145, 21)
+  );
+
+  if (settingsProvider.hasValue(this.settingsValues.prefixRootObject)) {
+    sizeBox.setStringValue(String(this.settingsValues.prefixRootObject.value));
+  } else {
+    sizeBox.setPlaceholderString(String(this.settingsValues.prefixRootObject.placeholder));
+  }
+
+  this.view.addSubview(sizeBox);
+
+  this.coeffCurrentHeight++;
+  addDescription('Add a path structure to the name of yours icons.', this.lineOne)
+  addDescription('$size is equal to the size of the artboard.', this.lineTwo)
+
+  this.prefixRootObject = sizeBox;
+}
+
+
+function addDescription(text, ajust) {
+
+  const yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + ajust
+
+  const descriptionLabel = utils.createLabel(text, 0, yAxis, 400, 20, true);
+
+  this.view.addSubview(descriptionLabel);
 }

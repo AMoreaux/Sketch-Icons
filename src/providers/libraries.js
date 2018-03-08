@@ -18,11 +18,11 @@ export default {
  */
 function getLibById(libraryId) {
 
-  let library, userLibraries = AppController.sharedInstance().librariesController().userLibraries()
+  let library, availableLibraries = AppController.sharedInstance().librariesController().availableLibraries()
 
-  for(let i = 0; i < userLibraries.length; i++){
-    if(String(libraryId) === String(userLibraries[i].libraryID())){
-      library = userLibraries[i]
+  for(let i = 0; i < availableLibraries.length; i++){
+    if(String(libraryId) === String(availableLibraries[i].libraryID())){
+      library = availableLibraries[i]
       break;
     }
   }
@@ -38,10 +38,9 @@ function getLibById(libraryId) {
  * @returns {Array}
  */
 function loadColorFromSelectedLib(library, colorMenu) {
-  
+
   colorMenu.removeAllItems()
   library = library.representedObject()
-  loadLibrary(library)
 
   return getColorSymbolsFromDocument(library.document())
 }
@@ -61,8 +60,8 @@ function loadLibrary(library){
 function initLibsSelectList(context, libraries, colorMenu) {
 
   function addListener(item) {
-    item.setCOSJSTargetFunction(function (library) {
-      updateColorMenu(context, library, colorMenu)
+    item.setCOSJSTargetFunction((libraryItem) => {
+      updateColorMenu(context, libraryItem, colorMenu)
     })
   }
 
@@ -71,7 +70,7 @@ function initLibsSelectList(context, libraries, colorMenu) {
   currentDocument.title = 'Current file'
   addListener(currentDocument)
   colorLibsMenu.addItem(currentDocument)
-  libraries.some(function(library){
+  libraries.forEach((library) => {
     let item = NSMenuItem.alloc().init()
     item.title = library.name()
     item.representedObject = library
@@ -84,12 +83,12 @@ function initLibsSelectList(context, libraries, colorMenu) {
   return colorLibsMenu
 }
 
-function updateColorMenu(context, library, colorMenu){
+function updateColorMenu(context, libraryItem, colorMenu){
   let colors = []
-  if(!library.representedObject()){
+  if(!libraryItem.representedObject()){
     colors = getColorSymbolsFromDocument(context.document.documentData())
   }else{
-    colors = loadColorFromSelectedLib(library, colorMenu)
+    colors = loadColorFromSelectedLib(libraryItem, colorMenu)
   }
   if(colors.length > 0){
     initColorSelectList(colorMenu, colors);
@@ -138,9 +137,16 @@ function getColorSymbolsFromDocument(document){
     if(color)result.push(color)
   })
 
+
   return result
 }
 
+/**
+ * @name getSymbolFromDocument
+ * @param document
+ * @param symbolId
+ * @return {*}
+ */
 function getSymbolFromDocument(document, symbolId){
 
 
@@ -154,20 +160,25 @@ function getSymbolFromDocument(document, symbolId){
   }
 
   return symbol
-
-  // return document.symbolWithID(symbolId)
 }
 
+/**
+ * @name getColorFromSymbol
+ * @param symbol
+ * @return {*}
+ */
 function getColorFromSymbol(symbol){
   const layers = symbol.layers()
   let result
+
   if(layers.length === 0 && symbol.backgroundColor()){
     result = {
       color: symbol.backgroundColor(),
       symbol: symbol
     }
   }
-  else if(layers.length === 1 && layers[0].children().length === 2 && String(layers[0].children()[0].class()) === 'MSRectangleShape' && layers[0].style().hasEnabledFill()){
+  else if(layers.length === 1 && layers[0].children().length === 2 && layers[0].style().hasEnabledFill()){
+
 
     result = {
       color: layers[0].style().fills()[0].color(),

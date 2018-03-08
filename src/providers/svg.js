@@ -9,7 +9,8 @@ export default {
   initUpdateIconsSelectedArtboards,
   addSVG,
   replaceSVG,
-  addPDF
+  addPDF,
+  addBITMAP
 };
 
 /**
@@ -20,17 +21,22 @@ export default {
  * @param rootObjects {Array} : MSArtboardGroup && MSSymbolMaster
  */
 function initUpdateIconsSelectedArtboards(context, rootObjects, params) {
-  rootObjects.forEach(function (rootObject, index) {
+  rootObjects.forEach(async function (rootObject, index) {
+
+    const iconParams = {
+      ...maskProvider.getMaskPropertiesFromArtboard(context, rootObject.object),
+      ...artboardProvider.getPaddingAndSize(context, rootObject.object),
+      ...params
+    }
+
     const svgData = String(NSString.alloc().initWithContentsOfURL(params.listIcon[index]));
+    iconParams.withMask = !!(iconParams.colorLib || iconParams.colorPicker || iconParams.color);
 
-    params = {...maskProvider.getMaskPropertiesFromArtboard(context, rootObject.object), ...params};
-    
-    params.withMask = !!(params.colorLib || params.colorPicker || params.color);
+    rootObject.object.removeAllLayers();
 
-    replaceSVG(context, rootObject.object, svgData, params, true).then(() => {
-      rootObject.object.setName(utils.getIconNameByNSUrl(params.listIcon[index]));
-      if (params.withMask) maskProvider.addColor(context, rootObject.object, params);
-    });
+    await addSVG(context, rootObject.object, iconParams, String(svgData), true)
+    rootObject.object.setName(utils.getIconNameByNSUrl(params.listIcon[index]));
+    if (iconParams.withMask) maskProvider.addColor(context, rootObject.object, iconParams);
   });
 
   utils.clearSelection(context);
@@ -48,50 +54,58 @@ function initUpdateIconsSelectedArtboards(context, rootObjects, params) {
 async function addSVG(context, rootObject, params, svgData, withResize) {
   let viewBox;
 
-  const settingsParams = settingsProvider.getSettings(context)
+  const settingsParams = settingsProvider.getSettings(context, 'default')
 
-  if (params.withMask) svgData = await convertLayersToPathWithSVGO(context, svgData);
   svgData = NSString.stringWithString(svgData);
-  if (params.viewBoxWidth && params.viewBoxHeight){
-    svgData = updateViewBox(svgData, params)
-    viewBox = {width: params.viewBoxWidth, height: params.viewBoxHeight }
-  }else{
-    viewBox = getViewBox(svgData);
-  }
+
+  viewBox = getViewBox(svgData);
+
   if (withResize) svgData = addRectToResize(svgData, viewBox);
   const svgImporter = MSSVGImporter.svgImporter();
   svgImporter.prepareToImportFromData(svgData.dataUsingEncoding(NSUTF8StringEncoding));
   const svgLayer = svgImporter.importAsLayer();
 
   removeTxt(svgLayer);
-  rootObject.addLayer(svgLayer);
-  if (utils.svgHasStroke(rootObject) && settingsParams.convertStroke) {
-    convertStrokeToLine(rootObject)
 
-  //   const diagContainer = artboardSize - iconPadding * 2
-  //   setThicknessProportionnally(svgLayer, diagContainer, viewBox)
-  }
-  if (params.withMask) cleanSvg(svgLayer, rootObject);
+  rootObject.addLayer(svgLayer);
+
+  removeNoFillChildren(rootObject)
+
+  if (utils.svgHasStroke(rootObject) && settingsParams.convertStroke.data === '1') convertStrokeToFill(rootObject)
+
   if (withResize) resizeIcon(rootObject, params.iconPadding);
   if (withResize) removeDeleteMeRect(rootObject);
-  // artboard.firstLayer().resizeToFitChildrenWithOption(1);
+
   center(params.artboardSize, rootObject.firstLayer());
 }
 
-function updateViewBox(svgData, params) {
-  svgData = svgData.replace(/viewBox="[+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+"/, `viewbox="0 0 ${params.viewBoxWidth} ${params.viewBoxHeight}"`)
-  svgData = svgData.replace(/width="[0-9]+px"/, `width="${params.viewBoxWidth}px"`)
-  svgData = svgData.replace(/height="[0-9]+px"/, `height="${params.viewBoxHeight}px"`)
-  return svgData
-}
+// function updateViewBox(svgData, params) {
+//   svgData = svgData.replace(/viewBox="[+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+"/, `viewbox="0 0 ${params.viewBoxWidth} ${params.viewBoxHeight}"`)
+//   svgData = svgData.replace(/width="[0-9]+px"/, `width="${params.viewBoxWidth}px"`)
+//   svgData = svgData.replace(/height="[0-9]+px"/, `height="${params.viewBoxHeight}px"`)
+//   return svgData
+// }
 
-async function addPDF(context, rootObject, iconPadding, artboardSize, icon) {
+async function addPDF(context, rootObject, params, icon) {
   const pdfImporter = MSPDFImporter.pdfImporter();
   pdfImporter.prepareToImportFromURL(icon);
   const pdfLayer = pdfImporter.importAsLayer();
   rootObject.addLayer(pdfLayer);
-  resizeIcon(rootObject.firstLayer(), rootObject, iconPadding);
-  center(artboardSize, rootObject.firstLayer());
+  resizeIcon(rootObject, params.iconPadding);
+  center(params.artboardSize, rootObject.firstLayer());
+  rootObject.firstLayer().setName(rootObject.name());
+}
+
+function addBITMAP(context, rootObject, params, icon) {
+
+  if (String(icon.class()) === 'MSBitmapLayer') {
+    MSLayerGroup.moveLayers_intoGroup([icon], rootObject)
+  } else {
+    rootObject.addLayer(MSBitmapLayer.bitmapLayerWithImageFromPath(icon));
+  }
+
+  resizeIcon(rootObject, params.iconPadding);
+  center(params.artboardSize, rootObject.firstLayer());
   rootObject.firstLayer().setName(rootObject.name());
 }
 
@@ -123,11 +137,10 @@ function addRectToResize(svgString, viewBox) {
 /**
  * @name cleanSvg
  * @description main function which used sketch properties to convert icon in one path
- * @param svgLayer
  * @param rootObject
  */
-function cleanSvg(svgLayer, rootObject) {
-  unGroup(svgLayer);
+function cleanSvg(rootObject) {
+  unGroup(rootObject);
   rootObject.firstLayer().setName(rootObject.name());
   removeNoFillLayer(rootObject);
   mergeLayer(rootObject);
@@ -154,16 +167,16 @@ function center(artboardSize, svgLayer) {
  * @param iconPadding {Number}
  */
 function resizeIcon(rootObject, iconPadding) {
+
   const svgLayer = rootObject.firstLayer()
   const svgLayerFrame = svgLayer.frame();
-
-  svgLayer.resizeToFitChildrenWithOption(1);
 
   const currentArtboardRect = rootObject.rect();
   const currentArtboardSize = {
     width: parseInt(currentArtboardRect.size.width),
     height: parseInt(currentArtboardRect.size.height)
   };
+
   const width = svgLayerFrame.width();
   const height = svgLayerFrame.height();
 
@@ -242,11 +255,29 @@ function removeDeleteMeRect(rootObject) {
  */
 function removeNoFillLayer(rootObject) {
   const indexes = NSMutableIndexSet.indexSet();
-  rootObject.layers().forEach(function (layer, index) {
-    if (!layer.style().hasEnabledFill() && !layer.style().hasEnabledBorder())
-      indexes.addIndex(index);
+  rootObject.layers().forEach((layer, index) => {
+    if (!layer.style().hasEnabledFill() && !layer.style().hasEnabledBorder()) indexes.addIndex(index);
   });
   rootObject.removeLayersAtIndexes(indexes);
+}
+
+/**
+ * @description remove transparent layers
+ * @name removeNoFillLayer
+ * @param rootObject
+ */
+function removeNoFillChildren(rootObject) {
+  const toDelete = []
+  rootObject.firstLayer().children().forEach(layer => {
+    const style = layer.styledLayer().style()
+    if (style.hasEnabledFill() && style.contextSettings().opacity() === 0) {
+      toDelete.push(layer);
+    }
+  });
+
+  toDelete.forEach(layer => {
+    layer.removeFromParent()
+  })
 }
 
 /**
@@ -265,9 +296,8 @@ function mergeLayer(rootObject) {
 
   if (rootObject.layers().length > 1) return mergeLayer(rootObject);
 
-  rootObject.children().forEach(function (children) {
-    if (String(children.class()) === 'MSShapePathLayer' && children.booleanOperation() !== -1)
-      children.setBooleanOperation(-1);
+  rootObject.children().forEach(children => {
+    if (children.booleanOperationCanBeReset()) children.setBooleanOperation(-1);
   });
 
   layers[0].resizeToFitChildrenWithOption(0);
@@ -281,39 +311,38 @@ function mergeLayer(rootObject) {
  * @returns {{width: number, height: number}}
  */
 function getViewBox(svgData) {
-  let viewBox = svgData.match(/viewBox="[+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+"/);
+
+  let viewBox = svgData.match(/viewBox="(.*?)"/gm);
+
   let size;
   let result;
   if (Array.isArray(viewBox)) {
-    size = viewBox[0].match(/[+-]?([0-9]*[.])?[0-9]+/g);
+    size = viewBox[0].match(/[+\-]?(?:0|[1-9]\d*)(?:\.\d*)?(?:[eE][+\-]?\d+)?/g);
     result = { width: parseFloat(size[2]), height: parseFloat(size[3]) };
   }
 
   return result;
 }
 
-async function replaceSVG(context, rootObject, svgData, params, withResize) {
-  params = {...artboardProvider.getPaddingAndSize(context, rootObject), ...params};
-  rootObject.removeAllLayers();
+async function replaceSVG(context, rootObject, svgLayer, params, withResize) {
   try {
-    await addSVG(
-      context,
-      rootObject,
-      params,
-      String(svgData),
-      withResize
-    );
+    params = { ...artboardProvider.getPaddingAndSize(context, rootObject), ...params };
+    cleanSvg(rootObject);
+    let svgData = utils.layerToSvg(rootObject.firstLayer())
+    svgData = await convertLayersToPathWithSVGO(context, String(svgData));
+    rootObject.removeAllLayers();
+    await addSVG(context, rootObject, params, String(svgData), withResize);
+    unGroup(rootObject);
   } catch (e) {
     logger.error(e);
   }
 }
 
-function convertStrokeToLine(rootObject) {
+function convertStrokeToFill(rootObject) {
 
   rootObject.children().forEach(layer => {
-    if(layer.canConvertToOutlines()){
+    if (layer.canConvertToOutlines() && String(layer.name()) !== 'delete-me') {
       layer.layersByConvertingToOutlines()
-      layer.splitPathsIntoShapes()
     }
   })
 

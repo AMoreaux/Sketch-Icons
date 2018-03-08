@@ -1,13 +1,13 @@
-import logger from './utils/logger';
 import utils from './utils/utils';
 import artboardProvider from './providers/artboard';
 import maskProvider from './providers/mask';
 import modals from './utils/modals';
 import files from './providers/files';
 import svg from './providers/svg';
-import {importModal, maskModal, artboardModal} from './modals/modals';
+import { importModal, maskModal } from './modals/modals';
 import settingsModal from './modals/settings';
 import settingsProvider from './providers/settings'
+import analytics from './utils/analytics'
 
 /**
  * @name importIcons
@@ -15,12 +15,14 @@ import settingsProvider from './providers/settings'
  * @param context
  */
 export function importIcons(context) {
+  settingsProvider.resetSettings(context)
+  analytics(context, 1)
   utils.runFramework(context)
   const params = importModal(context)
   if (params.button !== 1000) return
   params.listIcon = files.selectIconsFiles()
   if (!params.listIcon.length) return
-  artboardProvider.initImportIcons(context, params)
+  artboardProvider.initImport(context, params, artboardProvider.initImportIcons)
 }
 
 /**
@@ -31,12 +33,7 @@ export function importIcons(context) {
 export function updateIconsOnSelectedArtboards(context) {
   const selectedArtboardsAndSymbols = utils.getSelectedArtboardsAndSymbols(context);
   if (selectedArtboardsAndSymbols.length === 0) return modals.newErrorModal('No artboards selected', 'Please select one or more artboards to replace icons.')
-  const settings = settingsProvider.getSettings(context)
   let params = {}
-  if(settings.modalReplaceIcon){
-    params = artboardModal(context)
-    if (params.button !== 1000) return
-  }
   params.listIcon = files.selectIconsFiles()
   if (!params.listIcon.length) return
   if (selectedArtboardsAndSymbols.length > params.listIcon.length) return modals.newErrorModal('Too much artboards selected', 'Please select as many artboards as icons.')
@@ -44,6 +41,10 @@ export function updateIconsOnSelectedArtboards(context) {
   svg.initUpdateIconsSelectedArtboards(context, selectedArtboardsAndSymbols, params)
 }
 
+/**
+ * @name organizeIcons
+ * @param context
+ */
 export function organizeIcons(context) {
   const selectedLayers = context.selection;
   if (selectedLayers.length === 0) return modals.newErrorModal('No layers selected', 'Please select one or more layers.')
@@ -51,7 +52,8 @@ export function organizeIcons(context) {
   const params = importModal(context)
   if (params.button !== 1000) return
   params.listIcon = selectedLayers
-  artboardProvider.initOrganizeIcons(context, params)
+  artboardProvider.initImport(context, params, artboardProvider.initOrganizeIcons)
+  params.listIcon.forEach(icon => icon.removeFromParent())
 }
 
 /**

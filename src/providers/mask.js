@@ -21,10 +21,10 @@ export default {
  */
 function initAddMaskOnSelectedArtboards(context, params, rootObjects) {
   rootObjects.forEach(async (rootObject) => {
-    if (utils.hasMask(rootObject.object) && !utils.svgHasStroke(rootObject.object)) removeMask(context, rootObject.object)
-    try{
+    try {
+      if (utils.hasMask(rootObject.object) && !utils.svgHasStroke(rootObject.object)) removeMask(context, rootObject.object)
       await addColor(context, rootObject.object, params)
-    }catch (e){
+    } catch (e) {
       console.log('>>>>>>>>>>>', e);
     }
   })
@@ -39,7 +39,8 @@ function initAddMaskOnSelectedArtboards(context, params, rootObjects) {
  * @param params {Object}
  */
 async function addColor(context, rootObject, params) {
-  console.log('>>>>>>>>>>>', utils.svgHasStroke(rootObject));
+
+  if (String(rootObject.firstLayer().class()) === 'MSBitMapLayer') return
 
   if (utils.svgHasStroke(rootObject)) {
     applyColor(rootObject, params);
@@ -49,8 +50,7 @@ async function addColor(context, rootObject, params) {
       removeMask(context, rootObject)
     } else {
       const firstLayer = rootObject.firstLayer()
-      const svgData = utils.layerToSvg(firstLayer)
-      if(rootObject.layers().length > 1 || String(firstLayer.class()) !== "MSShapeGroup" ) await svgProvider.replaceSVG(context, rootObject, svgData, {withMask: true}, false)
+      if (rootObject.layers().length > 1 || String(firstLayer.class()) !== "MSShapeGroup") await svgProvider.replaceSVG(context, rootObject, firstLayer, {withMask: true}, false)
     }
 
     applyMask(context, rootObject, params)
@@ -131,7 +131,8 @@ function registerMask(context, rootObject, params) {
 
 function getMaskPropertiesFromArtboard(context, rootObject) {
 
-  let params = getColorParams(context, rootObject)
+
+  let params = getColorParams(context, rootObject);
 
   const maskLayer = rootObject.firstLayer()
   if (!params.colorLibraryId && !params.colorSymbolId && !params.colorString && maskLayer && maskLayer.hasClippingMask()) {
@@ -149,14 +150,13 @@ function getMaskPropertiesFromArtboard(context, rootObject) {
 
   params.colorPicker = (params.colorString) ? utils.convertStringToMSColor(params.colorString) : null
 
-
   const result = {
     colorLib: (params.colorLibraryId) ? params.colorLibrary : null,
     color: (params.colorSymbolId) ? params.colorSymbol : null,
     colorPicker: params.colorPicker
   }
 
-  return (!result.colorLib && !result.color && !result.colorPicker) ? null : result
+  return (!result.colorLib && !result.color && !result.colorPicker) ? {} : result
 }
 
 /**

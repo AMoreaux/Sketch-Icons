@@ -1,30 +1,27 @@
-// @import './utils/utils.js'
-// @import './providers/mask.cocoascript'
-// @import './providers/svg.cocoascript'
-
 import utils from '../utils/utils';
 import logger from '../utils/logger';
-import svg from '../providers/svg';
+import importerProvider from '../providers/svg';
 import maskProvider from './mask';
 import settingsProvider from './settings';
+// import dom from 'sketch'
+
+// import { Text } from 'sketch'
 
 export default {
+  initImport,
   initImportIcons,
   getPaddingAndSize,
-  initOrganizeIcons
+  initOrganizeIcons,
+  resizeRootObject
 };
 
 const artboardParams = {
-  position: {
-    x: 0,
-    y: 0
-  },
-  size: {
-    height: 0,
-    width: 0
-  },
-  iconsByLine: 10
+  iconsByLine: 10,
+  sizeBetweenPreset: 200,
+  titleFontSize: 32
 };
+
+const workingRootObject = [];
 
 /**
  * @name createArtboard
@@ -32,49 +29,91 @@ const artboardParams = {
  * @param context {Object} :
  * @param index {Number}
  * @param name {String}
- * @param convertToSymbol {Boolean}
+ * @param params {Object}
  * @returns {Object} : MSArtboardGroup
  */
-function createArtboard(context, index, name, convertToSymbol) {
-  if (index % artboardParams.iconsByLine === 0) {
-    artboardParams.position.y += artboardParams.size.width * 2;
-    artboardParams.position.x = artboardParams.size.width;
-  } else {
-    artboardParams.position.x += 2 * artboardParams.size.width;
-  }
-  const newArtboard = MSArtboardGroup.new();
-  newArtboard.setName(name);
-  const newArtboardFrame = newArtboard.frame();
-  newArtboardFrame.setWidth(artboardParams.size.width);
-  newArtboardFrame.setHeight(artboardParams.size.height);
-  newArtboardFrame.setX(artboardParams.position.x);
-  newArtboardFrame.setY(artboardParams.position.y);
-  context.document.currentPage().addLayers([newArtboard]);
+function createArtboard(context, index, name, params) {
 
-  return convertToSymbol
-    ? MSSymbolMaster.convertArtboardToSymbol(newArtboard)
-    : newArtboard;
+  const marginBetweenRootObject = settingsProvider.getSettings(context, 'default').marginBetweenRootObject;
+  const space = utils.getSizeBetweenIcon(artboardParams.width, marginBetweenRootObject.data)
+
+  if (index === 0) {
+    artboardParams.y = params.yOrigin;
+    artboardParams.x = params.xOrigin || 0;
+  }
+  else if (index % artboardParams.iconsByLine === 0) {
+    artboardParams.y += space;
+    artboardParams.x = params.xOrigin || 0;
+  } else {
+    artboardParams.x += space;
+  }
+
+  const rootObject = MSArtboardGroup.new();
+  rootObject.setName(`${params.prefix}${name}`);
+
+  setPositionRootObject(rootObject, artboardParams)
+
+  context.document.currentPage().addLayers([rootObject]);
+
+  return params.convertSymbol
+    ? MSSymbolMaster.convertArtboardToSymbol(rootObject)
+    : rootObject;
 }
 
 /**
- * @name initArtboardsParams
- * @description initialisation for new artboard position
- * @param context
+ * @name setPositionRootObject
+ * @param rootObject
+ * @param mensuration
  */
-function initArtboardsParams(context) {
-  const currentPage = context.api().selectedDocument.selectedPage;
-  artboardParams.iconsByLine = parseInt(settingsProvider.getSettings(context).iconsByLine)
-  if (currentPage.sketchObject.children().length === 1) {
-    artboardParams.position.x = artboardParams.position.y = artboardParams.size.width * 2;
-  } else {
-    const Y = [];
-    currentPage.sketchObject.layers().some(function(layer) {
-      Y.push(layer.origin().y);
-    });
-    artboardParams.position.x = artboardParams.size.width * 2;
-    artboardParams.position.y = Math.max(...Y);
+function setPositionRootObject(rootObject, mensuration) {
+
+  const rootObjectFrame = rootObject.frame();
+  rootObjectFrame.setWidth(mensuration.width);
+  rootObjectFrame.setHeight(mensuration.height);
+  rootObjectFrame.setX(mensuration.x);
+  rootObjectFrame.setY(mensuration.y);
+}
+
+// /**
+//  * @name initArtboardsPosition
+//  * @description initialisation for new artboard position
+//  * @param context
+//  * @param x
+//  */
+// function initArtboardsPosition(context, x = 0) {
+//   artboardParams.iconsByLine = parseInt(settingsProvider.getSettings(context).iconsByLine)
+//   artboardParams.x = x
+//   // const rootObjectsOnCurrentPage = utils.getRootObject(context)
+//   // if (rootObjectsOnCurrentPage.length === 0) {
+//     artboardParams.y = 0;
+//   // } else {
+//   //   artboardParams.y = getLowestIcon(context)
+//   // }
+// }
+
+function setOrigin(context, setOfRootObject) {
+  const Y = [];
+  const X = [];
+  let size = 0;
+
+  setOfRootObject.forEach(layer => {
+    const layerSize = layer.frame().height();
+    const origin = layer.origin()
+    Y.push(origin.y - size);
+    X.push(origin.x - size);
+    if (layerSize > size) size = layerSize;
+  });
+
+
+  const yOrigin = (Y.length !== 0) ? Math.max(...Y) : 0
+  const xOrigin = (X.length !== 0) ? Math.max(...X) + size : 0
+
+  return {
+    yOrigin: (setOfRootObject.length === 0) ? yOrigin : yOrigin + 100 + size,
+    xOrigin: (setOfRootObject.length === 0) ? xOrigin : xOrigin + 100 + size
   }
 }
+
 
 /**
  * @name initImportIcons
@@ -82,17 +121,18 @@ function initArtboardsParams(context) {
  * @param context {Object}
  * @param params: {Object}
  */
-function initImportIcons(context, params) {
+async function initImportIcons(context, params) {
   utils.clearSelection(context);
-  artboardParams.size.height = artboardParams.size.width = params.artboardSize;
-  initArtboardsParams(context);
   params.listIcon.forEach(async (icon, index) => {
     try {
       const name = utils.getIconNameByNSUrl(icon)
-      const newRootObject = createArtboard(context, index, name, params.convertSymbol);
-      if (String(icon.toString().split('.').pop()) === 'pdf') return svg.addPDF(context, newRootObject, params.iconPadding, params.artboardSize, icon);
+      const newRootObject = createArtboard(context, index, name, params);
+      const ext = String(icon.toString().split('.').pop()).toLowerCase()
+      if (ext === 'pdf') return importerProvider.addPDF(context, newRootObject, params, icon);
+      if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') return importerProvider.addBITMAP(context, newRootObject, params, icon)
       const svgData = String(NSString.alloc().initWithContentsOfURL(icon));
       await processSVG(context, newRootObject, params, svgData)
+      workingRootObject.push(newRootObject)
     } catch (e) {
       logger.error(e);
     }
@@ -103,31 +143,93 @@ function initImportIcons(context, params) {
   );
 }
 
-function initOrganizeIcons(context, params){
-  artboardParams.size.height = artboardParams.size.width = params.artboardSize;
-  initArtboardsParams(context);
-  params.listIcon.forEach((icon, index) => {
-    try{
-      const newRootObject = createArtboard(context, index, icon.name(), params.convertSymbol);
+/**
+ * @name initOrganizeIcons
+ * @param context
+ * @param params
+ */
+function initOrganizeIcons(context, params) {
 
+  params.listIcon.forEach(async (icon, index) => {
+    try {
+      const newRootObject = createArtboard(context, index, icon.name(), params);
+      if (String(icon.class()) === 'MSBitmapLayer') return importerProvider.addBITMAP(context, newRootObject, params, icon)
       const ancestry = MSImmutableLayerAncestry.ancestryWithMSLayer_(icon);
       const exportRequest = MSExportRequest.exportRequestsFromLayerAncestry_(ancestry).firstObject();
       exportRequest.format = 'svg';
       const exporter = MSExporter.exporterForRequest_colorSpace_(exportRequest, NSColorSpace.sRGBColorSpace());
       const svgData = NSString.alloc().initWithData_encoding(exporter.data(), NSUTF8StringEncoding);
-
-      processSVG(context, newRootObject, params, svgData)
-
-      icon.removeFromParent()
-    }catch (e){
+      await processSVG(context, newRootObject, params, String(svgData));
+      workingRootObject.push(newRootObject)
+    } catch (e) {
       logger.error(e);
     }
   })
 }
 
-async function processSVG(context, rootObject, params, svgData){
-  // await svg.addSVG(context, rootObject, params.iconPadding, params.artboardSize, svgData, params.withMask, true);
-  await svg.addSVG(context, rootObject, params, svgData, true);
+/**
+ * @name initImport
+ * @param context
+ * @param params
+ * @param cb
+ */
+function initImport(context, params, cb) {
+  const rootObjects = utils.getRootObject(context)
+  params.yOrigin = setOrigin(context, rootObjects).yOrigin;
+  if (params.presets) {
+    const withPresetTitle = (rootObjects);
+    params.presets.forEach(async (preset) => {
+      setArtboardsSize(params, preset);
+      params.xOrigin = setOrigin(context, workingRootObject).xOrigin;
+      params.artboardSize = preset.artboardSize;
+      params.prefix = utils.buildPrefix(context, params.artboardSize);
+      if (withPresetTitle) context.document.currentPage().addLayers([newText(preset, params.xOrigin)]);
+      artboardParams.iconsByLine = parseInt(settingsProvider.getSettings(context, 'default').iconsByLine.data);
+      await cb(context, params)
+    })
+  } else {
+    params.prefix = utils.buildPrefix(context, params.artboardSize);
+    artboardParams.height = artboardParams.width = params.artboardSize;
+    console.log('>>>>>>>>>>>', JSON.stringify(settingsProvider.getSettings(context, 'default')));
+    artboardParams.iconsByLine = parseInt(settingsProvider.getSettings(context, 'default').iconsByLine.data)
+    cb(context, params)
+  }
+}
+
+function newText(preset, xOrigin) {
+  const text = MSTextLayer.new();
+  text.setStringValue_(`${preset.artboardSize}px`)
+  const fontManager = NSFontManager.sharedFontManager();
+  const boldItalic = fontManager.fontWithFamily_traits_weight_size("Helvetica neue", NSBoldFontMask, 0, artboardParams.titleFontSize)
+  text.setFont(boldItalic)
+  text.lineHeight = 48
+  text.setName(`${preset.artboardSize}px`)
+  const textFrame = text.frame();
+  textFrame.setX(xOrigin)
+  textFrame.setY(-(32 + text.lineHeight()))
+  return text
+}
+
+/**
+ * @name setArtboardsPosition
+ * @param params
+ * @param preset
+ */
+function setArtboardsSize(params, preset) {
+  params.iconPadding = preset.iconPadding
+  artboardParams.height = artboardParams.width = preset.artboardSize;
+}
+
+/**
+ * @name processSVG
+ * @param context
+ * @param rootObject
+ * @param params
+ * @param svgData
+ * @return {Promise<*>}
+ */
+async function processSVG(context, rootObject, params, svgData) {
+  await importerProvider.addSVG(context, rootObject, params, svgData, true);
   if (params.withMask) maskProvider.addColor(context, rootObject, params);
   return context.command.setValue_forKey_onLayer(params.iconPadding, 'padding', rootObject);
 }
@@ -151,4 +253,15 @@ function getPaddingAndSize(context, artboard) {
     iconPadding: parseInt(iconPadding),
     artboardSize: parseInt(artboard.rect().size.width)
   };
+}
+
+/**
+ * @name resizeRootObject
+ * @param rootObject
+ * @param size
+ */
+function resizeRootObject(rootObject, size) {
+  const rootObjectFrame = rootObject.frame()
+  rootObjectFrame.setWidth(size);
+  rootObjectFrame.setHeight(size);
 }

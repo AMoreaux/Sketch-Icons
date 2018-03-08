@@ -9,11 +9,10 @@ export {
   setEnabledColorMenu,
   importModal,
   maskModal,
-  constructBase,
-  artboardModal
+  constructBase
 }
 
-function maskModal(context){
+function maskModal(context) {
 
   this.modalParams = {
     messageText: 'Configure your color mask',
@@ -52,23 +51,37 @@ function maskModal(context){
 
 function importModal(context) {
 
-  this.settingsValues = settingsProvider.getSettings(context)
+  let usePresets;
+  this.settingsValues = settingsProvider.getSettings(context, 'default')
 
   this.modalParams = {
     messageText: 'Configure your import',
     informativeText: 'Your icons will be arranged in artboards. Set size and padding of your artboards.',
-    height: (this.settingsValues.viewBoxParams) ? 330 : 300,
     width: 300,
     lineHeight: 35
   }
 
-  this.coeffCurrentHeight = 0
-  this.isLibrarySource = true
-  this.adjustHeight = 0
+  if(settingsProvider.hasValue(this.settingsValues.presets)){
+    this.modalParams.height = 300 + this.settingsValues.presets.data.split(',').length * 30
+    usePresets = true
+  }else{
+    this.modalParams.height = 300;
+    usePresets = false
+  }
+
+  this.modalParams.height = settingsProvider.hasValue(this.settingsValues.presets) ? 300 + this.settingsValues.presets.data.split(',').length * 30 : 300
+
+  this.coeffCurrentHeight = 0;
+  this.isLibrarySource = true;
+  this.adjustHeight = 0;
 
   constructBase()
-  makeArtboardParams()
-  if(!!this.settingsValues.viewBoxParams) makeViewBoxParams()
+  if (usePresets) {
+    makePresetsParams()
+  } else {
+    makeArtboardParams()
+  }
+
   this.view.addSubview(utils.createDivider(NSMakeRect(0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - 10, this.modalParams.width, 1)));
   this.adjustHeight = 5
   makeSymbolParams()
@@ -85,15 +98,23 @@ function importModal(context) {
 
   const result = {
     button: this.modal.runModal(),
-    artboardSize: parseInt(this.artboardSize.stringValue()),
-    iconPadding: parseInt(this.artboardPadding.stringValue()),
     convertSymbol: this.symbolParams.state(),
     withMask: !!this.checkboxMaskParams.state()
   }
 
-  if(this.settingsValues.viewBoxParams){
-    result.viewBoxWidth = this.viewBoxWidth.stringValue()
-    result.viewBoxHeight = this.viewBoxHeight.stringValue()
+  if (usePresets) {
+    result.presets = []
+    this.presets.forEach(preset => {
+      if (preset.presetCheckBox.state()) {
+        result.presets.push({
+          artboardSize: parseInt(preset.sizeBox.stringValue()),
+          iconPadding: parseInt(preset.paddingBox.stringValue())
+        })
+      }
+    })
+  } else {
+    result.artboardSize = parseInt(this.artboardSize.stringValue())
+    result.iconPadding = parseInt(this.artboardPadding.stringValue())
   }
 
   if (result.withMask && this.isLibrarySource) {
@@ -103,16 +124,16 @@ function importModal(context) {
     let colorLib = this.colorLibsMenuParams.selectedItem()
     result.colorLib = (colorLib) ? this.colorLibsMenuParams.representedObject() : null
 
-    if(!result.color)result.withMask = false
+    if (!result.color) result.withMask = false
   } else if (result.withMask) {
     result.colorPicker = this.colorPickerColor || MSColor.blackColor()
   }
   return result
 }
 
-function artboardModal(context){
+function artboardModal(context) {
 
-  this.settingsValues = settingsProvider.getSettings(context)
+  this.settingsValues = settingsProvider.getSettings(context, 'placeholder')
 
   this.modalParams = {
     messageText: 'Configure your icons',
@@ -135,7 +156,7 @@ function artboardModal(context){
   }
 }
 
-function constructBase(button1 = 'continue'){
+function constructBase(button1 = 'Continue') {
 
   this.modal = COSAlertWindow.new();
 
@@ -143,9 +164,37 @@ function constructBase(button1 = 'continue'){
 
   this.modal.addAccessoryView(this.view);
   this.modal.setMessageText(this.modalParams.messageText);
-  this.modal.setInformativeText(this.modalParams.informativeText);
   this.modal.addButtonWithTitle(button1);
+  this.modal.setInformativeText(this.modalParams.informativeText);
   this.modal.addButtonWithTitle('Cancel');
+}
+
+function makePresetsParams() {
+  const presets = this.settingsValues.presets.data.split(',').map(preset => {
+    const properties = preset.split('-')
+    return {
+      artboardSize: properties[0],
+      padding: (properties[1]) ? properties[1] : 0
+    }
+  })
+
+  this.presets = []
+
+  const presetLabel = utils.createLabel(`Presets`, 0, this.modalParams.height - this.modalParams.lineHeight, 150, 20)
+  this.view.addSubview(presetLabel)
+
+  const sizeLabel = utils.createLabel(`Size`, 180, this.modalParams.height - this.modalParams.lineHeight, 100, 20)
+  this.view.addSubview(sizeLabel)
+
+  const paddingLabel = utils.createLabel(`Padding`, 240, this.modalParams.height - this.modalParams.lineHeight, 100, 20)
+  this.view.addSubview(paddingLabel)
+
+  this.coeffCurrentHeight++
+
+  presets.forEach((preset) => {
+    this.coeffCurrentHeight++
+    makePreset(preset, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight)
+  })
 }
 
 function makeArtboardParams() {
@@ -155,7 +204,7 @@ function makeArtboardParams() {
   const textBoxLabel = utils.createLabel('Artboard size', 0, this.modalParams.height - this.modalParams.lineHeight, 150, 20)
   this.view.addSubview(textBoxLabel)
   const textBox = NSTextField.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight, 50, 20));
-  textBox.setStringValue(this.settingsValues.artboardSize);
+  textBox.setStringValue(24);
   this.view.addSubview(textBox)
   const textBoxUnit = utils.createLabel('px', 205, this.modalParams.height - this.modalParams.lineHeight, 50, 20)
   this.view.addSubview(textBoxUnit)
@@ -165,7 +214,7 @@ function makeArtboardParams() {
   const paddingBoxLabel = utils.createLabel('Artboard Padding', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 150, 20)
   this.view.addSubview(paddingBoxLabel)
   const paddingBox = NSTextField.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 50, 20));
-  paddingBox.setStringValue(this.settingsValues.iconPadding);
+  paddingBox.setStringValue(4);
   this.view.addSubview(paddingBox)
   const paddingBoxUnit = utils.createLabel('px', 205, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 50, 20)
   this.view.addSubview(paddingBoxUnit)
@@ -176,30 +225,36 @@ function makeArtboardParams() {
   this.artboardSize.setNextKeyView(this.artboardPadding)
 }
 
-function makeViewBoxParams() {
+function makePreset(preset, yAxis) {
 
-  this.coeffCurrentHeight++
+  const presetCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(150, yAxis, 30, 20));
+  presetCheckBox.setState(true);
+  presetCheckBox.setButtonType(NSSwitchButton);
+  presetCheckBox.setFont(NSFont.systemFontOfSize_(13));
+  presetCheckBox.setTitle('')
 
-  const textBoxLabel = utils.createLabel('Viewbox size', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 150, 20)
-  this.view.addSubview(textBoxLabel)
-  const textBoxWidth = NSTextField.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 35, 20));
-  const multiplicationSymbol = utils.createLabel('✕︎', 190, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - 2, 30, 20)
-  const textBoxHeight = NSTextField.alloc().initWithFrame(NSMakeRect(210, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 35, 20));
-  textBoxWidth.setStringValue(this.settingsValues.artboardSize);
-  textBoxHeight.setStringValue(this.settingsValues.artboardSize);
-  this.view.addSubview(textBoxWidth)
-  this.view.addSubview(multiplicationSymbol)
-  this.view.addSubview(textBoxHeight)
+  this.view.addSubview(presetCheckBox)
 
-  this.viewBoxWidth = textBoxWidth
-  this.viewBoxHeight = textBoxHeight
+  const sizeBox = NSTextField.alloc().initWithFrame(NSMakeRect(180, yAxis, 50, 20));
+  sizeBox.setStringValue(preset.artboardSize);
+  this.view.addSubview(sizeBox)
+
+  const paddingBox = NSTextField.alloc().initWithFrame(NSMakeRect(240, yAxis, 50, 20));
+  paddingBox.setStringValue(preset.padding);
+  this.view.addSubview(paddingBox)
+
+  const newPreset = { sizeBox, paddingBox, presetCheckBox }
+
+  addListenerPreset(newPreset)
+
+  this.presets.push(newPreset)
 }
 
 function makeSymbolParams() {
 
   this.coeffCurrentHeight++
 
-  const maskCheckboxLabel = utils.createLabel('Symbols', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight , 150, 20)
+  const maskCheckboxLabel = utils.createLabel('Symbols', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 150, 20)
   this.view.addSubview(maskCheckboxLabel)
 
   const symbolCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 200, 20));
@@ -283,7 +338,7 @@ function makeMaskLibraryParams(context) {
   this.colorLibsMenuParamsLabel = colorLibsLabel
   this.colorsMenuParamsLabel = colorMenuLabel
 
-  colorLibsMenu.menu = libraries.initLibsSelectList(context, AppController.sharedInstance().librariesController().userLibraries(), colorMenu);
+  colorLibsMenu.menu = libraries.initLibsSelectList(context, AppController.sharedInstance().librariesController().availableLibraries(), colorMenu);
 }
 
 function makeMaskColorPickerParams(context) {
@@ -311,15 +366,6 @@ function makeMaskColorPickerParams(context) {
   const main = AMOMain.alloc().init();
 
   pickerButton.setCOSJSTargetFunction(() => {
-    // const colorInspector = MSColorInspector.alloc()
-    //   .initWithSender_document_handlerManager_globalAssets(
-    //     this,
-    //     MSDocument.currentDocument(),
-    //     MSDocument.currentDocument().eventHandlerManager(),
-    //     AppController.sharedInstance().globalAssets());
-    // this.popover = BCPopover.alloc().init();
-    // this.popover.setContentViewController(colorInspector);
-    // this.popover.showRelativeToView_preferredEdge(this.view, NSMinYEdge); // where `view` is an NSView
     main.openPopover_onView_withWebview(pickerButton, this.view, utils.createWebview(context, pickerButton, (color) => {
       this.colorPickerColor = color
       hexLabel.setStringValue_(`#${color.immutableModelObject().hexValue()}`)
@@ -339,7 +385,7 @@ function addListenerOnMaskCheckbox() {
     if (mask.state()) {
       setEnabledRadioButton(true)
       setEnabledColorLibraryMenu(true)
-      if(this.colorsMenuParams.numberOfItems() > 0)setEnabledColorMenu(true)
+      if (this.colorsMenuParams.numberOfItems() > 0) setEnabledColorMenu(true)
     } else {
       setEnabledRadioButton(false)
       setEnabledColorLibraryMenu(false)
@@ -411,6 +457,14 @@ function removePickerButton() {
   this.colorPickerLabel.removeFromSuperview()
 }
 
-function getStateColor(enabled){
+function getStateColor(enabled) {
   return (enabled) ? NSColor.controlTextColor() : disabledColor
+}
+
+function addListenerPreset(newPreset) {
+  newPreset.presetCheckBox.setCOSJSTargetFunction(() => {
+    newPreset.sizeBox.setEnabled(newPreset.presetCheckBox.state())
+    newPreset.paddingBox.setEnabled(newPreset.presetCheckBox.state())
+
+  })
 }
