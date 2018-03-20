@@ -11,28 +11,41 @@ function jsonToQueryString(json) {
   }).join('&')
 }
 
-export default function (context, hitType = 1, props) {
+export default {
+  action
+}
+
+function action(context, category, action, label, value) {
   const payload = {
     v: 1,
-    tid: 'UA-115322859-1',
-    ds: 'Sketch ' + NSBundle.mainBundle().objectForInfoDictionaryKey("CFBundleShortVersionString"),
-    cid: 555,
-    t: hitType,
-    an: context.plugin.name(),
-    aid: context.plugin.identifier(),
-    av: context.plugin.version()
+    t: 'event',
+    cid: uuid,
+    tid: 'UA-115448236-1',
+    ec: category,
+    ea: action,
+    el: label,
+    ev: value
   }
-  if (props) {
-    Object.keys(props).forEach(function (key) {
-      payload[key] = props[key]
-    })
-  }
+  send(payload)
+}
 
-  const url = NSURL.URLWithString(
-    NSString.stringWithFormat("https://www.google-analytics.com/collect%@", jsonToQueryString(payload))
-  )
+function send(payload) {
 
-  if (url) {
-    NSURLSession.sharedSession().dataTaskWithURL(url).resume()
-  }
+  try{
+    const url = NSURL.URLWithString(
+      NSString.stringWithFormat("https://www.google-analytics.com/collect%@", jsonToQueryString(payload))
+    )
+
+    if (url) {
+      const task = NSTask.alloc().init();
+      task.setLaunchPath("/usr/bin/curl");
+      task.setArguments(['-X', 'POST', String(url)]);
+      const outputPipe = NSPipe.pipe();
+      task.setStandardOutput(outputPipe);
+      task.launch();
+    }
+
+  }catch (e){}
+
+
 }

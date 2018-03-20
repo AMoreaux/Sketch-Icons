@@ -22,12 +22,10 @@ const LIST_SETTINGS_FIELDS = [
 ]
 
 function registerSettings(context, params) {
-  if (params.button === 1002) {
-    resetSettings(context)
-    return NSApp.delegate().runPluginCommandWithIdentifier_fromBundleAtURL_context_('settings.sketch.icons', context.plugin.url(), context);
-  }
+
 
   LIST_SETTINGS_FIELDS.forEach((field) => {
+    NSUserDefaults.standardUserDefaults().setObject_forKey(params[field.name], field.name)
     context.command.setValue_forKey_onDocument(params[field.name], field.name, context.document.documentData());
   })
 }
@@ -45,8 +43,10 @@ function getSettings(context, fallbackValue) {
 
   LIST_SETTINGS_FIELDS.forEach(field => {
 
+
     result[field.name] = {
-      'value': context.command.valueForKey_onDocument(field.name, context.document.documentData()),
+      // 'value': context.command.valueForKey_onDocument(field.name, context.document.documentData()) || NSUserDefaults.standardUserDefaults().objectForKey(field.name),
+      'value': NSUserDefaults.standardUserDefaults().objectForKey(field.name),
       'default': field.default,
       'placeholder': field.placeholder
     };

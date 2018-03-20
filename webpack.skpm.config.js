@@ -22,10 +22,6 @@ const ressourcesConfig = {
       {
         from: path.resolve('./resources/icons'),
         to: path.resolve(`${pluginResourcesPath}/icons`)
-      },
-      {
-        from: path.resolve('./resources/.svgo.yml'),
-        to: path.resolve(pluginResourcesPath)
       }
     ])
   ]

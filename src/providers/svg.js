@@ -2,15 +2,13 @@ import maskProvider from './mask';
 import artboardProvider from './artboard';
 import settingsProvider from './settings';
 import utils from '../utils/utils';
-import logger from '../utils/logger';
-import svgo from '../svgo/lib/svgo';
 
 export default {
   initUpdateIconsSelectedArtboards,
   addSVG,
-  replaceSVG,
   addPDF,
-  addBITMAP
+  addBITMAP,
+  cleanSvg
 };
 
 /**
@@ -21,25 +19,28 @@ export default {
  * @param rootObjects {Array} : MSArtboardGroup && MSSymbolMaster
  */
 function initUpdateIconsSelectedArtboards(context, rootObjects, params) {
-  rootObjects.forEach(async function (rootObject, index) {
+  rootObjects.forEach((rootObject, index) => {
 
     const iconParams = {
       ...maskProvider.getMaskPropertiesFromArtboard(context, rootObject.object),
       ...artboardProvider.getPaddingAndSize(context, rootObject.object),
       ...params
-    }
+    };
+    const replaceBy = (params.listIcon.length === 1) ? params.listIcon[0] : params.listIcon[index];
 
-    const svgData = String(NSString.alloc().initWithContentsOfURL(params.listIcon[index]));
+    const svgData = String(NSString.alloc().initWithContentsOfURL(replaceBy));
     iconParams.withMask = !!(iconParams.colorLib || iconParams.colorPicker || iconParams.color);
 
     rootObject.object.removeAllLayers();
 
-    await addSVG(context, rootObject.object, iconParams, String(svgData), true)
-    rootObject.object.setName(utils.getIconNameByNSUrl(params.listIcon[index]));
+    addSVG(context, rootObject.object, iconParams, String(svgData), true);
+    rootObject.object.setName(utils.getIconNameByNSUrl(replaceBy));
     if (iconParams.withMask) maskProvider.addColor(context, rootObject.object, iconParams);
   });
 
   utils.clearSelection(context);
+
+  return rootObjects.length
 }
 
 /**
@@ -51,7 +52,7 @@ function initUpdateIconsSelectedArtboards(context, rootObjects, params) {
  * @param svgData {String}
  * @param withResize {Boolean}
  */
-async function addSVG(context, rootObject, params, svgData, withResize) {
+function addSVG(context, rootObject, params, svgData, withResize) {
   let viewBox;
 
   const settingsParams = settingsProvider.getSettings(context, 'default')
@@ -79,14 +80,7 @@ async function addSVG(context, rootObject, params, svgData, withResize) {
   center(params.artboardSize, rootObject.firstLayer());
 }
 
-// function updateViewBox(svgData, params) {
-//   svgData = svgData.replace(/viewBox="[+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+"/, `viewbox="0 0 ${params.viewBoxWidth} ${params.viewBoxHeight}"`)
-//   svgData = svgData.replace(/width="[0-9]+px"/, `width="${params.viewBoxWidth}px"`)
-//   svgData = svgData.replace(/height="[0-9]+px"/, `height="${params.viewBoxHeight}px"`)
-//   return svgData
-// }
-
-async function addPDF(context, rootObject, params, icon) {
+function addPDF(context, rootObject, params, icon) {
   const pdfImporter = MSPDFImporter.pdfImporter();
   pdfImporter.prepareToImportFromURL(icon);
   const pdfLayer = pdfImporter.importAsLayer();
@@ -107,19 +101,6 @@ function addBITMAP(context, rootObject, params, icon) {
   resizeIcon(rootObject, params.iconPadding);
   center(params.artboardSize, rootObject.firstLayer());
   rootObject.firstLayer().setName(rootObject.name());
-}
-
-/**
- * @name convertLayersToPathWithSVGO
- * @description used svgo to initiate conversion in one path
- * @param context
- * @param svgString
- * @returns {Promise<void>}
- */
-async function convertLayersToPathWithSVGO(context, svgString) {
-  const svgoInstance = new svgo({}, context);
-  const result = await svgoInstance.optimize(svgString);
-  return result.data;
 }
 
 /**
@@ -322,20 +303,6 @@ function getViewBox(svgData) {
   }
 
   return result;
-}
-
-async function replaceSVG(context, rootObject, svgLayer, params, withResize) {
-  try {
-    params = { ...artboardProvider.getPaddingAndSize(context, rootObject), ...params };
-    cleanSvg(rootObject);
-    let svgData = utils.layerToSvg(rootObject.firstLayer())
-    svgData = await convertLayersToPathWithSVGO(context, String(svgData));
-    rootObject.removeAllLayers();
-    await addSVG(context, rootObject, params, String(svgData), withResize);
-    unGroup(rootObject);
-  } catch (e) {
-    logger.error(e);
-  }
 }
 
 function convertStrokeToFill(rootObject) {

@@ -38,7 +38,7 @@ function initAddMaskOnSelectedArtboards(context, params, rootObjects) {
  * @param rootObject {Object} : MSArtboardGroup && MSSymbolMaster
  * @param params {Object}
  */
-async function addColor(context, rootObject, params) {
+function addColor(context, rootObject, params) {
 
   if (String(rootObject.firstLayer().class()) === 'MSBitMapLayer') return
 
@@ -46,12 +46,8 @@ async function addColor(context, rootObject, params) {
     applyColor(rootObject, params);
   } else {
 
-    if (utils.hasMask(rootObject)) {
-      removeMask(context, rootObject)
-    } else {
-      const firstLayer = rootObject.firstLayer()
-      if (rootObject.layers().length > 1 || String(firstLayer.class()) !== "MSShapeGroup") await svgProvider.replaceSVG(context, rootObject, firstLayer, {withMask: true}, false)
-    }
+    if (utils.hasMask(rootObject)) removeMask(context, rootObject)
+    svgProvider.cleanSvg(rootObject)
 
     applyMask(context, rootObject, params)
   }
@@ -90,7 +86,7 @@ function removeMask(context, rootObject) {
   context.command.setValue_forKey_onLayer(null, "colorPicker", rootObject)
 
   if (utils.svgHasStroke(rootObject)) {
-    return applyColor(rootObject, {colorPicker: MSImmutableColor.blackColor()})
+    return applyColor(rootObject, { colorPicker: MSImmutableColor.blackColor() })
   }
 
   const iconLayer = rootObject.firstLayer()
@@ -185,8 +181,8 @@ function createMaskFromNean(context, rootObject, color) {
   const currentRootObjectSize = rootObject.rect()
 
   const mask = MSShapeGroup.shapeWithRect({
-    origin: {x: 0, y: 0},
-    size: {width: currentRootObjectSize.size.width, height: currentRootObjectSize.size.height}
+    origin: { x: 0, y: 0 },
+    size: { width: currentRootObjectSize.size.width, height: currentRootObjectSize.size.height }
   })
 
   const fill = mask.style().addStylePartOfType(0);

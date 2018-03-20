@@ -11,8 +11,7 @@ export default {
   initImport,
   initImportIcons,
   getPaddingAndSize,
-  initOrganizeIcons,
-  resizeRootObject
+  initOrganizeIcons
 };
 
 const artboardParams = {
@@ -74,23 +73,6 @@ function setPositionRootObject(rootObject, mensuration) {
   rootObjectFrame.setY(mensuration.y);
 }
 
-// /**
-//  * @name initArtboardsPosition
-//  * @description initialisation for new artboard position
-//  * @param context
-//  * @param x
-//  */
-// function initArtboardsPosition(context, x = 0) {
-//   artboardParams.iconsByLine = parseInt(settingsProvider.getSettings(context).iconsByLine)
-//   artboardParams.x = x
-//   // const rootObjectsOnCurrentPage = utils.getRootObject(context)
-//   // if (rootObjectsOnCurrentPage.length === 0) {
-//     artboardParams.y = 0;
-//   // } else {
-//   //   artboardParams.y = getLowestIcon(context)
-//   // }
-// }
-
 function setOrigin(context, setOfRootObject) {
   const Y = [];
   const X = [];
@@ -123,7 +105,7 @@ function setOrigin(context, setOfRootObject) {
  */
 async function initImportIcons(context, params) {
   utils.clearSelection(context);
-  params.listIcon.forEach(async (icon, index) => {
+  params.listIcon.forEach((icon, index) => {
     try {
       const name = utils.getIconNameByNSUrl(icon)
       const newRootObject = createArtboard(context, index, name, params);
@@ -131,16 +113,13 @@ async function initImportIcons(context, params) {
       if (ext === 'pdf') return importerProvider.addPDF(context, newRootObject, params, icon);
       if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') return importerProvider.addBITMAP(context, newRootObject, params, icon)
       const svgData = String(NSString.alloc().initWithContentsOfURL(icon));
-      await processSVG(context, newRootObject, params, svgData)
+      processSVG(context, newRootObject, params, svgData)
       workingRootObject.push(newRootObject)
     } catch (e) {
       logger.error(e);
     }
   });
   utils.clearSelection(context);
-  context.document.showMessage(
-    `🎉 Tadaaa! 🎉 ${params.listIcon.length} icon${params.listIcon.length > 1 ? 's' : ''} imported`
-  );
 }
 
 /**
@@ -178,22 +157,26 @@ function initImport(context, params, cb) {
   params.yOrigin = setOrigin(context, rootObjects).yOrigin;
   if (params.presets) {
     const withPresetTitle = (rootObjects);
-    params.presets.forEach(async (preset) => {
+    params.presets.forEach((preset) => {
       setArtboardsSize(params, preset);
       params.xOrigin = setOrigin(context, workingRootObject).xOrigin;
       params.artboardSize = preset.artboardSize;
       params.prefix = utils.buildPrefix(context, params.artboardSize);
-      if (withPresetTitle) context.document.currentPage().addLayers([newText(preset, params.xOrigin)]);
+      if (withPresetTitle && rootObjects.length === 0) context.document.currentPage().addLayers([newText(preset, params.xOrigin)]);
       artboardParams.iconsByLine = parseInt(settingsProvider.getSettings(context, 'default').iconsByLine.data);
-      await cb(context, params)
+      cb(context, params)
     })
   } else {
     params.prefix = utils.buildPrefix(context, params.artboardSize);
     artboardParams.height = artboardParams.width = params.artboardSize;
-    console.log('>>>>>>>>>>>', JSON.stringify(settingsProvider.getSettings(context, 'default')));
     artboardParams.iconsByLine = parseInt(settingsProvider.getSettings(context, 'default').iconsByLine.data)
     cb(context, params)
   }
+  const importedIcons = params.listIcon.length * (params.presets.length || 1)
+  context.document.showMessage(
+    `🎉 Tadaaa! 🎉 ${importedIcons} icon${params.listIcon.length > 1 ? 's' : ''} imported`
+  );
+  return importedIcons
 }
 
 function newText(preset, xOrigin) {
@@ -228,8 +211,8 @@ function setArtboardsSize(params, preset) {
  * @param svgData
  * @return {Promise<*>}
  */
-async function processSVG(context, rootObject, params, svgData) {
-  await importerProvider.addSVG(context, rootObject, params, svgData, true);
+function processSVG(context, rootObject, params, svgData) {
+  importerProvider.addSVG(context, rootObject, params, svgData, true);
   if (params.withMask) maskProvider.addColor(context, rootObject, params);
   return context.command.setValue_forKey_onLayer(params.iconPadding, 'padding', rootObject);
 }

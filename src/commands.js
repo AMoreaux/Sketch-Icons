@@ -15,14 +15,14 @@ import analytics from './utils/analytics'
  * @param context
  */
 export function importIcons(context) {
-  settingsProvider.resetSettings(context)
-  analytics(context, 1)
   utils.runFramework(context)
   const params = importModal(context)
   if (params.button !== 1000) return
   params.listIcon = files.selectIconsFiles()
   if (!params.listIcon.length) return
-  artboardProvider.initImport(context, params, artboardProvider.initImportIcons)
+  const importedIcons = artboardProvider.initImport(context, params, artboardProvider.initImportIcons)
+  const label = (params.withMask) ? 'import-mask' : 'import';
+  analytics.action(context, 'icons', 'import', label, importedIcons)
 }
 
 /**
@@ -36,9 +36,10 @@ export function updateIconsOnSelectedArtboards(context) {
   let params = {}
   params.listIcon = files.selectIconsFiles()
   if (!params.listIcon.length) return
-  if (selectedArtboardsAndSymbols.length > params.listIcon.length) return modals.newErrorModal('Too much artboards selected', 'Please select as many artboards as icons.')
-  if (selectedArtboardsAndSymbols.length < params.listIcon.length) return modals.newErrorModal('Too much icons selected', 'Please select as many icons as artboards.')
-  svg.initUpdateIconsSelectedArtboards(context, selectedArtboardsAndSymbols, params)
+  if (selectedArtboardsAndSymbols.length > params.listIcon.length && params.listIcon.length !== 1) return modals.newErrorModal('Too much artboards selected', 'Please select as many artboards as icons.')
+  if (selectedArtboardsAndSymbols.length < params.listIcon.length && params.listIcon.length !== 1) return modals.newErrorModal('Too much icons selected', 'Please select as many icons as artboards.')
+  const replacedIcons = svg.initUpdateIconsSelectedArtboards(context, selectedArtboardsAndSymbols, params)
+  analytics.action(context, 'icons', 'replace', 'replace', replacedIcons)
 }
 
 /**
@@ -54,6 +55,8 @@ export function organizeIcons(context) {
   params.listIcon = selectedLayers
   artboardProvider.initImport(context, params, artboardProvider.initOrganizeIcons)
   params.listIcon.forEach(icon => icon.removeFromParent())
+  const label = (params.withMask) ? 'organize-mask' : 'organize';
+  analytics.action(context, 'icons', 'organize', label, params.listIcon.length)
 }
 
 /**
@@ -68,6 +71,7 @@ export function addMaskOnSelectedArtboards(context) {
   const params = maskModal(context)
   if (params.button !== 1000) return
   maskProvider.initAddMaskOnSelectedArtboards(context, params, selectedArtboardsAndSymbols)
+  analytics.action(context, 'icons', 'mask', 'mask', selectedArtboardsAndSymbols.length)
 }
 
 /**
@@ -81,6 +85,7 @@ export function removeMaskOnSelectedArtboards(context) {
   selectedArtboardsAndSymbols.forEach((rootElement) => {
     maskProvider.removeMask(context, rootElement.object)
   })
+  analytics.action(context, 'icons', 'remove mask', 'remove mask', selectedArtboardsAndSymbols.length)
 }
 
 /**
@@ -92,4 +97,5 @@ export function setSettings(context) {
   const params = settingsModal(context)
   if (params.button === 1001) return
   settingsProvider.registerSettings(context, params)
+  analytics.action(context, 'settings', 'settings', 'settings')
 }

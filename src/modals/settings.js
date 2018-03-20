@@ -109,11 +109,11 @@ function quantityIconsByLine() {
   }
 
   this.view.addSubview(sizeBox);
-  const sizeBoxUnit = utils.createLabel('icons per line', this.marginLeftColRight + 55, yAxis, 100, 20)
+  const sizeBoxUnit = utils.createLabel('icons per row', this.marginLeftColRight + 55, yAxis, 100, 20)
   this.view.addSubview(sizeBoxUnit);
 
   this.coeffCurrentHeight++;
-  addDescription('Set the number of imported icons per line.', this.lineOne)
+  addDescription('Set the number of imported icons per row.', this.lineOne)
   // addDescription('Format: size-padding', this.lineTwo)
 
   this.iconsByLine = sizeBox;
