@@ -1,4 +1,4 @@
-![alt text](https://raw.githubusercontent.com/AMoreaux/Sketch-Icons/master/images/sketch-icons-cover.jpg)
+![alt text](https://raw.githubusercontent.com/AMoreaux/Sketch-Icons/master/images/sketch-icons-cover.jpeg)
 
 # Sketch Icons
 
