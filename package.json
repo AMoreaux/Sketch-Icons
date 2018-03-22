@@ -1,6 +1,6 @@
 {
-  "name": "Sketch-Icons-v5",
-  "version": "5.0.0",
+  "name": "Sketch-Icons",
+  "version": "3.0.14",
   "identifier": "sketch.icons.plugin",
   "description": "Import your icons, apply a color mask and create a dynamic icons library.",
   "license": "MIT",
@@ -12,7 +12,7 @@
     "sketch": ">=48.0"
   },
   "skpm": {
-    "name": "Sketch-Icons-v5",
+    "name": "Sketch-Icons",
     "manifest": "src/manifest.json",
     "main": "Sketch-Icons.sketchplugin",
     "title": "Sketch Icons"
