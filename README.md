@@ -36,7 +36,7 @@ To save you even more time, we have designed a feature that allows you to replac
 
 ![alt text](https://raw.githubusercontent.com/AMoreaux/Sketch-Icons/master/images/update-icons.gif)
 
-### Organize icons - 🎉 New feature
+### ✨ Organize icons (New)
 
 You can now drag and drop your icons directly into Sketch (from a folder or an application like IconJar). Once your icons are dropped, select the set and go to `Plugins -> Sketch Icons -> Organize icons...`.
 
