@@ -64,15 +64,7 @@ We recommend installing the plugin with Sketch runner.
  	<img width="160" height="41" src="http://bit.ly/RunnerBadgeBlue" alt="runner-badge-blue">
  </a>
 
-### Method 2: Sketchpacks
-
-Open Sketchpacks, search for "Sketch Icons", and click "Install". Or you may click the "Install it with Sketchpacks" button below :)
-
-<a href="https://sketchpacks.com/AMoreaux/Sketch-Icons/install">
-  <img width="160" height="41" src="http://sketchpacks-com.s3.amazonaws.com/assets/badges/sketchpacks-badge-install.png" >
-</a>
-
-### Method 3: Manually
+### Method 2: Manually
 
 1. [Download the ZIP file](https://github.com/AMoreaux/Sketch-Icons/releases/latest) and unzip
 2. Open `Sketch Icons.sketchplugin`
