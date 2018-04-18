@@ -36,6 +36,12 @@ To save you even more time, we have designed a feature that allows you to replac
 
 ![alt text](https://raw.githubusercontent.com/AMoreaux/Sketch-Icons/master/images/update-icons.gif)
 
+### Organize icons
+
+You can now drag and drop your icons directly into Sketch (from a folder or an application like IconJar). Once your icons are dropped, select the set and go to `Plugins -> Sketch Icons -> Organize icons...`.
+
+![alt text](https://raw.githubusercontent.com/AMoreaux/Sketch-Icons/master/images/organize-icons.gif)
+
 ### Add a color mask on several icons
 
 If you want to apply a color mask to an icon - or a set of icons - you can use this functionality `Plugins -> Sketch Icons -> Apply a color mask...`. You can also use the keyboard shortcut `cmd + shift + m`.
