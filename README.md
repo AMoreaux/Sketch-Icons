@@ -4,6 +4,8 @@
 
 A Sketch plugin that allows you to import a set of icons and automatically apply a color mask.
 
+✨ <a href="https://sketchicons.com" target="_blank">Discover our new website!</a>
+
 📣 <a href="https://blog.prototypr.io/introducing-sketch-icons-2074d9dc9ed2" target="_blank">Read our Medium article to use Sketch Icons efficiently</a>
 
 ⚠️ If you have some troubles with Sketch Icons, here are some recommendations:
