@@ -1,7 +1,8 @@
 import logger from '../utils/logger'
 
 export default {
-  selectIconsFiles
+  selectIconsFiles,
+  getFilesByUrls
 }
 
 const AVAILABLE_EXT = ["svg", "pdf", "png", "jpg", "jpeg"]

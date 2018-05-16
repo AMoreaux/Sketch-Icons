@@ -46,6 +46,7 @@ function maskModal(context) {
     result.colorPicker = this.colorPickerColor
   }
 
+
   return result
 }
 
@@ -108,13 +109,13 @@ function importModal(context) {
       if (preset.presetCheckBox.state()) {
         result.presets.push({
           artboardSize: parseInt(preset.sizeBox.stringValue()),
-          iconPadding: parseInt(preset.paddingBox.stringValue())
+          iconPadding: parseFloat(preset.paddingBox.stringValue())
         })
       }
     })
   } else {
     result.artboardSize = parseInt(this.artboardSize.stringValue())
-    result.iconPadding = parseInt(this.artboardPadding.stringValue())
+    result.iconPadding = parseFloat(this.artboardPadding.stringValue())
   }
 
   if (result.withMask && this.isLibrarySource) {
@@ -128,6 +129,7 @@ function importModal(context) {
   } else if (result.withMask) {
     result.colorPicker = this.colorPickerColor || MSColor.blackColor()
   }
+
   return result
 }
 
@@ -152,7 +154,7 @@ function artboardModal(context) {
   return {
     button: this.modal.runModal(),
     artboardSize: parseInt(this.artboardSize.stringValue()),
-    iconPadding: parseInt(this.artboardPadding.stringValue()),
+    iconPadding: parseFloat(this.artboardPadding.stringValue()),
   }
 }
 

@@ -172,7 +172,7 @@ function initImport(context, params, cb) {
     artboardParams.iconsByLine = parseInt(settingsProvider.getSettings(context, 'default').iconsByLine.data)
     cb(context, params)
   }
-  const importedIcons = params.listIcon.length * (params.presets.length || 1)
+  const importedIcons = params.listIcon.length * ((Array.isArray(params.presets)) ? params.presets.length : 1)
   context.document.showMessage(
     `🎉 Tadaaa! 🎉 ${importedIcons} icon${params.listIcon.length > 1 ? 's' : ''} imported`
   );
@@ -233,7 +233,7 @@ function getPaddingAndSize(context, artboard) {
   }
 
   return {
-    iconPadding: parseInt(iconPadding),
+    iconPadding: parseFloat(iconPadding),
     artboardSize: parseInt(artboard.rect().size.width)
   };
 }

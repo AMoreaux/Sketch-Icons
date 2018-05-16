@@ -40,16 +40,14 @@ function initAddMaskOnSelectedArtboards(context, params, rootObjects) {
  */
 function addColor(context, rootObject, params) {
 
-  if (String(rootObject.firstLayer().class()) === 'MSBitMapLayer') return
+  if (String(rootObject.firstLayer().class()) === 'MSBitMapLayer') return;
 
   if (utils.svgHasStroke(rootObject)) {
     applyColor(rootObject, params);
   } else {
-
-    if (utils.hasMask(rootObject)) removeMask(context, rootObject)
-    svgProvider.cleanSvg(rootObject)
-
-    applyMask(context, rootObject, params)
+    if (utils.hasMask(rootObject)) removeMask(context, rootObject);
+    svgProvider.cleanSvg(rootObject);
+    applyMask(context, rootObject, params);
   }
 
   return registerMask(context, rootObject, params)
@@ -62,10 +60,10 @@ function addColor(context, rootObject, params) {
  * @param params
  */
 function applyColor(rootObject, params) {
-  const color = (params.colorPicker) ? params.colorPicker : librariesProvider.getColorFromSymbol(params.color).color
+  const color = (params.colorPicker) ? params.colorPicker : librariesProvider.getColorFromSymbol(params.color).color;
   rootObject.children().forEach((layer) => {
     if (layer.styledLayer().style().hasEnabledBorder()) {
-      const style = layer.styledLayer().style()
+      const style = layer.styledLayer().style();
       style.enabledBorders().forEach((border) => {
         border.color = color
       })
@@ -81,26 +79,28 @@ function applyColor(rootObject, params) {
  */
 function removeMask(context, rootObject) {
 
-  context.command.setValue_forKey_onLayer(null, "colorLib", rootObject)
-  context.command.setValue_forKey_onLayer(null, "color", rootObject)
-  context.command.setValue_forKey_onLayer(null, "colorPicker", rootObject)
+
+  context.command.setValue_forKey_onLayer(null, "colorLib", rootObject);
+  context.command.setValue_forKey_onLayer(null, "color", rootObject);
+  context.command.setValue_forKey_onLayer(null, "colorPicker", rootObject);
 
   if (utils.svgHasStroke(rootObject)) {
     return applyColor(rootObject, { colorPicker: MSImmutableColor.blackColor() })
   }
 
-  const iconLayer = rootObject.firstLayer()
+  const iconLayer = rootObject.firstLayer();
 
-  if (iconLayer.hasClippingMask()) {
+  if (rootObject.layers().count() > 1 && iconLayer.hasClippingMask()) {
     iconLayer.hasClippingMask = false;
-    iconLayer.clippingMaskMode = 1
-    const style = rootObject.firstLayer().style()
-    const fillColor = style.fills()[0].color()
-    style.removeAllStyleFills()
-    style.addStylePartOfType(0).color = fillColor
-
+    iconLayer.clippingMaskMode = 1;
+    const style = rootObject.firstLayer().style();
+    const fills = style.fills();
+    const fillColor = (fills.count() > 0) ? style.fills()[0].color() : MSColor.blackColor();
+    style.removeAllStyleFills();
+    style.addStylePartOfType(0).color = fillColor;
     rootObject.lastLayer().removeFromParent()
   }
+
 }
 
 /**

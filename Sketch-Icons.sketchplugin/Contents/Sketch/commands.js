@@ -1,1 +1,3773 @@
-var that=this;function __skpm_run(key,context){that.context=context;var exports=function(e){var t={};function r(i){if(t[i])return t[i].exports;var a=t[i]={i:i,l:!1,exports:{}};return e[i].call(a.exports,a,a.exports,r),a.l=!0,a.exports}return r.m=e,r.c=t,r.d=function(e,t,i){r.o(e,t)||Object.defineProperty(e,t,{configurable:!1,enumerable:!0,get:i})},r.n=function(e){var t=e&&e.__esModule?function(){return e.default}:function(){return e};return r.d(t,"a",t),t},r.o=function(e,t){return Object.prototype.hasOwnProperty.call(e,t)},r.p="",r(r.s=12)}([function(e,t,r){Object.defineProperty(t,"__esModule",{value:!0});var i="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e},a=s(r(13)),o=s(r(1)),n=s(r(2));function s(e){return e&&e.__esModule?e:{default:e}}function l(e){var t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:{width:14,height:14},r=CGSizeMake(t.width,t.height),i=NSImage.alloc().init();i.size=r,i.lockFocus();var a=MSBackgroundColorView.alloc().init();return a.backgroundColor=e,a.drawRect(NSMakeRect(0,0,t.width,t.height)),i.unlockFocus(),i}t.default={clearSelection:function(e){e.api().selectedDocument.selectedLayers.clear()},getIconNameByNSUrl:function(e){return e.lastPathComponent().split(".")[0]},createLabel:function(e,t,r,i,a,o){var n=NSTextField.alloc().initWithFrame_(NSMakeRect(t,r,i,a));o&&n.setTextColor(NSColor.colorWithCalibratedRed_green_blue_alpha(0,0,0,.6));return n.setEditable_(!1),n.setSelectable_(!1),n.setBezeled_(!1),n.setDrawsBackground_(!1),n.setFont(NSFont.systemFontOfSize(o?11:13)),n.setStringValue_(e),n},getSelectedArtboardsAndSymbols:function(e){var t=[];return e.selection.forEach(function(e){var r=String(e.class());"MSArtboardGroup"===r&&"MSSymbolMaster"===r||(e=e.parentRoot(),r=String(e.class())),-1!==t.indexOf(String(e.objectID()))||"MSArtboardGroup"!==r&&"MSSymbolMaster"!==r||t.push({object:e,type:r,id:e.objectID()})}),t=t.filter(function(e,t,r){return t===r.findIndex(function(t){return t.id===e.id})})},createWebview:function(e,t,r){var i=WebView.alloc().initWithFrame(NSMakeRect(0,0,220,300)),n=i.windowScriptObject(),s=new a.default({"webView:didFinishLoadForFrame:":function(){return function(e,t){o.default.log("loaded")}}(),"webView:didChangeLocationWithinPageForFrame:":function(){return function(e,i){var a=n.evaluateWebScript("window.location.hash"),o=JSON.parse(decodeURIComponent(a).split("color=")[1]);o.r=parseInt(o.r)/255,o.g=parseInt(o.g)/255,o.b=parseInt(o.b)/255,o.a=parseFloat(o.a);var s=NSColor.colorWithRed_green_blue_alpha(o.r,o.g,o.b,o.a),c=MSImmutableColor.colorWithNSColor(s);t.setImage(l(s,{width:40,height:30})),r(c)}}()});return i.setDrawsBackground(!1),i.setMainFrameURL_(e.plugin.urlForResourceNamed("webview.html").path()),i.setFrameLoadDelegate_(s.getClassInstance()),i},createDivider:function(e){var t=NSView.alloc().initWithFrame(e);return t.setWantsLayer(1),t.layer().setBackgroundColor(CGColorCreateGenericRGB(.8,.8,.8,1)),t},runFramework:function(e){var t=Mocha.sharedRuntime(),r=e.scriptPath.stringByDeletingLastPathComponent();return!!t.valueForKey("SketchIconsFramework")||(t.loadFrameworkWithName_inDirectory("SketchIconsFramework",r)?(t.setValue_forKey_(!0,"SketchIconsFramework"),!0):(log("❌ loadFramework: `SketchIconsFramework` failed!: "+r+". Please define SketchIcons_FrameworkPath if you're trying to @import in a custom plugin"),!1))},getImageByColor:l,hasMask:function(e){return!!e.firstLayer().hasClippingMask()},layerToSvg:function(e){var t=SketchSVGExporter.alloc().init().exportLayers([e.immutableModelObject()]);return NSString.alloc().initWithData_encoding(t,NSUTF8StringEncoding)},svgHasStroke:function(e){var t=!1;return e.children().forEach(function(e){e.styledLayer().style().hasEnabledBorder()&&(t=!0)}),t},convertMSColorToString:function(e){return JSON.stringify({r:e.red(),g:e.green(),b:e.blue(),a:e.alpha()})},convertStringToMSColor:function(e){var t="object"!==(void 0===e?"undefined":i(e))?e:JSON.parse(e),r=NSColor.colorWithRed_green_blue_alpha(t.r,t.g,t.b,t.a);return MSImmutableColor.colorWithNSColor(r)},getBorderColor:function(e){for(var t=void 0,r=e.children(),i=0;i<r.length;i++){var a=r[i].styledLayer().style();if(t=a.firstEnabledBorder())break}return t},getRootObject:function(e){var t=[];return e.api().selectedDocument.selectedPage.sketchObject.layers().forEach(function(e){var r=String(e.class());"MSArtboardGroup"!==r&&"MSSymbolMaster"!==r||t.push(e)}),t},getSizeBetweenIcon:function(e,t){var r=parseInt(t),i=t.replace(r,"");return i&&"%"===i?e+e*(r/100):e+r},buildPrefix:function(e,t){var r=n.default.getSettings(e,"default");return"null"!==r.prefixRootObject.data?r.prefixRootObject.data.replace("$size",t):""}}},function(e,t){Object.defineProperty(t,"__esModule",{value:!0}),t.default=function(){return{log:function(e){log(e)},debug:function(e){log("DEBUG: "+e)},info:function(e){log("INFO: "+e)},warn:function(e){log("WARN: "+e)},error:function(e){log("ERROR: "+e)}}}()},function(e,t){Object.defineProperty(t,"__esModule",{value:!0}),t.default={registerSettings:function(e,t){r.forEach(function(r){NSUserDefaults.standardUserDefaults().setObject_forKey(t[r.name],r.name),e.command.setValue_forKey_onDocument(t[r.name],r.name,e.document.documentData())})},getSettings:function(e,t){var a={};return r.forEach(function(e){a[e.name]={value:NSUserDefaults.standardUserDefaults().objectForKey(e.name),default:e.default,placeholder:e.placeholder},i(a[e.name])?a[e.name].data=String(a[e.name].value):a[e.name].data=String(a[e.name][t])}),a},resetSettings:function(e){r.forEach(function(t){e.command.setValue_forKey_onDocument(null,t.name,e.document.documentData())})},hasValue:i};var r=[{name:"presets",default:"",placeholder:"24-4, 48-8..."},{name:"convertStroke",default:"0",placeholder:"0"},{name:"iconsByLine",default:"10",placeholder:"10"},{name:"marginBetweenRootObject",default:"100%",placeholder:"100%"},{name:"prefixRootObject",default:"",placeholder:"icons/$size/..."}];function i(e){return!(!e.value||"null"===String(e.value)||0===String(e.value).length)}},function(e,t,r){(function(e){Object.defineProperty(t,"__esModule",{value:!0});var i=s(r(0)),a=s(r(4)),o=s(r(5)),n=(s(r(1)),s(r(21)));function s(e){return e&&e.__esModule?e:{default:e}}function l(e,t,r){if("MSBitMapLayer"!==String(t.firstLayer().class()))return i.default.svgHasStroke(t)?c(t,r):(i.default.hasMask(t)&&u(e,t),a.default.cleanSvg(t),function(e,t,r){var a=void 0;r.color?a=function(e,t,r){i.default.clearSelection(e);var a=AppController.sharedInstance().librariesController();return(r?a.importForeignSymbol_fromLibrary_intoDocument(t,r,e.document.documentData()).symbolMaster():t).newSymbolInstance()}(e,r.color,r.colorLib):r.colorPicker&&(a=function(e,t,r){var i=t.rect(),a=MSShapeGroup.shapeWithRect({origin:{x:0,y:0},size:{width:i.size.width,height:i.size.height}});return a.style().addStylePartOfType(0).color=r,a}(0,t,r.colorPicker));var o=t.rect();a.setHeightRespectingProportions(o.size.height),a.setWidthRespectingProportions(o.size.width),a.setName("🎨 color"),t.firstLayer().style().disableAllFills(),t.addLayers([a]);var n=t.firstLayer();n.hasClippingMask=!0,n.clippingMaskMode=0}(e,t,r)),d(e,t,r)}function c(e,t){var r=t.colorPicker?t.colorPicker:o.default.getColorFromSymbol(t.color).color;e.children().forEach(function(e){e.styledLayer().style().hasEnabledBorder()&&e.styledLayer().style().enabledBorders().forEach(function(e){e.color=r})})}function u(e,t){if(e.command.setValue_forKey_onLayer(null,"colorLib",t),e.command.setValue_forKey_onLayer(null,"color",t),e.command.setValue_forKey_onLayer(null,"colorPicker",t),i.default.svgHasStroke(t))return c(t,{colorPicker:MSImmutableColor.blackColor()});var r=t.firstLayer();if(r.hasClippingMask()){r.hasClippingMask=!1,r.clippingMaskMode=1;var a=t.firstLayer().style(),o=a.fills()[0].color();a.removeAllStyleFills(),a.addStylePartOfType(0).color=o,t.lastLayer().removeFromParent()}}function d(e,t,r){if(r.color){var a=r.colorLib?r.colorLib.libraryID():null,o="string"==typeof r.color?r.color:r.color.symbolID();e.command.setValue_forKey_onLayer(a,"colorLib",t),e.command.setValue_forKey_onLayer(o,"color",t),e.command.setValue_forKey_onLayer(null,"colorPicker",t)}else r.colorPicker&&(e.command.setValue_forKey_onLayer(i.default.convertMSColorToString(r.colorPicker),"colorPicker",t),e.command.setValue_forKey_onLayer(null,"colorLib",t),e.command.setValue_forKey_onLayer(null,"color",t))}function h(e,t){return{colorLibraryId:e.command.valueForKey_onLayer("colorLib",t),colorSymbolId:e.command.valueForKey_onLayer("color",t),colorString:e.command.valueForKey_onLayer("colorPicker",t)}}t.default={initAddMaskOnSelectedArtboards:function(t,r,a){a.forEach(async function(a){try{i.default.hasMask(a.object)&&!i.default.svgHasStroke(a.object)&&u(t,a.object),await l(t,a.object,r)}catch(t){e.log(">>>>>>>>>>>",t)}}),i.default.clearSelection(t)},addColor:l,removeMask:u,getMaskPropertiesFromArtboard:function(e,t){var r=h(e,t),a=t.firstLayer();r.colorLibraryId||r.colorSymbolId||r.colorString||!a||!a.hasClippingMask()||(n.default.switchToV4(e,t),r=h(e,t));!r.colorLibraryId&&r.colorSymbolId?r.colorSymbol=o.default.getSymbolFromDocument(e.document.documentData(),r.colorSymbolId):r.colorLibraryId&&(r.colorLibrary=o.default.getLibById(r.colorLibraryId),o.default.loadLibrary(r.colorLibrary),r.colorSymbol=o.default.getSymbolFromDocument(r.colorLibrary.document(),r.colorSymbolId));r.colorPicker=r.colorString?i.default.convertStringToMSColor(r.colorString):null;var s={colorLib:r.colorLibraryId?r.colorLibrary:null,color:r.colorSymbolId?r.colorSymbol:null,colorPicker:r.colorPicker};return s.colorLib||s.color||s.colorPicker?s:{}},registerMask:d}}).call(t,r(8))},function(e,t,r){Object.defineProperty(t,"__esModule",{value:!0});var i=s(r(3)),a=s(r(7)),o=s(r(2)),n=s(r(0));function s(e){return e&&e.__esModule?e:{default:e}}function l(e,t,r,i,a){var s,l=o.default.getSettings(e,"default");s=function(e){var t=e.match(/viewBox="(.*?)"/gm),r=void 0,i=void 0;Array.isArray(t)&&(r=t[0].match(/[+\-]?(?:0|[1-9]\d*)(?:\.\d*)?(?:[eE][+\-]?\d+)?/g),i={width:parseFloat(r[2]),height:parseFloat(r[3])});return i}(i=NSString.stringWithString(i)),a&&(i=function(e,t){var r='<rect width="'+String(t.width)+'" height="'+String(t.height)+'" id="delete-me"/></svg>';return NSString.stringWithString(e.replace("</svg>",r))}(i,s));var d=MSSVGImporter.svgImporter();d.prepareToImportFromData(i.dataUsingEncoding(NSUTF8StringEncoding));var h=d.importAsLayer();!function(e){var t=e.children(),r=NSPredicate.predicateWithFormat("(className == %@)","MSTextLayer"),i=t.filteredArrayUsingPredicate(r).objectEnumerator(),a=void 0;for(;a=i.nextObject();)a.removeFromParent()}(h),t.addLayer(h),function(e){var t=[];e.firstLayer().children().forEach(function(e){var r=e.styledLayer().style();r.hasEnabledFill()&&0===r.contextSettings().opacity()&&t.push(e)}),t.forEach(function(e){e.removeFromParent()})}(t),n.default.svgHasStroke(t)&&"1"===l.convertStroke.data&&function(e){e.children().forEach(function(e){e.canConvertToOutlines()&&"delete-me"!==String(e.name())&&e.layersByConvertingToOutlines()}),e.children().forEach(function(e){e.styledLayer().style().disableAllBorders()})}(t),a&&u(t,r.iconPadding),a&&function(e){var t=e.children(),r=NSPredicate.predicateWithFormat("(name == %@)","delete-me"),i=t.filteredArrayUsingPredicate(r);if(!i.length)return e.firstLayer().lastLayer().removeFromParent();var a=i.objectEnumerator(),o=void 0;for(;o=a.nextObject();)o.removeFromParent()}(t),c(r.artboardSize,t.firstLayer())}function c(e,t){var r=t.frame().width(),i=t.frame().height();t.frame().setX((e-r)/2),t.frame().setY((e-i)/2)}function u(e,t){var r=e.firstLayer().frame(),i=e.rect(),a=parseInt(i.size.width),o=parseInt(i.size.height),n=r.width(),s=r.height();r.constrainProportions=!0,n>=s?r.setWidth(a-2*t):r.setHeight(o-2*t)}t.default={initUpdateIconsSelectedArtboards:function(e,t,r){return t.forEach(function(t,o){var s=Object.assign({},i.default.getMaskPropertiesFromArtboard(e,t.object),a.default.getPaddingAndSize(e,t.object),r),c=1===r.listIcon.length?r.listIcon[0]:r.listIcon[o],u=String(NSString.alloc().initWithContentsOfURL(c));s.withMask=!!(s.colorLib||s.colorPicker||s.color),t.object.removeAllLayers(),l(e,t.object,s,String(u),!0),t.object.setName(n.default.getIconNameByNSUrl(c)),s.withMask&&i.default.addColor(e,t.object,s)}),n.default.clearSelection(e),t.length},addSVG:l,addPDF:function(e,t,r,i){var a=MSPDFImporter.pdfImporter();a.prepareToImportFromURL(i);var o=a.importAsLayer();t.addLayer(o),u(t,r.iconPadding),c(r.artboardSize,t.firstLayer()),t.firstLayer().setName(t.name())},addBITMAP:function(e,t,r,i){"MSBitmapLayer"===String(i.class())?MSLayerGroup.moveLayers_intoGroup([i],t):t.addLayer(MSBitmapLayer.bitmapLayerWithImageFromPath(i));u(t,r.iconPadding),c(r.artboardSize,t.firstLayer()),t.firstLayer().setName(t.name())},cleanSvg:function(e){(function(e){var t=e.children(),r=NSPredicate.predicateWithFormat("(className == %@)","MSLayerGroup"),i=t.filteredArrayUsingPredicate(r).objectEnumerator(),a=void 0;for(;a=i.nextObject();)a.ungroup()})(e),e.firstLayer().setName(e.name()),function(e){var t=NSMutableIndexSet.indexSet();e.layers().forEach(function(e,r){e.style().hasEnabledFill()||e.style().hasEnabledBorder()||t.addIndex(r)}),e.removeLayersAtIndexes(t)}(e),function e(t){var r=t.layers();if(r.length>1)for(var i=0;i<=r.length-1;i++)r[1].moveToLayer_beforeLayer(r[0],r[1]);if(t.layers().length>1)return e(t);t.children().forEach(function(e){e.booleanOperationCanBeReset()&&e.setBooleanOperation(-1)});r[0].resizeToFitChildrenWithOption(0);r[0].setName(t.name())}(e),e.firstLayer().resizeToFitChildrenWithOption(1)}}},function(e,t,r){Object.defineProperty(t,"__esModule",{value:!0});o(r(1));var i=o(r(0)),a=r(6);function o(e){return e&&e.__esModule?e:{default:e}}function n(e,t,r){var o=[];(o=t.representedObject()?function(e,t){return t.removeAllItems(),s((e=e.representedObject()).document())}(t,r):s(e.document.documentData())).length>0?(!function(e,t){var r=NSMenu.alloc().init();r.cancelTracking(),t.forEach(function(e){var t=NSMenuItem.alloc().init();t.title=e.symbol?e.symbol.name():"";var a=e.color?NSColor.colorWithRed_green_blue_alpha(e.color.red(),e.color.green(),e.color.blue(),e.color.alpha()):NSColor.colorWithRed_green_blue_alpha(e.red(),e.green(),e.blue(),e.alpha());t.representedObject=e.symbol?e.symbol:a,t.image=i.default.getImageByColor(a),r.addItem(t)}),e.menu=r}(r,o),(0,a.setEnabledColorMenu)(!0)):(0,a.setEnabledColorMenu)(!1)}function s(e){var t=[];return e.localSymbols().forEach(function(e){var r=l(e);r&&t.push(r)}),t}function l(e){var t=e.layers(),r=void 0;return 0===t.length&&e.backgroundColor()?r={color:e.backgroundColor(),symbol:e}:1===t.length&&2===t[0].children().length&&t[0].style().hasEnabledFill()&&(r={color:t[0].style().fills()[0].color(),symbol:e}),r}t.default={getLibById:function(e){for(var t=void 0,r=AppController.sharedInstance().librariesController().availableLibraries(),i=0;i<r.length;i++)if(String(e)===String(r[i].libraryID())){t=r[i];break}return t},initLibsSelectList:function(e,t,r){function i(t){t.setCOSJSTargetFunction(function(t){n(e,t,r)})}var a=NSMenu.alloc().init(),o=NSMenuItem.alloc().init();return o.title="Current file",i(o),a.addItem(o),t.forEach(function(e){var t=NSMenuItem.alloc().init();t.title=e.name(),t.representedObject=e,a.addItem(t),i(t)}),n(e,o,r),a},getColorFromSymbol:l,getSymbolFromDocument:function(e,t){for(var r=void 0,i=e.localSymbols(),a=0;a<i.length;a++)if(String(i[a].symbolID())===String(t)){r=i[a];break}return r},loadLibrary:function(e){return e.loadSynchronously()}}},function(e,t,r){Object.defineProperty(t,"__esModule",{value:!0}),t.constructBase=t.maskModal=t.importModal=t.setEnabledColorMenu=void 0;var i=n(r(0)),a=(n(r(1)),n(r(5))),o=n(r(2));function n(e){return e&&e.__esModule?e:{default:e}}var s=NSColor.colorWithCalibratedRed_green_blue_alpha(170/255,170/255,170/255,1);function l(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:"Continue";this.modal=COSAlertWindow.new(),this.view=NSView.alloc().initWithFrame(NSMakeRect(0,0,this.modalParams.width,this.modalParams.height)),this.modal.addAccessoryView(this.view),this.modal.setMessageText(this.modalParams.messageText),this.modal.addButtonWithTitle(e),this.modal.setInformativeText(this.modalParams.informativeText),this.modal.addButtonWithTitle("Cancel")}function c(){this.coeffCurrentHeight++;var e=i.default.createLabel("Artboard size",0,this.modalParams.height-this.modalParams.lineHeight,150,20);this.view.addSubview(e);var t=NSTextField.alloc().initWithFrame(NSMakeRect(150,this.modalParams.height-this.modalParams.lineHeight,50,20));t.setStringValue(24),this.view.addSubview(t);var r=i.default.createLabel("px",205,this.modalParams.height-this.modalParams.lineHeight,50,20);this.view.addSubview(r),this.coeffCurrentHeight++;var a=i.default.createLabel("Artboard Padding",0,this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight,150,20);this.view.addSubview(a);var o=NSTextField.alloc().initWithFrame(NSMakeRect(150,this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight,50,20));o.setStringValue(4),this.view.addSubview(o);var n=i.default.createLabel("px",205,this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight,50,20);this.view.addSubview(n),this.artboardPadding=o,this.artboardSize=t,this.artboardSize.setNextKeyView(this.artboardPadding)}function u(){this.coeffCurrentHeight++,this.coeffCurrentHeight++;var e=i.default.createLabel("Color Source",0,this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight-this.adjustHeight+40,150,20);this.view.addSubview(e);var t=NSButtonCell.alloc().init();t.setButtonType(NSRadioButton);var r=NSMatrix.alloc().initWithFrame_mode_prototype_numberOfRows_numberOfColumns(NSMakeRect(150,this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight-this.adjustHeight,300,60),NSRadioModeMatrix,t,2,1);r.setCellSize(CGSizeMake(300,25));var a=r.cells();a[0].setTitle("From Symbols"),a[0].setFont(NSFont.systemFontOfSize_(13)),a[1].setTitle("From Color picker"),a[1].setFont(NSFont.systemFontOfSize_(13)),this.view.addSubview(r),function(e){function t(e){"From Symbols"===String(e.selectedCells()[0].title())?(S(),p(),this.isLibrarySource=!0):(!function(){this.colorLibsMenuParams.removeFromSuperview(),this.colorsMenuParams.removeFromSuperview(),this.colorLibsMenuParamsLabel.removeFromSuperview(),this.colorsMenuParamsLabel.removeFromSuperview()}(),function(){this.view.addSubview(this.pickerView),this.view.addSubview(this.colorPickerLabel)}(),this.isLibrarySource=!1)}e[0].setCOSJSTargetFunction(t),e[1].setCOSJSTargetFunction(t)}(a),this.radioParams=r,this.radioButtonLabel=e}function d(e){this.coeffCurrentHeight++;var t=i.default.createLabel("Document Source",0,this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight-this.adjustHeight,150,25);this.view.addSubview(t);var r=NSPopUpButton.alloc().initWithFrame(NSMakeRect(150,this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight-this.adjustHeight,130,30));this.coeffCurrentHeight++;var o=i.default.createLabel("Color",0,this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight-this.adjustHeight,150,25);this.view.addSubview(o);var n=NSPopUpButton.alloc().initWithFrame(NSMakeRect(150,this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight-this.adjustHeight,130,30));this.view.addSubview(r),this.view.addSubview(n),this.colorLibsMenuParams=r,this.colorsMenuParams=n,this.colorLibsMenuParamsLabel=t,this.colorsMenuParamsLabel=o,r.menu=a.default.initLibsSelectList(e,AppController.sharedInstance().librariesController().availableLibraries(),n)}function h(e){var t=this,r=i.default.createLabel("Color picker",0,this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight-this.adjustHeight+20,150,20),a=NSView.alloc().initWithFrame(NSMakeRect(150,this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight-this.adjustHeight,130,60));a.setWantsLayer(!0),a.layer().setBackgroundColor(CGColorCreateGenericRGB(1,1,1,1)),a.layer().setBorderColor(CGColorCreateGenericRGB(186/255,186/255,186/255,1)),a.layer().borderWidth=1;var o=i.default.createLabel("#000000",60,20,100,20);a.addSubview(o);var n=NSButton.alloc().initWithFrame(NSMakeRect(5,15,50,30));n.setButtonType(NSMomentaryChangeButton),n.setImage(i.default.getImageByColor(NSColor.colorWithRed_green_blue_alpha(0,0,0,1),{width:40,height:30})),n.setBordered(!1);var s=AMOMain.alloc().init();n.setCOSJSTargetFunction(function(){s.openPopover_onView_withWebview(n,t.view,i.default.createWebview(e,n,function(e){t.colorPickerColor=e,o.setStringValue_("#"+String(e.immutableModelObject().hexValue()))}))}),a.addSubview(n),this.pickerView=a,this.colorPickerLabel=r}function f(e){var t=e?NSColor.controlTextColor():s;this.colorLibsMenuParamsLabel.setTextColor(t),this.colorLibsMenuParams.setEnabled(e)}function m(e){this.colorsMenuParamsLabel.setTextColor(b(e)),this.colorsMenuParams.setEnabled(e)}function g(e){this.radioParams.setEnabled(e),this.radioButtonLabel.setTextColor(b(e))}function S(){this.view.addSubview(this.colorLibsMenuParams),this.view.addSubview(this.colorsMenuParams),this.view.addSubview(this.colorLibsMenuParamsLabel),this.view.addSubview(this.colorsMenuParamsLabel)}function p(){this.pickerView.removeFromSuperview(),this.colorPickerLabel.removeFromSuperview()}function b(e){return e?NSColor.controlTextColor():s}t.setEnabledColorMenu=m,t.importModal=function(e){var t=void 0;this.settingsValues=o.default.getSettings(e,"default"),this.modalParams={messageText:"Configure your import",informativeText:"Your icons will be arranged in artboards. Set size and padding of your artboards.",width:300,lineHeight:35},o.default.hasValue(this.settingsValues.presets)?(this.modalParams.height=300+30*this.settingsValues.presets.data.split(",").length,t=!0):(this.modalParams.height=300,t=!1);this.modalParams.height=o.default.hasValue(this.settingsValues.presets)?300+30*this.settingsValues.presets.data.split(",").length:300,this.coeffCurrentHeight=0,this.isLibrarySource=!0,this.adjustHeight=0,l(),t?function(){var e=this,t=this.settingsValues.presets.data.split(",").map(function(e){var t=e.split("-");return{artboardSize:t[0],padding:t[1]?t[1]:0}});this.presets=[];var r=i.default.createLabel("Presets",0,this.modalParams.height-this.modalParams.lineHeight,150,20);this.view.addSubview(r);var a=i.default.createLabel("Size",180,this.modalParams.height-this.modalParams.lineHeight,100,20);this.view.addSubview(a);var o=i.default.createLabel("Padding",240,this.modalParams.height-this.modalParams.lineHeight,100,20);this.view.addSubview(o),this.coeffCurrentHeight++,t.forEach(function(t){e.coeffCurrentHeight++,function(e,t){var r=NSButton.alloc().initWithFrame(NSMakeRect(150,t,30,20));r.setState(!0),r.setButtonType(NSSwitchButton),r.setFont(NSFont.systemFontOfSize_(13)),r.setTitle(""),this.view.addSubview(r);var i=NSTextField.alloc().initWithFrame(NSMakeRect(180,t,50,20));i.setStringValue(e.artboardSize),this.view.addSubview(i);var a=NSTextField.alloc().initWithFrame(NSMakeRect(240,t,50,20));a.setStringValue(e.padding),this.view.addSubview(a);var o={sizeBox:i,paddingBox:a,presetCheckBox:r};(function(e){e.presetCheckBox.setCOSJSTargetFunction(function(){e.sizeBox.setEnabled(e.presetCheckBox.state()),e.paddingBox.setEnabled(e.presetCheckBox.state())})})(o),this.presets.push(o)}(t,e.modalParams.height-e.modalParams.lineHeight*e.coeffCurrentHeight)})}():c();this.view.addSubview(i.default.createDivider(NSMakeRect(0,this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight-10,this.modalParams.width,1))),this.adjustHeight=5,function(){this.coeffCurrentHeight++;var e=i.default.createLabel("Symbols",0,this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight-this.adjustHeight,150,20);this.view.addSubview(e);var t=NSButton.alloc().initWithFrame(NSMakeRect(150,this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight-this.adjustHeight,200,20));t.setButtonType(NSSwitchButton),t.setState(!0),t.setFont(NSFont.systemFontOfSize_(13)),t.setTitle("Convert to symbol"),this.view.addSubview(t),this.symbolParams=t}(),this.view.addSubview(i.default.createDivider(NSMakeRect(0,this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight-15,this.modalParams.width,1))),this.adjustHeight=8,function(){this.coeffCurrentHeight++;var e=i.default.createLabel("Mask",0,this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight-this.adjustHeight,150,20);this.view.addSubview(e);var t=NSButton.alloc().initWithFrame(NSMakeRect(150,this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight-this.adjustHeight,200,20));t.setButtonType(NSSwitchButton),t.setState(!1),t.setFont(NSFont.systemFontOfSize_(13)),t.setTitle("Add color mask"),this.view.addSubview(t),this.checkboxMaskParams=t}(),u(),d(e),f(!1),m(!1),g(!1),h(e),function(){var e=this;this.checkboxMaskParams.setCOSJSTargetFunction(function(t){t.state()?(g(!0),f(!0),e.colorsMenuParams.numberOfItems()>0&&m(!0)):(g(!1),f(!1),m(!1),S(),p(),e.radioParams.cells()[0].state=!0,e.radioParams.cells()[1].state=!1)})}();var r={button:this.modal.runModal(),convertSymbol:this.symbolParams.state(),withMask:!!this.checkboxMaskParams.state()};t?(r.presets=[],this.presets.forEach(function(e){e.presetCheckBox.state()&&r.presets.push({artboardSize:parseInt(e.sizeBox.stringValue()),iconPadding:parseInt(e.paddingBox.stringValue())})})):(r.artboardSize=parseInt(this.artboardSize.stringValue()),r.iconPadding=parseInt(this.artboardPadding.stringValue()));if(r.withMask&&this.isLibrarySource){var a=this.colorsMenuParams.selectedItem();r.color=a?this.colorsMenuParams.representedObject():null;var n=this.colorLibsMenuParams.selectedItem();r.colorLib=n?this.colorLibsMenuParams.representedObject():null,r.color||(r.withMask=!1)}else r.withMask&&(r.colorPicker=this.colorPickerColor||MSColor.blackColor());return r},t.maskModal=function(e){this.modalParams={messageText:"Configure your color mask",informativeText:"Select your library and choose a color to apply as mask. Your layers will all be combined.",height:160,width:300,lineHeight:35},this.coeffCurrentHeight=0,this.isLibrarySource=!0,this.adjustHeight=0,l(),u(),d(e),h(e);var t={button:this.modal.runModal()};if(this.isLibrarySource){var r=this.colorsMenuParams.selectedItem();t.color=r?this.colorsMenuParams.representedObject():null;var i=this.colorLibsMenuParams.selectedItem();t.colorLib=i?this.colorLibsMenuParams.representedObject():null}else t.colorPicker=this.colorPickerColor;return t},t.constructBase=l},function(e,t,r){Object.defineProperty(t,"__esModule",{value:!0});var i=l(r(0)),a=l(r(1)),o=l(r(4)),n=l(r(3)),s=l(r(2));function l(e){return e&&e.__esModule?e:{default:e}}t.default={initImport:function(e,t,r){var a=i.default.getRootObject(e);if(t.yOrigin=h(e,a).yOrigin,t.presets){var o=a;t.presets.forEach(function(n){!function(e,t){e.iconPadding=t.iconPadding,c.height=c.width=t.artboardSize}(t,n),t.xOrigin=h(e,u).xOrigin,t.artboardSize=n.artboardSize,t.prefix=i.default.buildPrefix(e,t.artboardSize),o&&0===a.length&&e.document.currentPage().addLayers([function(e,t){var r=MSTextLayer.new();r.setStringValue_(String(e.artboardSize)+"px");var i=NSFontManager.sharedFontManager().fontWithFamily_traits_weight_size("Helvetica neue",NSBoldFontMask,0,c.titleFontSize);r.setFont(i),r.lineHeight=48,r.setName(String(e.artboardSize)+"px");var a=r.frame();return a.setX(t),a.setY(-(32+r.lineHeight())),r}(n,t.xOrigin)]),c.iconsByLine=parseInt(s.default.getSettings(e,"default").iconsByLine.data),r(e,t)})}else t.prefix=i.default.buildPrefix(e,t.artboardSize),c.height=c.width=t.artboardSize,c.iconsByLine=parseInt(s.default.getSettings(e,"default").iconsByLine.data),r(e,t);var n=t.listIcon.length*(t.presets.length||1);return e.document.showMessage("🎉 Tadaaa! 🎉 "+n+" icon"+(t.listIcon.length>1?"s":"")+" imported"),n},initImportIcons:async function(e,t){i.default.clearSelection(e),t.listIcon.forEach(function(r,n){try{var s=i.default.getIconNameByNSUrl(r),l=d(e,n,s,t),c=String(r.toString().split(".").pop()).toLowerCase();if("pdf"===c)return o.default.addPDF(e,l,t,r);if("png"===c||"jpg"===c||"jpeg"===c)return o.default.addBITMAP(e,l,t,r);var h=String(NSString.alloc().initWithContentsOfURL(r));f(e,l,t,h),u.push(l)}catch(e){a.default.error(e)}}),i.default.clearSelection(e)},getPaddingAndSize:function(e,t){var r=e.command.valueForKey_onLayer("padding",t);if(!r){var i=t.layers()[0].rect();r=Math.min(i.origin.x,i.origin.y)}return{iconPadding:parseInt(r),artboardSize:parseInt(t.rect().size.width)}},initOrganizeIcons:function(e,t){t.listIcon.forEach(async function(r,i){try{var n=d(e,i,r.name(),t);if("MSBitmapLayer"===String(r.class()))return o.default.addBITMAP(e,n,t,r);var s=MSImmutableLayerAncestry.ancestryWithMSLayer_(r),l=MSExportRequest.exportRequestsFromLayerAncestry_(s).firstObject();l.format="svg";var c=MSExporter.exporterForRequest_colorSpace_(l,NSColorSpace.sRGBColorSpace()),h=NSString.alloc().initWithData_encoding(c.data(),NSUTF8StringEncoding);await f(e,n,t,String(h)),u.push(n)}catch(e){a.default.error(e)}})}};var c={iconsByLine:10,sizeBetweenPreset:200,titleFontSize:32},u=[];function d(e,t,r,a){var o=s.default.getSettings(e,"default").marginBetweenRootObject,n=i.default.getSizeBetweenIcon(c.width,o.data);0===t?(c.y=a.yOrigin,c.x=a.xOrigin||0):t%c.iconsByLine==0?(c.y+=n,c.x=a.xOrigin||0):c.x+=n;var l=MSArtboardGroup.new();return l.setName(""+String(a.prefix)+String(r)),function(e,t){var r=e.frame();r.setWidth(t.width),r.setHeight(t.height),r.setX(t.x),r.setY(t.y)}(l,c),e.document.currentPage().addLayers([l]),a.convertSymbol?MSSymbolMaster.convertArtboardToSymbol(l):l}function h(e,t){var r=[],i=[],a=0;t.forEach(function(e){var t=e.frame().height(),o=e.origin();r.push(o.y-a),i.push(o.x-a),t>a&&(a=t)});var o=0!==r.length?Math.max.apply(Math,r):0,n=0!==i.length?Math.max.apply(Math,i)+a:0;return{yOrigin:0===t.length?o:o+100+a,xOrigin:0===t.length?n:n+100+a}}function f(e,t,r,i){return o.default.addSVG(e,t,r,i,!0),r.withMask&&n.default.addColor(e,t,r),e.command.setValue_forKey_onLayer(r.iconPadding,"padding",t)}},function(e,t,r){(function(t,i){if("production"!==t.env.NODE_ENV){var a=r(16),o=r(18),n=r(20)}function s(e,r){var s=Array.prototype.slice.call(r);if(s.forEach(function(e){try{log(i._skpmPrefix+function(){for(var e="",t=0;t<l;t++)e+="  ";l>0&&(e+="| ");return e}()+e)}catch(t){log(e)}}),"production"!==t.env.NODE_ENV){if(!o.isDebuggerPresent())return;var c={ts:Date.now(),type:e,plugin:String(context.scriptPath),values:s.map(a.prepareValue),stack:a.prepareStackTrace((new Error).stack)};o.sendToDebugger(n.ADD_LOG,c)}}i._skpmPrefix="console> ";var l=0;var c=i.group;i.group=function(){c&&c.apply(this,arguments),l+=1,"production"!==t.env.NODE_ENV&&o.sendToDebugger(n.GROUP,{plugin:String(context.scriptPath),collapsed:!1})};var u=i.groupCollapsed;i.groupCollapsed=function(){u&&u.apply(this,arguments),l+=1,"production"!==t.env.NODE_ENV&&o.sendToDebugger(n.GROUP,{plugin:String(context.scriptPath),collapsed:!0})};var d=i.groupEnd;i.groupEnd=function(){d&&d.apply(this,arguments),(l-=1)<0&&(l=0),"production"!==t.env.NODE_ENV&&o.sendToDebugger(n.GROUP_END,{plugin:context.scriptPath})};var h={},f=i.count;i.count=function(e){return h[e=void 0!==e?e:"Global"]=(h[e]||0)+1,f&&f.apply(this,arguments),s("log",[e+": "+h[e]])};var m={},g=i.time;i.time=function(e){if(g&&g.apply(this,arguments),m[e=void 0!==e?e:"default"])return s("warn",['Timer "'+e+'" already exists']);m[e]=Date.now()};var S=i.timeEnd;i.timeEnd=function(e){if(S&&S.apply(this,arguments),!m[e=void 0!==e?e:"default"])return s("warn",['Timer "'+e+'" does not exist']);var t=Date.now()-m[e];return delete m[e],s("log",[e+": "+t/1e3+"ms"])};var p=i.log;i.log=function(){return p&&p.apply(this,arguments),s("log",arguments)};var b=i.warn;i.warn=function(){return b&&b.apply(this,arguments),s("warn",arguments)};var v=i.error;i.error=function(){return v&&v.apply(this,arguments),s("error",arguments)};var y=i.assert;i.assert=function(e,t){if(y&&y.apply(this,arguments),!e)return s("assert",[t])};var w=i.info;i.info=function(){return w&&w.apply(this,arguments),s("info",arguments)};var P=i.clear;i.clear=function(){if(P&&P(),"production"!==t.env.NODE_ENV)return o.sendToDebugger(n.CLEAR_LOGS)},i._skpmEnabled=!0,e.exports=i}).call(t,r(14),r(8))},function(e,t,r){var i,a,o=[];if(r(15)()){o=[];i=function(e,t,r,i,a,n,s,l,c,u,d,h){var f=o.length;return o.push(coscript.scheduleWithInterval_jsFunction((t||0)/1e3,function(){e(r,i,a,n,s,l,c,u,d,h)})),f},a=function(e){var t=o[e];t&&(t.cancel(),o[e]=void 0)}}else i=function(e,t,r,i,n,s,l,c,u,d,h,f){coscript.shouldKeepAround=!0;var m=o.length;return o.push(!0),coscript.scheduleWithInterval_jsFunction((t||0)/1e3,function(){o[m]&&e(r,i,n,s,l,c,u,d,h,f),a(m),o.every(function(e){return!e})&&(coscript.shouldKeepAround=!1)}),m},a=function(e){o[e]=!1};e.exports={setTimeout:i,clearTimeout:a}},function(e,t){e.exports=function(e){var t=e.split("\n");return t=(t=t.map(function(e){return e.replace(/\sg/,"")})).map(function(e){var t=e.split("@"),r=t.shift(),i=t.join("@");0===r.indexOf("/Users/")&&(i=r+(i?"@"+i:""),r=null),i||(i=e,r=null);var a=i.split(":"),o=(i=a[0]).split("/");return{fn:r,file:o=o[o.length-1],filePath:i,line:a[1],column:a[2]}})}},function(e,t){e.exports=function(e){if(Array.isArray(e))return e;for(var t=[],r=0;r<(e||[]).length;r+=1)t.push(e[r]);return t}},function(e,t,r){Object.defineProperty(t,"__esModule",{value:!0}),t.importIcons=function(e){i.default.runFramework(e);var t=(0,c.importModal)(e);if(1e3!==t.button)return;if(t.listIcon=s.default.selectIconsFiles(),!t.listIcon.length)return;var r=a.default.initImport(e,t,a.default.initImportIcons),o=t.withMask?"import-mask":"import";h.default.action(e,"icons","import",o,r)},t.updateIconsOnSelectedArtboards=function(e){var t=i.default.getSelectedArtboardsAndSymbols(e);if(0===t.length)return n.default.newErrorModal("No artboards selected","Please select one or more artboards to replace icons.");var r={};if(r.listIcon=s.default.selectIconsFiles(),!r.listIcon.length)return;if(t.length>r.listIcon.length&&1!==r.listIcon.length)return n.default.newErrorModal("Too much artboards selected","Please select as many artboards as icons.");if(t.length<r.listIcon.length&&1!==r.listIcon.length)return n.default.newErrorModal("Too much icons selected","Please select as many icons as artboards.");var a=l.default.initUpdateIconsSelectedArtboards(e,t,r);h.default.action(e,"icons","replace","replace",a)},t.organizeIcons=function(e){var t=e.selection;if(0===t.length)return n.default.newErrorModal("No layers selected","Please select one or more layers.");i.default.runFramework(e);var r=(0,c.importModal)(e);if(1e3!==r.button)return;r.listIcon=t,a.default.initImport(e,r,a.default.initOrganizeIcons),r.listIcon.forEach(function(e){return e.removeFromParent()});var o=r.withMask?"organize-mask":"organize";h.default.action(e,"icons","organize",o,r.listIcon.length)},t.addMaskOnSelectedArtboards=function(e){i.default.runFramework(e);var t=i.default.getSelectedArtboardsAndSymbols(e);if(0===t.length)return n.default.newErrorModal("No artboards selected","Please select one or more artboards to add a mask.");var r=(0,c.maskModal)(e);if(1e3!==r.button)return;o.default.initAddMaskOnSelectedArtboards(e,r,t),h.default.action(e,"icons","mask","mask",t.length)},t.removeMaskOnSelectedArtboards=function(e){var t=i.default.getSelectedArtboardsAndSymbols(e);if(0===t.length)return n.default.newErrorModal("No artboards selected","Please select one or more artboards to add a mask.");t.forEach(function(t){o.default.removeMask(e,t.object)}),h.default.action(e,"icons","remove mask","remove mask",t.length)},t.setSettings=function(e){var t=(0,u.default)(e);if(1001===t.button)return;d.default.registerSettings(e,t),h.default.action(e,"settings","settings","settings")};var i=f(r(0)),a=f(r(7)),o=f(r(3)),n=f(r(22)),s=f(r(23)),l=f(r(4)),c=r(6),u=f(r(24)),d=f(r(2)),h=f(r(25));function f(e){return e&&e.__esModule?e:{default:e}}},function(module,exports){Object.defineProperty(exports,"__esModule",{value:!0});var _typeof="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e};function MochaJSDelegate(selectorHandlerDict){var uniqueClassName="MochaJSDelegate_DynamicClass_"+NSUUID.UUID().UUIDString(),delegateClassDesc=MOClassDescription.allocateDescriptionForClassWithName_superclass_(uniqueClassName,NSObject);delegateClassDesc.registerClass();var handlers={};if(this.setHandlerForSelector=function(selectorString,func){var handlerHasBeenSet=selectorString in handlers,selector=NSSelectorFromString(selectorString);if(handlers[selectorString]=func,!handlerHasBeenSet){for(var dynamicHandler=function(){var e=handlers[selectorString];if(e)return e.apply(delegateClassDesc,arguments)},args=[],regex=/:/g;match=regex.exec(selectorString);)args.push("arg"+args.length);dynamicFunction=eval("(function("+args.join(",")+"){ return dynamicHandler.apply(this, arguments); })"),delegateClassDesc.addInstanceMethodWithSelector_function_(selector,dynamicFunction)}},this.removeHandlerForSelector=function(e){delete handlers[e]},this.getHandlerForSelector=function(e){return handlers[e]},this.getAllHandlers=function(){return handlers},this.getClass=function(){return NSClassFromString(uniqueClassName)},this.getClassInstance=function(){return NSClassFromString(uniqueClassName).new()},"object"==(void 0===selectorHandlerDict?"undefined":_typeof(selectorHandlerDict)))for(var selectorString in selectorHandlerDict)this.setHandlerForSelector(selectorString,selectorHandlerDict[selectorString])}exports.default=MochaJSDelegate},function(e,t,r){(function(t,r){var i,a,o=e.exports={};function n(){throw new Error("setTimeout has not been defined")}function s(){throw new Error("clearTimeout has not been defined")}function l(e){if(i===t)return t(e,0);if((i===n||!i)&&t)return i=t,t(e,0);try{return i(e,0)}catch(t){try{return i.call(null,e,0)}catch(t){return i.call(this,e,0)}}}!function(){try{i="function"==typeof t?t:n}catch(e){i=n}try{a="function"==typeof r?r:s}catch(e){a=s}}();var c,u=[],d=!1,h=-1;function f(){d&&c&&(d=!1,c.length?u=c.concat(u):h=-1,u.length&&m())}function m(){if(!d){var e=l(f);d=!0;for(var t=u.length;t;){for(c=u,u=[];++h<t;)c&&c[h].run();h=-1,t=u.length}c=null,d=!1,function(e){if(a===r)return r(e);if((a===s||!a)&&r)return a=r,r(e);try{a(e)}catch(t){try{return a.call(null,e)}catch(t){return a.call(this,e)}}}(e)}}function g(e,t){this.fun=e,this.array=t}function S(){}o.nextTick=function(e){var t=new Array(arguments.length-1);if(arguments.length>1)for(var r=1;r<arguments.length;r++)t[r-1]=arguments[r];u.push(new g(e,t)),1!==u.length||d||l(m)},g.prototype.run=function(){this.fun.apply(null,this.array)},o.title="browser",o.browser=!0,o.env={},o.argv=[],o.version="",o.versions={},o.on=S,o.addListener=S,o.once=S,o.off=S,o.removeListener=S,o.removeAllListeners=S,o.emit=S,o.prependListener=S,o.prependOnceListener=S,o.listeners=function(e){return[]},o.binding=function(e){throw new Error("process.binding is not supported")},o.cwd=function(){return"/"},o.chdir=function(e){throw new Error("process.chdir is not supported")},o.umask=function(){return 0}}).call(t,r(9).setTimeout,r(9).clearTimeout)},function(e,t){e.exports=function(){return"undefined"!=typeof coscript&&coscript.createFiber}},function(e,t,r){var i=r(17);e.exports.toArray=r(11),e.exports.prepareStackTrace=r(10),e.exports.prepareValue=i,e.exports.prepareObject=i.prepareObject,e.exports.prepareArray=i.prepareArray},function(e,t,r){var i=r(10),a=r(11);function o(e,t){return e.map(function(e){return c(e,t)})}function n(e,t){const r={};return Object.keys(e).forEach(function(i){r[i]=c(e[i],t)}),r}function s(e){return{type:"String",primitive:"String",value:String(e.name())}}function l(e){return{type:"String",primitive:"String",value:String(e.selector())}}function c(e,t){var r="String",u="String";const d=typeof e;return e instanceof Error?(r="Error",u="Error",e={message:e.message,name:e.name,stack:i(e.stack)}):Array.isArray(e)?(r="Array",u="Array",e=o(e,t)):null===e||void 0===e||Number.isNaN(e)?(r="Empty",u="Empty",e=String(e)):"object"===d?e.isKindOfClass&&"function"==typeof e.class?"NSDictionary"===(r=String(e.class()))||"__NSDictionaryM"===r||"__NSSingleEntryDictionaryI"===r||"__NSDictionaryI"===r||"__NSCFDictionary"===r?(u="Object",e=n(Object(e),t)):"NSArray"===r||"NSMutableArray"===r||"__NSArrayM"===r||"__NSSingleObjectArrayI"===r||"__NSArray0"===r?(u="Array",e=o(a(e),t)):"NSString"===r||"__NSCFString"===r||"NSTaggedPointerString"===r||"__NSCFConstantString"===r?(u="String",e=String(e)):"__NSCFNumber"===r||"NSNumber"===r?(u="Number",e=0+e):"MOStruct"===r?(r=String(e.name()),u="Object",e=e.memberNames().reduce(function(r,i){return r[i]=c(e[i],t),r},{})):e.class().mocha?(u="Mocha",e=(t||{}).skipMocha?r:function(e,t){t=t||{};var r=e.class().mocha(),i={properties:{type:"Array",primitive:"Array",value:a(r["properties"+(t.withAncestors?"WithAncestors":"")]()).map(s)},classMethods:{type:"Array",primitive:"Array",value:a(r["classMethods"+(t.withAncestors?"WithAncestors":"")]()).map(l)},instanceMethods:{type:"Array",primitive:"Array",value:a(r["instanceMethods"+(t.withAncestors?"WithAncestors":"")]()).map(l)},protocols:{type:"Array",primitive:"Array",value:a(r["protocols"+(t.withAncestors?"WithAncestors":"")]()).map(s)}};return r.treeAsDictionary&&t.withTree&&(i.treeAsDictionary={type:"Object",primitive:"Object",value:n(r.treeAsDictionary())}),i}(e,t)):(u="Unknown",e=r):(r="Object",u="Object",e=n(e,t)):"function"===d?(r="Function",u="Function",e=String(e)):!0===e||!1===e?(r="Boolean",u="Boolean"):"number"===d&&(u="Number",r="Number"),{value:e,type:r,primitive:u}}e.exports=c,e.exports.prepareObject=n,e.exports.prepareArray=o},function(e,t,r){var i=r(19);e.exports.identifier="skpm.debugger",e.exports.isDebuggerPresent=i.isWebviewPresent.bind(this,e.exports.identifier),e.exports.sendToDebugger=function(t,r){return i.sendToWebview(e.exports.identifier,"sketchBridge("+JSON.stringify({name:t,payload:r})+");")}},function(e,t){var r=NSThread.mainThread().threadDictionary();e.exports.isWebviewPresent=function(e){return!!r[e]},e.exports.sendToWebview=function(t,i){if(!e.exports.isWebviewPresent(t))throw new Error("Webview "+t+" not found");var a=r[t].contentView().subviews();return(a=a[a.length-1]).stringByEvaluatingJavaScriptFromString(i)}},function(e,t){e.exports.SET_TREE="elements/SET_TREE",e.exports.SET_PAGE_METADATA="elements/SET_PAGE_METADATA",e.exports.SET_LAYER_METADATA="elements/SET_LAYER_METADATA",e.exports.ADD_LOG="logs/ADD_LOG",e.exports.CLEAR_LOGS="logs/CLEAR_LOGS",e.exports.GROUP="logs/GROUP",e.exports.GROUP_END="logs/GROUP_END",e.exports.TIMER_START="logs/TIMER_START",e.exports.TIMER_END="logs/TIMER_END",e.exports.ADD_REQUEST="network/ADD_REQUEST",e.exports.SET_RESPONSE="network/SET_RESPONSE",e.exports.ADD_ACTION="actions/ADD_ACTION",e.exports.SET_SCRIPT_RESULT="playground/SET_SCRIPT_RESULT"},function(e,t,r){Object.defineProperty(t,"__esModule",{value:!0});var i,a=r(3),o=(i=a)&&i.__esModule?i:{default:i};t.default={switchToV4:function(e,t){var r=t.lastLayer(),i={color:null,colorLib:null,colorPicker:null};if("MSSymbolInstance"===String(r.class())){var a=r.symbolMaster(),n=a.foreignSymbol();i.color=a,n&&(i.color=String(n.originalMaster().symbolID()),i.colorLib=n)}else i.colorPicker=r.style().fills()[0].color();o.default.registerMask(e,t,i)}}},function(e,t,r){Object.defineProperty(t,"__esModule",{value:!0});var i=o(r(5)),a=o(r(0));o(r(1));function o(e){return e&&e.__esModule?e:{default:e}}t.default={newModal:function(e,t,r){var i=COSAlertWindow.new(),a=NSView.alloc().initWithFrame(NSMakeRect(0,0,t.width,t.height));return i.addAccessoryView(a),i.setMessageText(r.messageText),i.setInformativeText(r.informativeText),i.addButtonWithTitle("Continue"),i.addButtonWithTitle("Cancel"),i.layout(),{modal:i,view:a,viewSize:t}},runModal:function(e){return e.modal.runModal()},getMainButtonParam:function(e){return{button:e}},createArtboardFields:function(){var e=NSTextField.alloc().initWithFrame(NSMakeRect(0,10,130,20));e.setStringValue("24");var t=NSTextField.alloc().initWithFrame(NSMakeRect(140,10,130,20));return t.setStringValue("3"),[{item:e,getter:function(){return parseInt(e.stringValue())},name:"artboardSize",label:a.default.createLabel("Size",0,30,130,20)},{item:t,getter:function(){return parseInt(t.stringValue())},name:"iconPadding",label:a.default.createLabel("Padding",140,30,130,20)}]},createCheckBoxes:function(){var e=NSButton.alloc().initWithFrame(NSMakeRect(0,30,200,14));e.setButtonType(NSSwitchButton),e.setState(!0),e.setFont(NSFont.systemFontOfSize_(13)),e.setTitle("Convert to symbol");var t=NSButton.alloc().initWithFrame(NSMakeRect(0,5,200,14));return t.setButtonType(NSSwitchButton),t.setState(!1),t.setFont(NSFont.systemFontOfSize_(13)),t.setTitle("Add color mask"),[{item:e,name:"convertSymbol",getter:e.state},{item:t,name:"withMask",getter:t.state}]},createMaskFields:function(e,t,r){var o=NSPopUpButton.alloc().initWithFrame(NSMakeRect(0,0,130,20)),n=NSPopUpButton.alloc().initWithFrame(NSMakeRect(140,0,130,20));o.setEnabled(!1),n.setEnabled(!1),o.menu=i.default.initLibsSelectList(AppController.sharedInstance().librariesController().availableLibraries(),n),r?r[1].item.setCOSJSTargetFunction(function(e){e.state()?(o.setEnabled(!0),n.selectedItem()&&n.setEnabled(!0)):(o.setEnabled(!1),n.setEnabled(!1))}):o.setEnabled(!0);return[{item:n,label:a.default.createLabel("Color",140,25,130,20),name:"color",getter:function(){return function(){var e=this.item.selectedItem();return e?e.representedObject():null}}()},{item:o,label:a.default.createLabel("Colors Library",0,25,130,20),name:"colorLib",getter:function(){return function(){var e=this.item.selectedItem();return e?e.representedObject():null}}()}]},appendsFields:function(e,t,r){var i=e.view,a=e.viewSize;t.reverse().forEach(function(e){var t=r?50*i.subviews().length+25:50*i.subviews().length,o=NSView.alloc().initWithFrame(NSMakeRect(0,t,a.width,50));e.forEach(function(e){e.label&&o.addSubview(e.label),e.item&&o.addSubview(e.item)}),i.addSubview(o)})},getParams:function(e){var t={};return e.forEach(function(e){e.forEach(function(e){t[e.name]=e.getter()})}),t},setNextKey:function(e){e.forEach(function(t,r){e[r+1]&&t.item&&t.item.setNextKeyView(e[r+1].item)})},newErrorModal:function(e,t){var r=COSAlertWindow.new();r.setMessageText(e),r.setInformativeText(t),r.runModal()}}},function(e,t,r){Object.defineProperty(t,"__esModule",{value:!0});var i,a=r(1);(i=a)&&i.__esModule;t.default={selectIconsFiles:function(){var e=NSOpenPanel.openPanel();if(e.setAllowsMultipleSelection(!0),e.setCanChooseDirectories(!0),e.setAllowedFileTypes(o),e.setCanChooseFiles(!0),e.setPrompt("Select"),e.runModal()!==NSFileHandlingPanelOKButton)return[];var t=[];return function e(t,r){for(var i=0;i<t.length;i++)if(t[i].hasDirectoryPath())e(NSFileManager.defaultManager().contentsOfDirectoryAtURL_includingPropertiesForKeys_options_error(t[i],null,null,null),r);else{var a=String(t[i].pathExtension()).toLowerCase();-1!==o.indexOf(a)&&r.push(t[i])}}(e.URLs(),t),t}};var o=["svg","pdf","png","jpg","jpeg"]},function(e,t,r){Object.defineProperty(t,"__esModule",{value:!0});var i=r(6),a=n(r(0)),o=n(r(2));function n(e){return e&&e.__esModule?e:{default:e}}function s(e,t){var r=this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight+t,i=a.default.createLabel(e,0,r,400,20,!0);this.view.addSubview(i)}t.default=function(e){return this.settingsValues=o.default.getSettings(e,"placeholder"),this.modalParams={messageText:"Settings",informativeText:"Customize your imports using presets and other features.",height:73*(Object.keys(this.settingsValues).length+1),width:340,lineHeight:45},this.coeffCurrentHeight=0,this.adjustHeight=0,this.marginLeftColRight=130,this.adjust=-5,this.lineOne=15,this.lineTwo=0,(0,i.constructBase)("Save"),function(){this.coeffCurrentHeight++;var e=this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight+this.adjust,t=a.default.createLabel("Size Presets",0,e,this.marginLeftColRight,20);this.view.addSubview(t);var r=NSTextField.alloc().initWithFrame(NSMakeRect(this.marginLeftColRight,e,145,21));o.default.hasValue(this.settingsValues.presets)?r.setStringValue(String(this.settingsValues.presets.value)):r.setPlaceholderString(String(this.settingsValues.presets.placeholder)),this.view.addSubview(r),this.coeffCurrentHeight++,s("Set your artboard sizes and padding.",this.lineOne),s("Format: size-padding",this.lineTwo),this.presets=r}(),function(){this.coeffCurrentHeight++;var e=this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight+this.adjust,t=a.default.createLabel("Add Prefix ",0,e,this.marginLeftColRight,20);this.view.addSubview(t);var r=NSTextField.alloc().initWithFrame(NSMakeRect(this.marginLeftColRight,e,145,21));o.default.hasValue(this.settingsValues.prefixRootObject)?r.setStringValue(String(this.settingsValues.prefixRootObject.value)):r.setPlaceholderString(String(this.settingsValues.prefixRootObject.placeholder)),this.view.addSubview(r),this.coeffCurrentHeight++,s("Add a path structure to the name of yours icons.",this.lineOne),s("$size is equal to the size of the artboard.",this.lineTwo),this.prefixRootObject=r}(),function(){this.coeffCurrentHeight++;var e=this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight+this.adjust,t=a.default.createLabel("Icons Grid",0,e,this.marginLeftColRight,20);this.view.addSubview(t);var r=NSTextField.alloc().initWithFrame(NSMakeRect(this.marginLeftColRight,e,50,21));"null"===String(this.settingsValues.iconsByLine.value)?r.setPlaceholderString("10"):r.setStringValue(String(this.settingsValues.iconsByLine.value)),this.view.addSubview(r);var i=a.default.createLabel("icons per row",this.marginLeftColRight+55,e,100,20);this.view.addSubview(i),this.coeffCurrentHeight++,s("Set the number of imported icons per row.",this.lineOne),this.iconsByLine=r}(),function(){this.coeffCurrentHeight++;var e=this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight+15,t=a.default.createLabel("Spacing",0,e,this.marginLeftColRight,20);this.view.addSubview(t);var r=NSTextField.alloc().initWithFrame(NSMakeRect(this.marginLeftColRight,e,50,21));o.default.hasValue(this.settingsValues.marginBetweenRootObject)?r.setStringValue(String(this.settingsValues.marginBetweenRootObject.value)):r.setPlaceholderString(String(this.settingsValues.marginBetweenRootObject.placeholder)),this.view.addSubview(r);var i=a.default.createLabel("px or %",this.marginLeftColRight+55,e,100,20);this.view.addSubview(i),this.coeffCurrentHeight++,s("Set the spacing between the imported icons.",this.lineOne+15),this.marginBetweenRootObject=r}(),function(){this.coeffCurrentHeight++;var e=this.modalParams.height-this.modalParams.lineHeight*this.coeffCurrentHeight+30,t=a.default.createLabel("Stroke to Fill",0,e,this.marginLeftColRight,20);this.view.addSubview(t);var r=NSButton.alloc().initWithFrame(NSMakeRect(this.marginLeftColRight,e,200,21));r.setButtonType(NSSwitchButton),r.setState(parseInt(this.settingsValues.convertStroke.data)),r.setFont(NSFont.systemFontOfSize_(13)),r.setTitle("Auto-Convert"),this.view.addSubview(r),this.coeffCurrentHeight++,s("This will allow you to add a dynamic color mask ",this.lineOne+30),s("over your outlined icons.",this.lineTwo+30),this.convertStroke=r}(),{button:this.modal.runModal(),presets:String(this.presets.stringValue()).replace(/ /g,""),iconsByLine:parseInt(this.iconsByLine.stringValue())||null,convertStroke:this.convertStroke.state(),marginBetweenRootObject:this.marginBetweenRootObject.stringValue().replace(/ /g,""),prefixRootObject:this.prefixRootObject.stringValue()}}},function(e,t){Object.defineProperty(t,"__esModule",{value:!0});var r=NSUserDefaults.standardUserDefaults().objectForKey("google.analytics.uuid");r||(r=NSUUID.UUID().UUIDString(),NSUserDefaults.standardUserDefaults().setObject_forKey(r,"google.analytics.uuid")),t.default={action:function(e,t,i,a,o){!function(e){try{var t=NSURL.URLWithString(NSString.stringWithFormat("https://www.google-analytics.com/collect%@",(a=e,"?"+Object.keys(a).map(function(e){return encodeURIComponent(e)+"="+encodeURIComponent(a[e])}).join("&"))));if(t){var r=NSTask.alloc().init();r.setLaunchPath("/usr/bin/curl"),r.setArguments(["-X","POST",String(t)]);var i=NSPipe.pipe();r.setStandardOutput(i),r.launch()}}catch(e){}var a}({v:1,t:"event",cid:r,tid:"UA-115448236-1",ec:t,ea:i,el:a,ev:o})}}}]);"default"===key&&"function"==typeof exports?exports(context):exports[key](context)}that.importIcons=__skpm_run.bind(this,"importIcons"),that.onRun=__skpm_run.bind(this,"default"),that.updateIconsOnSelectedArtboards=__skpm_run.bind(this,"updateIconsOnSelectedArtboards"),that.addMaskOnSelectedArtboards=__skpm_run.bind(this,"addMaskOnSelectedArtboards"),that.addMaskOnSelectedArtboards=__skpm_run.bind(this,"addMaskOnSelectedArtboards"),that.removeMaskOnSelectedArtboards=__skpm_run.bind(this,"removeMaskOnSelectedArtboards"),that.setSettings=__skpm_run.bind(this,"setSettings"),that.organizeIcons=__skpm_run.bind(this,"organizeIcons");
+var that = this;
+function __skpm_run (key, context) {
+  that.context = context;
+
+var exports =
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, {
+/******/ 				configurable: false,
+/******/ 				enumerable: true,
+/******/ 				get: getter
+/******/ 			});
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = 12);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ (function(module, exports, __webpack_require__) {
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var _MochaJSDelegate = __webpack_require__(13);
+
+var _MochaJSDelegate2 = _interopRequireDefault(_MochaJSDelegate);
+
+var _logger = __webpack_require__(1);
+
+var _logger2 = _interopRequireDefault(_logger);
+
+var _settings = __webpack_require__(2);
+
+var _settings2 = _interopRequireDefault(_settings);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+exports['default'] = {
+  clearSelection: clearSelection,
+  getIconNameByNSUrl: getIconNameByNSUrl,
+  createLabel: createLabel,
+  getSelectedArtboardsAndSymbols: getSelectedArtboardsAndSymbols,
+  createWebview: createWebview,
+  createDivider: createDivider,
+  runFramework: runFramework,
+  getImageByColor: getImageByColor,
+  hasMask: hasMask,
+  layerToSvg: layerToSvg,
+  svgHasStroke: svgHasStroke,
+  convertMSColorToString: convertMSColorToString,
+  convertStringToMSColor: convertStringToMSColor,
+  getBorderColor: getBorderColor,
+  getRootObject: getRootObject,
+  getSizeBetweenIcon: getSizeBetweenIcon,
+  buildPrefix: buildPrefix
+
+  /**
+   * @name clearSelection
+   * @description unselect all
+   * @param context
+   */
+};
+function clearSelection(context) {
+  context.api().selectedDocument.selectedLayers.clear();
+}
+
+/**
+ * @name getIconNameByNSUrl
+ * @description get name of icon by NSUrl
+ * @param icon {Object} : NSUrl
+ * @returns {String}
+ */
+function getIconNameByNSUrl(icon) {
+  return icon.lastPathComponent().split('.')[0];
+}
+
+/**
+ * @name createLabel
+ * @description create label in NSTextField
+ * @param name {String}
+ * @param x {Number}
+ * @param y {Number}
+ * @param w {Number}
+ * @param h {Number}
+ * @param isDescription {Boolean}
+ * @returns {Object} : NSTextField
+ */
+function createLabel(name, x, y, w, h, isDescription) {
+
+  var label = NSTextField.alloc().initWithFrame_(NSMakeRect(x, y, w, h));
+  if (isDescription) {
+    label.setTextColor(NSColor.colorWithCalibratedRed_green_blue_alpha(0 / 255, 0 / 255, 0 / 255, 0.6));
+  }
+  label.setEditable_(false);
+  label.setSelectable_(false);
+  label.setBezeled_(false);
+  label.setDrawsBackground_(false);
+  label.setFont(NSFont.systemFontOfSize(isDescription ? 11 : 13));
+  label.setStringValue_(name);
+
+  return label;
+}
+
+/**
+ * @name getSelectedArtboards
+ * @description get selected artboards
+ * @param context
+ * @returns {Array} : MSArtboardGroup
+ */
+function getSelectedArtboardsAndSymbols(context) {
+  var selectedArtboardsAndSymbols = [];
+
+  context.selection.forEach(function (layer) {
+    var className = String(layer['class']());
+    if (className !== 'MSArtboardGroup' || className !== 'MSSymbolMaster') {
+      layer = layer.parentRoot();
+      className = String(layer['class']());
+    }
+
+    if (selectedArtboardsAndSymbols.indexOf(String(layer.objectID())) === -1 && (className === 'MSArtboardGroup' || className === 'MSSymbolMaster')) {
+      selectedArtboardsAndSymbols.push({
+        'object': layer,
+        'type': className,
+        'id': layer.objectID()
+      });
+    }
+  });
+
+  selectedArtboardsAndSymbols = selectedArtboardsAndSymbols.filter(function (rootElement, index, self) {
+    return index === self.findIndex(function (compareElement) {
+      return compareElement.id === rootElement.id;
+    });
+  });
+
+  return selectedArtboardsAndSymbols;
+}
+
+/**
+ * @name createWebview
+ * @param context
+ * @param pickerButton
+ * @param setColor {function}
+ * @return {Object} : WebView
+ */
+function createWebview(context, pickerButton, setColor) {
+
+  var webView = WebView.alloc().initWithFrame(NSMakeRect(0, 0, 220, 300));
+  var windowObject = webView.windowScriptObject();
+  var delegate = new _MochaJSDelegate2['default']({
+    "webView:didFinishLoadForFrame:": function () {
+      function webViewDidFinishLoadForFrame(webView, webFrame) {
+
+        _logger2['default'].log('loaded');
+      }
+
+      return webViewDidFinishLoadForFrame;
+    }(),
+    "webView:didChangeLocationWithinPageForFrame:": function () {
+      function webViewDidChangeLocationWithinPageForFrame(webView, webFrame) {
+        var query = windowObject.evaluateWebScript('window.location.hash');
+        var color = JSON.parse(decodeURIComponent(query).split('color=')[1]);
+        color.r = parseInt(color.r) / 255;
+        color.g = parseInt(color.g) / 255;
+        color.b = parseInt(color.b) / 255;
+        color.a = parseFloat(color.a);
+
+        var colorNS = NSColor.colorWithRed_green_blue_alpha(color.r, color.g, color.b, color.a);
+        var colorMS = MSImmutableColor.colorWithNSColor(colorNS);
+
+        pickerButton.setImage(getImageByColor(colorNS, { width: 40, height: 30 }));
+        setColor(colorMS);
+      }
+
+      return webViewDidChangeLocationWithinPageForFrame;
+    }()
+  });
+
+  webView.setDrawsBackground(false);
+  webView.setMainFrameURL_(context.plugin.urlForResourceNamed("webview.html").path());
+  webView.setFrameLoadDelegate_(delegate.getClassInstance());
+  return webView;
+}
+
+/**
+ * @name createDivider
+ * @param frame
+ * @return {*}
+ */
+function createDivider(frame) {
+  var divider = NSView.alloc().initWithFrame(frame);
+
+  divider.setWantsLayer(1);
+  divider.layer().setBackgroundColor(CGColorCreateGenericRGB(204 / 255, 204 / 255, 204 / 255, 1.0));
+
+  return divider;
+}
+
+/**
+ * @name runFramework
+ * @param context
+ * @return {boolean}
+ */
+function runFramework(context) {
+
+  var mocha = Mocha.sharedRuntime();
+
+  var frameworkName = "SketchIconsFramework";
+  var directory = context.scriptPath.stringByDeletingLastPathComponent();
+
+  if (mocha.valueForKey(frameworkName)) {
+    return true;
+  } else if (mocha.loadFrameworkWithName_inDirectory(frameworkName, directory)) {
+    mocha.setValue_forKey_(true, frameworkName);
+    return true;
+  } else {
+    log("❌ loadFramework: `" + frameworkName + "` failed!: " + directory + ". Please define SketchIcons_FrameworkPath if you're trying to @import in a custom plugin");
+    return false;
+  }
+}
+
+/**
+ * @name getImageByColor
+ * @param color
+ * @param colorSize
+ * @return {Object} : NSImage
+ */
+function getImageByColor(color) {
+  var colorSize = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { width: 14, height: 14 };
+
+  var size = CGSizeMake(colorSize.width, colorSize.height);
+  var image = NSImage.alloc().init();
+  image.size = size;
+  image.lockFocus();
+  var colorCell = MSBackgroundColorView.alloc().init();
+  colorCell.backgroundColor = color;
+  colorCell.drawRect(NSMakeRect(0, 0, colorSize.width, colorSize.height));
+  image.unlockFocus();
+
+  return image;
+}
+
+/**
+ * @name iconHasColor
+ * @param artboard
+ * @return {Boolean}
+ */
+function hasMask(artboard) {
+  return !!artboard.firstLayer().hasClippingMask();
+}
+
+function layerToSvg(layer) {
+  var svgExporter = SketchSVGExporter.alloc().init();
+  var svgData = svgExporter.exportLayers([layer.immutableModelObject()]);
+  return NSString.alloc().initWithData_encoding(svgData, NSUTF8StringEncoding);
+}
+
+function svgHasStroke(rootObject) {
+  var hasBorder = false;
+  rootObject.children().forEach(function (layer) {
+    if (layer.styledLayer().style().hasEnabledBorder()) {
+      hasBorder = true;
+    }
+  });
+
+  return hasBorder;
+}
+
+function getBorderColor(rootObject) {
+  var color = void 0;
+  var layers = rootObject.children();
+
+  for (var i = 0; i < layers.length; i++) {
+    var style = layers[i].styledLayer().style();
+    color = style.firstEnabledBorder();
+    if (color) break;
+  }
+
+  return color;
+}
+
+function convertMSColorToString(colorMS) {
+  return JSON.stringify({ r: colorMS.red(), g: colorMS.green(), b: colorMS.blue(), a: colorMS.alpha() });
+}
+
+function convertStringToMSColor(string) {
+  var color = (typeof string === 'undefined' ? 'undefined' : _typeof(string)) !== 'object' ? string : JSON.parse(string);
+  var colorNS = NSColor.colorWithRed_green_blue_alpha(color.r, color.g, color.b, color.a);
+
+  return MSImmutableColor.colorWithNSColor(colorNS);
+}
+
+function getRootObject(context) {
+  var result = [];
+  context.api().selectedDocument.selectedPage.sketchObject.layers().forEach(function (layer) {
+    var className = String(layer['class']());
+    if (className === 'MSArtboardGroup' || className === 'MSSymbolMaster') {
+      result.push(layer);
+    }
+  });
+
+  return result;
+}
+
+function getSizeBetweenIcon(rootObjectSize, size) {
+  var value = parseInt(size);
+  var unit = size.replace(value, '');
+  return unit && unit === '%' ? rootObjectSize + rootObjectSize * (value / 100) : rootObjectSize + value;
+}
+
+function buildPrefix(context, rootObjectSize) {
+  var settings = _settings2['default'].getSettings(context, 'default');
+  // console.log('>>>>>>>>>>>', (settings.prefixRootObject.data !== 'null'));
+  // console.log('>>>>>>>>>>>', settings.prefixRootObject.data);
+  return settings.prefixRootObject.data !== 'null' ? settings.prefixRootObject.data.replace('$size', rootObjectSize) : '';
+}
+
+// function zoomOutOfPage(context){
+//   const currentPage = context.document.currentPage()
+//   const artboards = [];
+//     currentPage.layers().forEach(layer => {
+//       artboards.push(layer)
+//     })
+//   currentPage.changeSelectionBySelectingLayers(artboards);
+//
+//
+//   MSDocument.currentDocument().eventHandlerManager().currentHandler().zoomToSelection()
+// }
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports) {
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+exports['default'] = function () {
+  function _log(message) {
+    log(message);
+  }
+
+  function debug(message) {
+    log('DEBUG: ' + message);
+  }
+
+  function info(message) {
+    log('INFO: ' + message);
+  }
+
+  function warn(message) {
+    log('WARN: ' + message);
+  }
+
+  function error(message) {
+    log('ERROR: ' + message);
+  }
+
+  return {
+    log: _log,
+    debug: debug,
+    info: info,
+    warn: warn,
+    error: error
+  };
+}();
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports) {
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports['default'] = {
+  registerSettings: registerSettings,
+  getSettings: getSettings,
+  resetSettings: resetSettings,
+  hasValue: hasValue
+};
+
+
+var LIST_SETTINGS_FIELDS = [
+// {name: 'artboardSize', defaultValue: 24},
+// {name: 'iconPadding', defaultValue: 4},
+{ name: 'presets', 'default': '', placeholder: '24-4, 48-8...' },
+// {name: 'modalReplaceIcon', defaultValue: false},
+// {name: 'viewBoxParams', defaultValue: false},
+
+{ name: 'convertStroke', 'default': '0', placeholder: '0' },
+// {name: 'otherSize', defaultValue: true},
+// {name: 'otherSizeParams', defaultValue: 48},
+{ name: 'iconsByLine', 'default': '10', placeholder: '10' }, { name: 'marginBetweenRootObject', 'default': '100%', placeholder: '100%' }, { name: 'prefixRootObject', 'default': '', placeholder: 'icons/$size/...' }];
+
+function registerSettings(context, params) {
+
+  LIST_SETTINGS_FIELDS.forEach(function (field) {
+    NSUserDefaults.standardUserDefaults().setObject_forKey(params[field.name], field.name);
+    context.command.setValue_forKey_onDocument(params[field.name], field.name, context.document.documentData());
+  });
+}
+
+function resetSettings(context) {
+  LIST_SETTINGS_FIELDS.forEach(function (field) {
+    context.command.setValue_forKey_onDocument(null, field.name, context.document.documentData());
+  });
+}
+
+function getSettings(context, fallbackValue) {
+
+  var result = {};
+
+  LIST_SETTINGS_FIELDS.forEach(function (field) {
+
+    result[field.name] = {
+      // 'value': context.command.valueForKey_onDocument(field.name, context.document.documentData()) || NSUserDefaults.standardUserDefaults().objectForKey(field.name),
+      'value': NSUserDefaults.standardUserDefaults().objectForKey(field.name),
+      'default': field['default'],
+      'placeholder': field.placeholder
+    };
+
+    if (hasValue(result[field.name])) {
+      result[field.name].data = String(result[field.name].value);
+    } else {
+      result[field.name].data = String(result[field.name][fallbackValue]);
+    }
+  });
+
+  return result;
+}
+
+function hasValue(setting) {
+  return !(!setting.value || String(setting.value) === 'null' || String(setting.value).length === 0);
+}
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(console) {Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _utils = __webpack_require__(0);
+
+var _utils2 = _interopRequireDefault(_utils);
+
+var _svg = __webpack_require__(4);
+
+var _svg2 = _interopRequireDefault(_svg);
+
+var _libraries = __webpack_require__(5);
+
+var _libraries2 = _interopRequireDefault(_libraries);
+
+var _logger = __webpack_require__(1);
+
+var _logger2 = _interopRequireDefault(_logger);
+
+var _switchV3ToV = __webpack_require__(21);
+
+var _switchV3ToV2 = _interopRequireDefault(_switchV3ToV);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+exports['default'] = {
+  initAddMaskOnSelectedArtboards: initAddMaskOnSelectedArtboards,
+  addColor: addColor,
+  removeMask: removeMask,
+  getMaskPropertiesFromArtboard: getMaskPropertiesFromArtboard,
+  registerMask: registerMask
+
+  /**
+   * @name initAddMaskOnSelectedArtboards
+   * @description main function to add mask on selected artboards
+   * @param context {Object}
+   * @param params {Object}
+   * @param rootObjects {Array} : MSArtboardGroup
+   */
+};
+function initAddMaskOnSelectedArtboards(context, params, rootObjects) {
+  rootObjects.forEach(async function (rootObject) {
+    try {
+      if (_utils2['default'].hasMask(rootObject.object) && !_utils2['default'].svgHasStroke(rootObject.object)) removeMask(context, rootObject.object);
+      await addColor(context, rootObject.object, params);
+    } catch (e) {
+      console.log('>>>>>>>>>>>', e);
+    }
+  });
+  _utils2['default'].clearSelection(context);
+}
+
+/**
+ * @name addColor
+ * @description index function for all step to add mask and convert artboard to symbol at end
+ * @param context {Object}
+ * @param rootObject {Object} : MSArtboardGroup && MSSymbolMaster
+ * @param params {Object}
+ */
+function addColor(context, rootObject, params) {
+
+  if (String(rootObject.firstLayer()['class']()) === 'MSBitMapLayer') return;
+
+  if (_utils2['default'].svgHasStroke(rootObject)) {
+    applyColor(rootObject, params);
+  } else {
+    if (_utils2['default'].hasMask(rootObject)) removeMask(context, rootObject);
+    _svg2['default'].cleanSvg(rootObject);
+    applyMask(context, rootObject, params);
+  }
+
+  return registerMask(context, rootObject, params);
+}
+
+/**
+ * @name applyColor
+ * @description apply border color on svg with stroke
+ * @param rootObject
+ * @param params
+ */
+function applyColor(rootObject, params) {
+  var color = params.colorPicker ? params.colorPicker : _libraries2['default'].getColorFromSymbol(params.color).color;
+  rootObject.children().forEach(function (layer) {
+    if (layer.styledLayer().style().hasEnabledBorder()) {
+      var style = layer.styledLayer().style();
+      style.enabledBorders().forEach(function (border) {
+        border.color = color;
+      });
+    }
+  });
+}
+
+/**
+ * @name removeMask
+ * @description remove all mask from artboard
+ * @param context
+ * @param rootObject {Object} : MSArtboardGroup
+ */
+function removeMask(context, rootObject) {
+
+  context.command.setValue_forKey_onLayer(null, "colorLib", rootObject);
+  context.command.setValue_forKey_onLayer(null, "color", rootObject);
+  context.command.setValue_forKey_onLayer(null, "colorPicker", rootObject);
+
+  if (_utils2['default'].svgHasStroke(rootObject)) {
+    return applyColor(rootObject, { colorPicker: MSImmutableColor.blackColor() });
+  }
+
+  var iconLayer = rootObject.firstLayer();
+
+  if (rootObject.layers().count() > 1 && iconLayer.hasClippingMask()) {
+    iconLayer.hasClippingMask = false;
+    iconLayer.clippingMaskMode = 1;
+    var style = rootObject.firstLayer().style();
+    var fills = style.fills();
+    var fillColor = fills.count() > 0 ? style.fills()[0].color() : MSColor.blackColor();
+    style.removeAllStyleFills();
+    style.addStylePartOfType(0).color = fillColor;
+    rootObject.lastLayer().removeFromParent();
+  }
+}
+
+/**
+ * @name registerMask
+ * @description register properties of mask in artboard metadata
+ * @param context
+ * @param rootObject
+ * @param params
+ */
+function registerMask(context, rootObject, params) {
+  if (params.color) {
+    var libraryId = params.colorLib ? params.colorLib.libraryID() : null;
+    var colorId = typeof params.color === 'string' ? params.color : params.color.symbolID();
+
+    context.command.setValue_forKey_onLayer(libraryId, "colorLib", rootObject);
+    context.command.setValue_forKey_onLayer(colorId, "color", rootObject);
+    context.command.setValue_forKey_onLayer(null, "colorPicker", rootObject);
+  } else if (params.colorPicker) {
+    context.command.setValue_forKey_onLayer(_utils2['default'].convertMSColorToString(params.colorPicker), "colorPicker", rootObject);
+    context.command.setValue_forKey_onLayer(null, "colorLib", rootObject);
+    context.command.setValue_forKey_onLayer(null, "color", rootObject);
+  }
+}
+
+function getMaskPropertiesFromArtboard(context, rootObject) {
+
+  var params = getColorParams(context, rootObject);
+
+  var maskLayer = rootObject.firstLayer();
+  if (!params.colorLibraryId && !params.colorSymbolId && !params.colorString && maskLayer && maskLayer.hasClippingMask()) {
+    _switchV3ToV2['default'].switchToV4(context, rootObject);
+    params = getColorParams(context, rootObject);
+  }
+
+  if (!params.colorLibraryId && params.colorSymbolId) {
+    params.colorSymbol = _libraries2['default'].getSymbolFromDocument(context.document.documentData(), params.colorSymbolId);
+  } else if (params.colorLibraryId) {
+    params.colorLibrary = _libraries2['default'].getLibById(params.colorLibraryId);
+    _libraries2['default'].loadLibrary(params.colorLibrary);
+    params.colorSymbol = _libraries2['default'].getSymbolFromDocument(params.colorLibrary.document(), params.colorSymbolId);
+  }
+
+  params.colorPicker = params.colorString ? _utils2['default'].convertStringToMSColor(params.colorString) : null;
+
+  var result = {
+    colorLib: params.colorLibraryId ? params.colorLibrary : null,
+    color: params.colorSymbolId ? params.colorSymbol : null,
+    colorPicker: params.colorPicker
+  };
+
+  return !result.colorLib && !result.color && !result.colorPicker ? {} : result;
+}
+
+/**
+ * @name getColorParams
+ * @param context
+ * @param rootObject
+ * @returns {{colorLibraryId: *, colorSymbolId: *, colorString: *}}
+ */
+function getColorParams(context, rootObject) {
+  return {
+    colorLibraryId: context.command.valueForKey_onLayer("colorLib", rootObject),
+    colorSymbolId: context.command.valueForKey_onLayer("color", rootObject),
+    colorString: context.command.valueForKey_onLayer("colorPicker", rootObject)
+  };
+}
+
+/**
+ * @name createMaskFromNean
+ * @param context
+ * @param rootObject
+ * @param color
+ * @return {Object} : MSShapeGroup
+ */
+function createMaskFromNean(context, rootObject, color) {
+  var currentRootObjectSize = rootObject.rect();
+
+  var mask = MSShapeGroup.shapeWithRect({
+    origin: { x: 0, y: 0 },
+    size: { width: currentRootObjectSize.size.width, height: currentRootObjectSize.size.height }
+  });
+
+  var fill = mask.style().addStylePartOfType(0);
+  fill.color = color;
+
+  return mask;
+}
+
+/**
+ * @name createMask
+ * @description add mask from symbol master colors library to one artboard
+ * @param context {Object}
+ * @param colorSymbolMaster {Object}
+ * @param colorLibrary {Object} : MSAssetLibrary
+ * @return symbol {Object} : MSSymbolInstance
+ */
+function getMaskSymbolFromLib(context, colorSymbolMaster, colorLibrary) {
+  _utils2['default'].clearSelection(context);
+  var librairiesController = AppController.sharedInstance().librariesController();
+  var symbolMaster = colorLibrary ? librairiesController.importForeignSymbol_fromLibrary_intoDocument(colorSymbolMaster, colorLibrary, context.document.documentData()).symbolMaster() : colorSymbolMaster;
+  return symbolMaster.newSymbolInstance();
+}
+
+/**
+ * @name applyMask
+ * @param context
+ * @param rootObject {Object} : MSArtboardGroup && MSSymbolMaster
+ * @param params
+ */
+function applyMask(context, rootObject, params) {
+
+  var mask = void 0;
+
+  if (params.color) {
+    mask = getMaskSymbolFromLib(context, params.color, params.colorLib);
+  } else if (params.colorPicker) {
+    mask = createMaskFromNean(context, rootObject, params.colorPicker);
+  }
+
+  var currentArtboardSize = rootObject.rect();
+  mask.setHeightRespectingProportions(currentArtboardSize.size.height);
+  mask.setWidthRespectingProportions(currentArtboardSize.size.width);
+  mask.setName('🎨 color');
+  rootObject.firstLayer().style().disableAllFills();
+  rootObject.addLayers([mask]);
+  var iconLayer = rootObject.firstLayer();
+  iconLayer.hasClippingMask = true;
+  iconLayer.clippingMaskMode = 0;
+}
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8)))
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _mask = __webpack_require__(3);
+
+var _mask2 = _interopRequireDefault(_mask);
+
+var _artboard = __webpack_require__(7);
+
+var _artboard2 = _interopRequireDefault(_artboard);
+
+var _settings = __webpack_require__(2);
+
+var _settings2 = _interopRequireDefault(_settings);
+
+var _utils = __webpack_require__(0);
+
+var _utils2 = _interopRequireDefault(_utils);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+exports['default'] = {
+  initUpdateIconsSelectedArtboards: initUpdateIconsSelectedArtboards,
+  addSVG: addSVG,
+  addPDF: addPDF,
+  addBITMAP: addBITMAP,
+  cleanSvg: cleanSvg
+};
+
+/**
+ * @name initUpdateIconsSelectedArtboards
+ * @description main function to update multiple icons on selected artboard
+ * @param context
+ * @param params {Object}
+ * @param rootObjects {Array} : MSArtboardGroup && MSSymbolMaster
+ */
+
+function initUpdateIconsSelectedArtboards(context, rootObjects, params) {
+  rootObjects.forEach(function (rootObject, index) {
+
+    var iconParams = Object.assign({}, _mask2['default'].getMaskPropertiesFromArtboard(context, rootObject.object), _artboard2['default'].getPaddingAndSize(context, rootObject.object), params);
+    var replaceBy = params.listIcon.length === 1 ? params.listIcon[0] : params.listIcon[index];
+
+    var svgData = String(NSString.alloc().initWithContentsOfURL(replaceBy));
+    iconParams.withMask = !!(iconParams.colorLib || iconParams.colorPicker || iconParams.color);
+
+    rootObject.object.removeAllLayers();
+
+    addSVG(context, rootObject.object, iconParams, String(svgData), true);
+    rootObject.object.setName(_utils2['default'].getIconNameByNSUrl(replaceBy));
+    if (iconParams.withMask) _mask2['default'].addColor(context, rootObject.object, iconParams);
+  });
+
+  _utils2['default'].clearSelection(context);
+
+  return rootObjects.length;
+}
+
+/**
+ * @name addSVG
+ * @description  add svg on specific artboard
+ * @param context {Object}
+ * @param rootObject {Object} : MSArtboardGroup
+ * @param params {Object}
+ * @param svgData {String}
+ * @param withResize {Boolean}
+ */
+function addSVG(context, rootObject, params, svgData, withResize) {
+  var viewBox = void 0;
+
+  var settingsParams = _settings2['default'].getSettings(context, 'default');
+
+  svgData = NSString.stringWithString(svgData);
+
+  viewBox = getViewBox(svgData);
+
+  if (withResize) svgData = addRectToResize(svgData, viewBox);
+  var svgImporter = MSSVGImporter.svgImporter();
+  svgImporter.prepareToImportFromData(svgData.dataUsingEncoding(NSUTF8StringEncoding));
+  var svgLayer = svgImporter.importAsLayer();
+
+  removeTxt(svgLayer);
+
+  rootObject.addLayer(svgLayer);
+
+  removeNoFillChildren(rootObject);
+
+  if (_utils2['default'].svgHasStroke(rootObject) && settingsParams.convertStroke.data === '1') convertStrokeToFill(rootObject);
+
+  if (withResize) resizeIcon(rootObject, params.iconPadding);
+  if (withResize) removeDeleteMeRect(rootObject);
+
+  center(params.artboardSize, rootObject.firstLayer());
+}
+
+function addPDF(context, rootObject, params, icon) {
+  var pdfImporter = MSPDFImporter.pdfImporter();
+  pdfImporter.prepareToImportFromURL(icon);
+  var pdfLayer = pdfImporter.importAsLayer();
+  rootObject.addLayer(pdfLayer);
+  resizeIcon(rootObject, params.iconPadding);
+  center(params.artboardSize, rootObject.firstLayer());
+  rootObject.firstLayer().setName(rootObject.name());
+}
+
+function addBITMAP(context, rootObject, params, icon) {
+
+  if (String(icon['class']()) === 'MSBitmapLayer') {
+    MSLayerGroup.moveLayers_intoGroup([icon], rootObject);
+  } else {
+    rootObject.addLayer(MSBitmapLayer.bitmapLayerWithImageFromPath(icon));
+  }
+
+  resizeIcon(rootObject, params.iconPadding);
+  center(params.artboardSize, rootObject.firstLayer());
+  rootObject.firstLayer().setName(rootObject.name());
+}
+
+/**
+ * @name addRectToResize
+ * @description add rect to keep proportion on resize
+ * @param svgString
+ * @param viewBox
+ * @returns {String}
+ */
+function addRectToResize(svgString, viewBox) {
+  var addrect = '<rect width="' + String(viewBox.width) + '" height="' + String(viewBox.height) + '" id="delete-me"/></svg>';
+  return NSString.stringWithString(svgString.replace('</svg>', addrect));
+}
+
+/**
+ * @name cleanSvg
+ * @description main function which used sketch properties to convert icon in one path
+ * @param rootObject
+ */
+function cleanSvg(rootObject) {
+  unGroup(rootObject);
+  rootObject.firstLayer().setName(rootObject.name());
+  removeNoFillLayer(rootObject);
+  mergeLayer(rootObject);
+  rootObject.firstLayer().resizeToFitChildrenWithOption(1);
+}
+
+/**
+ * @name center
+ * @description center svg in artboard
+ * @param artboardSize
+ * @param svgLayer
+ */
+function center(artboardSize, svgLayer) {
+  var shapeGroupWidth = svgLayer.frame().width();
+  var shapeGroupHeight = svgLayer.frame().height();
+  svgLayer.frame().setX((artboardSize - shapeGroupWidth) / 2);
+  svgLayer.frame().setY((artboardSize - shapeGroupHeight) / 2);
+}
+
+/**
+ * @name resizeIcon
+ * @description resize layer by artboard
+ * @param rootObject {Object}
+ * @param iconPadding {Number}
+ */
+function resizeIcon(rootObject, iconPadding) {
+
+  var svgLayer = rootObject.firstLayer();
+  var svgLayerFrame = svgLayer.frame();
+
+  var currentArtboardRect = rootObject.rect();
+  var currentArtboardSize = {
+    width: parseInt(currentArtboardRect.size.width),
+    height: parseInt(currentArtboardRect.size.height)
+  };
+
+  var width = svgLayerFrame.width();
+  var height = svgLayerFrame.height();
+
+  svgLayerFrame.constrainProportions = true;
+
+  if (width >= height) {
+    svgLayerFrame.setWidth(currentArtboardSize.width - 2 * iconPadding);
+  } else {
+    svgLayerFrame.setHeight(currentArtboardSize.height - 2 * iconPadding);
+  }
+}
+
+/**
+ * @name removeTxt
+ * @description remove text form svg
+ * @param svgLayer {Object}
+ */
+function removeTxt(svgLayer) {
+  var scope = svgLayer.children(),
+      predicateTextLayers = NSPredicate.predicateWithFormat('(className == %@)', 'MSTextLayer');
+
+  var layers = scope.filteredArrayUsingPredicate(predicateTextLayers);
+
+  var loop = layers.objectEnumerator();
+  var layer = void 0;
+  while (layer = loop.nextObject()) {
+    layer.removeFromParent();
+  }
+}
+
+/**
+ * @name removeUnecessaryGroup
+ * @description ungroup all group
+ * @param svgLayer
+ */
+function unGroup(svgLayer) {
+  var scope = svgLayer.children(),
+      predicateTextLayers = NSPredicate.predicateWithFormat('(className == %@)', 'MSLayerGroup');
+  var layers = scope.filteredArrayUsingPredicate(predicateTextLayers);
+
+  var loop = layers.objectEnumerator();
+  var layer = void 0;
+  while (layer = loop.nextObject()) {
+    layer.ungroup();
+  }
+}
+
+/**
+ * @name removeDeleteMeRect
+ * @description remove rect used to keep proportion on resize
+ * @param rootObject
+ * @returns {*}
+ */
+function removeDeleteMeRect(rootObject) {
+  var scope = rootObject.children(),
+      predicateTextLayers = NSPredicate.predicateWithFormat('(name == %@)', 'delete-me');
+  var layers = scope.filteredArrayUsingPredicate(predicateTextLayers);
+
+  if (!layers.length) return rootObject.firstLayer().lastLayer().removeFromParent();
+
+  var loop = layers.objectEnumerator();
+  var layer = void 0;
+  while (layer = loop.nextObject()) {
+    layer.removeFromParent();
+  }
+}
+
+/**
+ * @description remove transparent layers
+ * @name removeNoFillLayer
+ * @param rootObject
+ */
+function removeNoFillLayer(rootObject) {
+  var indexes = NSMutableIndexSet.indexSet();
+  rootObject.layers().forEach(function (layer, index) {
+    if (!layer.style().hasEnabledFill() && !layer.style().hasEnabledBorder()) indexes.addIndex(index);
+  });
+  rootObject.removeLayersAtIndexes(indexes);
+}
+
+/**
+ * @description remove transparent layers
+ * @name removeNoFillLayer
+ * @param rootObject
+ */
+function removeNoFillChildren(rootObject) {
+  var toDelete = [];
+  rootObject.firstLayer().children().forEach(function (layer) {
+    var style = layer.styledLayer().style();
+    if (style.hasEnabledFill() && style.contextSettings().opacity() === 0) {
+      toDelete.push(layer);
+    }
+  });
+
+  toDelete.forEach(function (layer) {
+    layer.removeFromParent();
+  });
+}
+
+/**
+ * @name mergeLayer
+ * @description merge all path in one path
+ * @param rootObject
+ */
+function mergeLayer(rootObject) {
+  var layers = rootObject.layers();
+
+  if (layers.length > 1) {
+    for (var i = 0; i <= layers.length - 1; i++) {
+      layers[1].moveToLayer_beforeLayer(layers[0], layers[1]);
+    }
+  }
+
+  if (rootObject.layers().length > 1) return mergeLayer(rootObject);
+
+  rootObject.children().forEach(function (children) {
+    if (children.booleanOperationCanBeReset()) children.setBooleanOperation(-1);
+  });
+
+  layers[0].resizeToFitChildrenWithOption(0);
+  layers[0].setName(rootObject.name());
+}
+
+/**
+ * @name getViewBox
+ * @description return values of viewbox
+ * @param svgData
+ * @returns {{width: number, height: number}}
+ */
+function getViewBox(svgData) {
+
+  var viewBox = svgData.match(/viewBox="(.*?)"/gm);
+
+  var size = void 0;
+  var result = void 0;
+  if (Array.isArray(viewBox)) {
+    size = viewBox[0].match(/[+\-]?(?:0|[1-9]\d*)(?:\.\d*)?(?:[eE][+\-]?\d+)?/g);
+    result = { width: parseFloat(size[2]), height: parseFloat(size[3]) };
+  }
+
+  return result;
+}
+
+function convertStrokeToFill(rootObject) {
+
+  rootObject.children().forEach(function (layer) {
+    if (layer.canConvertToOutlines() && String(layer.name()) !== 'delete-me') {
+      layer.layersByConvertingToOutlines();
+    }
+  });
+
+  rootObject.children().forEach(function (layer) {
+    layer.styledLayer().style().disableAllBorders();
+  });
+}
+
+// function setThicknessProportionnally(svgLayer, diagContainer, viewBox) {
+//
+//   const diagViewbox = Math.sqrt(Math.pow(viewBox.width, 2) + Math.pow(viewBox.height, 2))
+//   const diagArtboard = Math.sqrt(Math.pow(diagContainer, 2) * 2)
+//   const ratio = diagArtboard / diagViewbox
+//
+//   svgLayer.children().forEach((layer) => {
+//     if (layer.styledLayer().style().hasEnabledBorder() && String(layer.class()) === 'MSShapePathLayer') {
+//       const style = layer.styledLayer().style()
+//       const thickness = style.firstEnabledBorder().thickness()
+//       style.firstEnabledBorder().thickness = Math.round(thickness * ratio)
+//     }
+//   })
+// }
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _logger = __webpack_require__(1);
+
+var _logger2 = _interopRequireDefault(_logger);
+
+var _utils = __webpack_require__(0);
+
+var _utils2 = _interopRequireDefault(_utils);
+
+var _modals = __webpack_require__(6);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
+exports["default"] = {
+  getLibById: getLibById,
+  initLibsSelectList: initLibsSelectList,
+  getColorFromSymbol: getColorFromSymbol,
+  getSymbolFromDocument: getSymbolFromDocument,
+  loadLibrary: loadLibrary
+
+  /**
+   * @name getLibById
+   * @description return library by id
+   * @param libraryId
+   * @returns {Object} : MSAssetLibrary
+   */
+};
+function getLibById(libraryId) {
+
+  var library = void 0,
+      availableLibraries = AppController.sharedInstance().librariesController().availableLibraries();
+
+  for (var i = 0; i < availableLibraries.length; i++) {
+    if (String(libraryId) === String(availableLibraries[i].libraryID())) {
+      library = availableLibraries[i];
+      break;
+    }
+  }
+
+  return library;
+}
+
+/**
+ * @name loadColorFromSelectedLib
+ * @description get colors form library selected
+ * @param library
+ * @param colorMenu
+ * @returns {Array}
+ */
+function loadColorFromSelectedLib(library, colorMenu) {
+
+  colorMenu.removeAllItems();
+  library = library.representedObject();
+
+  return getColorSymbolsFromDocument(library.document());
+}
+
+function loadLibrary(library) {
+  return library.loadSynchronously();
+}
+
+/**
+ * @name initLibsSelectList
+ * @description get list of library in NSMenu
+ * @param context
+ * @param libraries  {Array}
+ * @param colorMenu {Object} : NSPopUpButton
+ * @returns {Object} : NSMenu
+ */
+function initLibsSelectList(context, libraries, colorMenu) {
+
+  function addListener(item) {
+    item.setCOSJSTargetFunction(function (libraryItem) {
+      updateColorMenu(context, libraryItem, colorMenu);
+    });
+  }
+
+  var colorLibsMenu = NSMenu.alloc().init();
+  var currentDocument = NSMenuItem.alloc().init();
+  currentDocument.title = 'Current file';
+  addListener(currentDocument);
+  colorLibsMenu.addItem(currentDocument);
+  libraries.forEach(function (library) {
+    var item = NSMenuItem.alloc().init();
+    item.title = library.name();
+    item.representedObject = library;
+    colorLibsMenu.addItem(item);
+    addListener(item);
+  });
+
+  updateColorMenu(context, currentDocument, colorMenu);
+
+  return colorLibsMenu;
+}
+
+function updateColorMenu(context, libraryItem, colorMenu) {
+  var colors = [];
+  if (!libraryItem.representedObject()) {
+    colors = getColorSymbolsFromDocument(context.document.documentData());
+  } else {
+    colors = loadColorFromSelectedLib(libraryItem, colorMenu);
+  }
+  if (colors.length > 0) {
+    initColorSelectList(colorMenu, colors);
+    (0, _modals.setEnabledColorMenu)(true);
+  } else {
+    (0, _modals.setEnabledColorMenu)(false);
+  }
+}
+
+/**
+ * @name initColorSelectList
+ * @description get list of colors in NSMenu
+ * @param popColorMenu {Object} : NSPopUpMenu
+ * @param colors
+ * @returns {Object} : NSMenu
+ */
+function initColorSelectList(popColorMenu, colors) {
+
+  var menu = NSMenu.alloc().init();
+
+  menu.cancelTracking();
+
+  colors.forEach(function (color) {
+    var item = NSMenuItem.alloc().init();
+    item.title = color.symbol ? color.symbol.name() : "";
+    var colorRGBA = color.color ? NSColor.colorWithRed_green_blue_alpha(color.color.red(), color.color.green(), color.color.blue(), color.color.alpha()) : NSColor.colorWithRed_green_blue_alpha(color.red(), color.green(), color.blue(), color.alpha());
+    item.representedObject = color.symbol ? color.symbol : colorRGBA;
+    item.image = _utils2["default"].getImageByColor(colorRGBA);
+    menu.addItem(item);
+  });
+
+  popColorMenu.menu = menu;
+  return popColorMenu;
+}
+
+/**
+ * @name getColorSymbolsFromDocument
+ * @param document
+ * @return {Array}
+ */
+function getColorSymbolsFromDocument(document) {
+  var result = [];
+
+  document.localSymbols().forEach(function (symbol) {
+    var color = getColorFromSymbol(symbol);
+    if (color) result.push(color);
+  });
+
+  return result;
+}
+
+/**
+ * @name getSymbolFromDocument
+ * @param document
+ * @param symbolId
+ * @return {*}
+ */
+function getSymbolFromDocument(document, symbolId) {
+
+  var symbol = void 0,
+      localSymbols = document.localSymbols();
+
+  for (var i = 0; i < localSymbols.length; i++) {
+    if (String(localSymbols[i].symbolID()) === String(symbolId)) {
+      symbol = localSymbols[i];
+      break;
+    }
+  }
+
+  return symbol;
+}
+
+/**
+ * @name getColorFromSymbol
+ * @param symbol
+ * @return {*}
+ */
+function getColorFromSymbol(symbol) {
+  var layers = symbol.layers();
+  var result = void 0;
+
+  if (layers.length === 0 && symbol.backgroundColor()) {
+    result = {
+      color: symbol.backgroundColor(),
+      symbol: symbol
+    };
+  } else if (layers.length === 1 && layers[0].children().length === 2 && layers[0].style().hasEnabledFill()) {
+
+    result = {
+      color: layers[0].style().fills()[0].color(),
+      symbol: symbol
+    };
+  }
+  return result;
+}
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.constructBase = exports.maskModal = exports.importModal = exports.setEnabledColorMenu = undefined;
+
+var _utils = __webpack_require__(0);
+
+var _utils2 = _interopRequireDefault(_utils);
+
+var _logger = __webpack_require__(1);
+
+var _logger2 = _interopRequireDefault(_logger);
+
+var _libraries = __webpack_require__(5);
+
+var _libraries2 = _interopRequireDefault(_libraries);
+
+var _settings = __webpack_require__(2);
+
+var _settings2 = _interopRequireDefault(_settings);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var disabledColor = NSColor.colorWithCalibratedRed_green_blue_alpha(170 / 255, 170 / 255, 170 / 255, 1);
+
+exports.setEnabledColorMenu = setEnabledColorMenu;
+exports.importModal = importModal;
+exports.maskModal = maskModal;
+exports.constructBase = constructBase;
+
+
+function maskModal(context) {
+
+  this.modalParams = {
+    messageText: 'Configure your color mask',
+    informativeText: 'Select your library and choose a color to apply as mask. Your layers will all be combined.',
+    height: 160,
+    width: 300,
+    lineHeight: 35
+  };
+
+  this.coeffCurrentHeight = 0;
+  this.isLibrarySource = true;
+  this.adjustHeight = 0;
+
+  constructBase();
+
+  makeMaskRadioButtonParams();
+  makeMaskLibraryParams(context);
+  makeMaskColorPickerParams(context);
+
+  var result = {
+    button: this.modal.runModal()
+  };
+
+  if (this.isLibrarySource) {
+    var colorMenu = this.colorsMenuParams.selectedItem();
+    result.color = colorMenu ? this.colorsMenuParams.representedObject() : null;
+
+    var colorLib = this.colorLibsMenuParams.selectedItem();
+    result.colorLib = colorLib ? this.colorLibsMenuParams.representedObject() : null;
+  } else {
+    result.colorPicker = this.colorPickerColor;
+  }
+
+  return result;
+}
+
+function importModal(context) {
+
+  var usePresets = void 0;
+  this.settingsValues = _settings2['default'].getSettings(context, 'default');
+
+  this.modalParams = {
+    messageText: 'Configure your import',
+    informativeText: 'Your icons will be arranged in artboards. Set size and padding of your artboards.',
+    width: 300,
+    lineHeight: 35
+  };
+
+  if (_settings2['default'].hasValue(this.settingsValues.presets)) {
+    this.modalParams.height = 300 + this.settingsValues.presets.data.split(',').length * 30;
+    usePresets = true;
+  } else {
+    this.modalParams.height = 300;
+    usePresets = false;
+  }
+
+  this.modalParams.height = _settings2['default'].hasValue(this.settingsValues.presets) ? 300 + this.settingsValues.presets.data.split(',').length * 30 : 300;
+
+  this.coeffCurrentHeight = 0;
+  this.isLibrarySource = true;
+  this.adjustHeight = 0;
+
+  constructBase();
+  if (usePresets) {
+    makePresetsParams();
+  } else {
+    makeArtboardParams();
+  }
+
+  this.view.addSubview(_utils2['default'].createDivider(NSMakeRect(0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - 10, this.modalParams.width, 1)));
+  this.adjustHeight = 5;
+  makeSymbolParams();
+  this.view.addSubview(_utils2['default'].createDivider(NSMakeRect(0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - 15, this.modalParams.width, 1)));
+  this.adjustHeight = 8;
+  makeMaskCheckboxParams();
+  makeMaskRadioButtonParams();
+  makeMaskLibraryParams(context);
+  setEnabledColorLibraryMenu(false);
+  setEnabledColorMenu(false);
+  setEnabledRadioButton(false);
+  makeMaskColorPickerParams(context);
+  addListenerOnMaskCheckbox();
+
+  var result = {
+    button: this.modal.runModal(),
+    convertSymbol: this.symbolParams.state(),
+    withMask: !!this.checkboxMaskParams.state()
+  };
+
+  if (usePresets) {
+    result.presets = [];
+    this.presets.forEach(function (preset) {
+      if (preset.presetCheckBox.state()) {
+        result.presets.push({
+          artboardSize: parseInt(preset.sizeBox.stringValue()),
+          iconPadding: parseFloat(preset.paddingBox.stringValue())
+        });
+      }
+    });
+  } else {
+    result.artboardSize = parseInt(this.artboardSize.stringValue());
+    result.iconPadding = parseFloat(this.artboardPadding.stringValue());
+  }
+
+  if (result.withMask && this.isLibrarySource) {
+    var colorMenu = this.colorsMenuParams.selectedItem();
+    result.color = colorMenu ? this.colorsMenuParams.representedObject() : null;
+
+    var colorLib = this.colorLibsMenuParams.selectedItem();
+    result.colorLib = colorLib ? this.colorLibsMenuParams.representedObject() : null;
+
+    if (!result.color) result.withMask = false;
+  } else if (result.withMask) {
+    result.colorPicker = this.colorPickerColor || MSColor.blackColor();
+  }
+
+  return result;
+}
+
+function artboardModal(context) {
+
+  this.settingsValues = _settings2['default'].getSettings(context, 'placeholder');
+
+  this.modalParams = {
+    messageText: 'Configure your icons',
+    informativeText: 'Your icons will be moved in artboards. Set size and padding of your artboards.',
+    height: 100,
+    width: 300,
+    lineHeight: 35
+  };
+
+  this.coeffCurrentHeight = 0;
+  this.adjustHeight = 0;
+
+  constructBase();
+  makeArtboardParams();
+
+  return {
+    button: this.modal.runModal(),
+    artboardSize: parseInt(this.artboardSize.stringValue()),
+    iconPadding: parseFloat(this.artboardPadding.stringValue())
+  };
+}
+
+function constructBase() {
+  var button1 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'Continue';
+
+
+  this.modal = COSAlertWindow['new']();
+
+  this.view = NSView.alloc().initWithFrame(NSMakeRect(0, 0, this.modalParams.width, this.modalParams.height));
+
+  this.modal.addAccessoryView(this.view);
+  this.modal.setMessageText(this.modalParams.messageText);
+  this.modal.addButtonWithTitle(button1);
+  this.modal.setInformativeText(this.modalParams.informativeText);
+  this.modal.addButtonWithTitle('Cancel');
+}
+
+function makePresetsParams() {
+  var _this = this;
+
+  var presets = this.settingsValues.presets.data.split(',').map(function (preset) {
+    var properties = preset.split('-');
+    return {
+      artboardSize: properties[0],
+      padding: properties[1] ? properties[1] : 0
+    };
+  });
+
+  this.presets = [];
+
+  var presetLabel = _utils2['default'].createLabel('Presets', 0, this.modalParams.height - this.modalParams.lineHeight, 150, 20);
+  this.view.addSubview(presetLabel);
+
+  var sizeLabel = _utils2['default'].createLabel('Size', 180, this.modalParams.height - this.modalParams.lineHeight, 100, 20);
+  this.view.addSubview(sizeLabel);
+
+  var paddingLabel = _utils2['default'].createLabel('Padding', 240, this.modalParams.height - this.modalParams.lineHeight, 100, 20);
+  this.view.addSubview(paddingLabel);
+
+  this.coeffCurrentHeight++;
+
+  presets.forEach(function (preset) {
+    _this.coeffCurrentHeight++;
+    makePreset(preset, _this.modalParams.height - _this.modalParams.lineHeight * _this.coeffCurrentHeight);
+  });
+}
+
+function makeArtboardParams() {
+
+  this.coeffCurrentHeight++;
+
+  var textBoxLabel = _utils2['default'].createLabel('Artboard size', 0, this.modalParams.height - this.modalParams.lineHeight, 150, 20);
+  this.view.addSubview(textBoxLabel);
+  var textBox = NSTextField.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight, 50, 20));
+  textBox.setStringValue(24);
+  this.view.addSubview(textBox);
+  var textBoxUnit = _utils2['default'].createLabel('px', 205, this.modalParams.height - this.modalParams.lineHeight, 50, 20);
+  this.view.addSubview(textBoxUnit);
+
+  this.coeffCurrentHeight++;
+
+  var paddingBoxLabel = _utils2['default'].createLabel('Artboard Padding', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 150, 20);
+  this.view.addSubview(paddingBoxLabel);
+  var paddingBox = NSTextField.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 50, 20));
+  paddingBox.setStringValue(4);
+  this.view.addSubview(paddingBox);
+  var paddingBoxUnit = _utils2['default'].createLabel('px', 205, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 50, 20);
+  this.view.addSubview(paddingBoxUnit);
+
+  this.artboardPadding = paddingBox;
+  this.artboardSize = textBox;
+
+  this.artboardSize.setNextKeyView(this.artboardPadding);
+}
+
+function makePreset(preset, yAxis) {
+
+  var presetCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(150, yAxis, 30, 20));
+  presetCheckBox.setState(true);
+  presetCheckBox.setButtonType(NSSwitchButton);
+  presetCheckBox.setFont(NSFont.systemFontOfSize_(13));
+  presetCheckBox.setTitle('');
+
+  this.view.addSubview(presetCheckBox);
+
+  var sizeBox = NSTextField.alloc().initWithFrame(NSMakeRect(180, yAxis, 50, 20));
+  sizeBox.setStringValue(preset.artboardSize);
+  this.view.addSubview(sizeBox);
+
+  var paddingBox = NSTextField.alloc().initWithFrame(NSMakeRect(240, yAxis, 50, 20));
+  paddingBox.setStringValue(preset.padding);
+  this.view.addSubview(paddingBox);
+
+  var newPreset = { sizeBox: sizeBox, paddingBox: paddingBox, presetCheckBox: presetCheckBox };
+
+  addListenerPreset(newPreset);
+
+  this.presets.push(newPreset);
+}
+
+function makeSymbolParams() {
+
+  this.coeffCurrentHeight++;
+
+  var maskCheckboxLabel = _utils2['default'].createLabel('Symbols', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 150, 20);
+  this.view.addSubview(maskCheckboxLabel);
+
+  var symbolCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 200, 20));
+  symbolCheckBox.setButtonType(NSSwitchButton);
+  symbolCheckBox.setState(true);
+  symbolCheckBox.setFont(NSFont.systemFontOfSize_(13));
+  symbolCheckBox.setTitle('Convert to symbol');
+  this.view.addSubview(symbolCheckBox);
+
+  this.symbolParams = symbolCheckBox;
+}
+
+function makeMaskCheckboxParams() {
+
+  this.coeffCurrentHeight++;
+
+  var maskCheckboxLabel = _utils2['default'].createLabel('Mask', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 150, 20);
+  this.view.addSubview(maskCheckboxLabel);
+
+  var maskCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 200, 20));
+  maskCheckBox.setButtonType(NSSwitchButton);
+  maskCheckBox.setState(false);
+  maskCheckBox.setFont(NSFont.systemFontOfSize_(13));
+  maskCheckBox.setTitle('Add color mask');
+  this.view.addSubview(maskCheckBox);
+
+  this.checkboxMaskParams = maskCheckBox;
+}
+
+function makeMaskRadioButtonParams() {
+
+  this.coeffCurrentHeight++;
+  this.coeffCurrentHeight++;
+
+  var radioButtonLabel = _utils2['default'].createLabel('Color Source', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight + 40, 150, 20);
+  this.view.addSubview(radioButtonLabel);
+
+  var buttonFormat = NSButtonCell.alloc().init();
+  buttonFormat.setButtonType(NSRadioButton);
+  var matrixFormat = NSMatrix.alloc().initWithFrame_mode_prototype_numberOfRows_numberOfColumns(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 300, 60), NSRadioModeMatrix, buttonFormat, 2, 1);
+  matrixFormat.setCellSize(CGSizeMake(300, 25));
+  var cells = matrixFormat.cells();
+  cells[0].setTitle("From Symbols");
+  cells[0].setFont(NSFont.systemFontOfSize_(13));
+  cells[1].setTitle("From Color picker");
+  cells[1].setFont(NSFont.systemFontOfSize_(13));
+
+  this.view.addSubview(matrixFormat);
+
+  setListenerRadioButon(cells);
+
+  this.radioParams = matrixFormat;
+  this.radioButtonLabel = radioButtonLabel;
+}
+
+function makeMaskLibraryParams(context) {
+
+  this.coeffCurrentHeight++;
+
+  var colorLibsLabel = _utils2['default'].createLabel('Document Source', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 150, 25);
+  this.view.addSubview(colorLibsLabel);
+  var colorLibsMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 130, 30));
+
+  this.coeffCurrentHeight++;
+
+  var colorMenuLabel = _utils2['default'].createLabel('Color', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 150, 25);
+  this.view.addSubview(colorMenuLabel);
+  var colorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 130, 30));
+
+  this.view.addSubview(colorLibsMenu);
+  this.view.addSubview(colorMenu);
+
+  this.colorLibsMenuParams = colorLibsMenu;
+  this.colorsMenuParams = colorMenu;
+  this.colorLibsMenuParamsLabel = colorLibsLabel;
+  this.colorsMenuParamsLabel = colorMenuLabel;
+
+  colorLibsMenu.menu = _libraries2['default'].initLibsSelectList(context, AppController.sharedInstance().librariesController().availableLibraries(), colorMenu);
+}
+
+function makeMaskColorPickerParams(context) {
+  var _this2 = this;
+
+  var colorPickerLabel = _utils2['default'].createLabel('Color picker', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight + 20, 150, 20);
+
+  var pickerView = NSView.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 130, 60));
+  pickerView.setWantsLayer(true);
+  pickerView.layer().setBackgroundColor(CGColorCreateGenericRGB(1, 1, 1, 1.0));
+  pickerView.layer().setBorderColor(CGColorCreateGenericRGB(186 / 255, 186 / 255, 186 / 255, 1));
+  pickerView.layer().borderWidth = 1;
+
+  var hexLabel = _utils2['default'].createLabel('#000000', 60, 20, 100, 20);
+  pickerView.addSubview(hexLabel);
+
+  var pickerButton = NSButton.alloc().initWithFrame(NSMakeRect(5, 15, 50, 30));
+  pickerButton.setButtonType(NSMomentaryChangeButton);
+  pickerButton.setImage(_utils2['default'].getImageByColor(NSColor.colorWithRed_green_blue_alpha(0, 0, 0, 1), {
+    width: 40,
+    height: 30
+  }));
+
+  pickerButton.setBordered(false);
+
+  var main = AMOMain.alloc().init();
+
+  pickerButton.setCOSJSTargetFunction(function () {
+    main.openPopover_onView_withWebview(pickerButton, _this2.view, _utils2['default'].createWebview(context, pickerButton, function (color) {
+      _this2.colorPickerColor = color;
+      hexLabel.setStringValue_('#' + String(color.immutableModelObject().hexValue()));
+    }));
+  });
+
+  pickerView.addSubview(pickerButton);
+
+  this.pickerView = pickerView;
+  this.colorPickerLabel = colorPickerLabel;
+}
+
+function addListenerOnMaskCheckbox() {
+  var _this3 = this;
+
+  this.checkboxMaskParams.setCOSJSTargetFunction(function (mask) {
+    if (mask.state()) {
+      setEnabledRadioButton(true);
+      setEnabledColorLibraryMenu(true);
+      if (_this3.colorsMenuParams.numberOfItems() > 0) setEnabledColorMenu(true);
+    } else {
+      setEnabledRadioButton(false);
+      setEnabledColorLibraryMenu(false);
+      setEnabledColorMenu(false);
+      addLibraryColorsFields();
+      removePickerButton();
+      _this3.radioParams.cells()[0].state = true;
+      _this3.radioParams.cells()[1].state = false;
+    }
+  });
+}
+
+function setListenerRadioButon(cells) {
+  function setState(item) {
+    if (String(item.selectedCells()[0].title()) === 'From Symbols') {
+      addLibraryColorsFields();
+      removePickerButton();
+      this.isLibrarySource = true;
+    } else {
+      removeLibraryColorsFields();
+      addPickerButton();
+      this.isLibrarySource = false;
+    }
+  }
+
+  cells[0].setCOSJSTargetFunction(setState);
+  cells[1].setCOSJSTargetFunction(setState);
+}
+
+function setEnabledColorLibraryMenu(enabled) {
+  var color = enabled ? NSColor.controlTextColor() : disabledColor;
+  this.colorLibsMenuParamsLabel.setTextColor(color);
+  this.colorLibsMenuParams.setEnabled(enabled);
+}
+
+function setEnabledColorMenu(enabled) {
+  this.colorsMenuParamsLabel.setTextColor(getStateColor(enabled));
+  this.colorsMenuParams.setEnabled(enabled);
+}
+
+function setEnabledRadioButton(enabled) {
+  this.radioParams.setEnabled(enabled);
+  this.radioButtonLabel.setTextColor(getStateColor(enabled));
+}
+
+function removeLibraryColorsFields() {
+  this.colorLibsMenuParams.removeFromSuperview();
+  this.colorsMenuParams.removeFromSuperview();
+  this.colorLibsMenuParamsLabel.removeFromSuperview();
+  this.colorsMenuParamsLabel.removeFromSuperview();
+}
+
+function addLibraryColorsFields() {
+  this.view.addSubview(this.colorLibsMenuParams);
+  this.view.addSubview(this.colorsMenuParams);
+  this.view.addSubview(this.colorLibsMenuParamsLabel);
+  this.view.addSubview(this.colorsMenuParamsLabel);
+}
+
+function addPickerButton() {
+  this.view.addSubview(this.pickerView);
+  this.view.addSubview(this.colorPickerLabel);
+}
+
+function removePickerButton() {
+  this.pickerView.removeFromSuperview();
+  this.colorPickerLabel.removeFromSuperview();
+}
+
+function getStateColor(enabled) {
+  return enabled ? NSColor.controlTextColor() : disabledColor;
+}
+
+function addListenerPreset(newPreset) {
+  newPreset.presetCheckBox.setCOSJSTargetFunction(function () {
+    newPreset.sizeBox.setEnabled(newPreset.presetCheckBox.state());
+    newPreset.paddingBox.setEnabled(newPreset.presetCheckBox.state());
+  });
+}
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _utils = __webpack_require__(0);
+
+var _utils2 = _interopRequireDefault(_utils);
+
+var _logger = __webpack_require__(1);
+
+var _logger2 = _interopRequireDefault(_logger);
+
+var _svg = __webpack_require__(4);
+
+var _svg2 = _interopRequireDefault(_svg);
+
+var _mask = __webpack_require__(3);
+
+var _mask2 = _interopRequireDefault(_mask);
+
+var _settings = __webpack_require__(2);
+
+var _settings2 = _interopRequireDefault(_settings);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+// import dom from 'sketch'
+
+// import { Text } from 'sketch'
+
+exports['default'] = {
+  initImport: initImport,
+  initImportIcons: initImportIcons,
+  getPaddingAndSize: getPaddingAndSize,
+  initOrganizeIcons: initOrganizeIcons
+};
+
+
+var artboardParams = {
+  iconsByLine: 10,
+  sizeBetweenPreset: 200,
+  titleFontSize: 32
+};
+
+var workingRootObject = [];
+
+/**
+ * @name createArtboard
+ * @description set position and size and create artboard
+ * @param context {Object} :
+ * @param index {Number}
+ * @param name {String}
+ * @param params {Object}
+ * @returns {Object} : MSArtboardGroup
+ */
+function createArtboard(context, index, name, params) {
+
+  var marginBetweenRootObject = _settings2['default'].getSettings(context, 'default').marginBetweenRootObject;
+  var space = _utils2['default'].getSizeBetweenIcon(artboardParams.width, marginBetweenRootObject.data);
+
+  if (index === 0) {
+    artboardParams.y = params.yOrigin;
+    artboardParams.x = params.xOrigin || 0;
+  } else if (index % artboardParams.iconsByLine === 0) {
+    artboardParams.y += space;
+    artboardParams.x = params.xOrigin || 0;
+  } else {
+    artboardParams.x += space;
+  }
+
+  var rootObject = MSArtboardGroup['new']();
+  rootObject.setName('' + String(params.prefix) + String(name));
+
+  setPositionRootObject(rootObject, artboardParams);
+
+  context.document.currentPage().addLayers([rootObject]);
+
+  return params.convertSymbol ? MSSymbolMaster.convertArtboardToSymbol(rootObject) : rootObject;
+}
+
+/**
+ * @name setPositionRootObject
+ * @param rootObject
+ * @param mensuration
+ */
+function setPositionRootObject(rootObject, mensuration) {
+
+  var rootObjectFrame = rootObject.frame();
+  rootObjectFrame.setWidth(mensuration.width);
+  rootObjectFrame.setHeight(mensuration.height);
+  rootObjectFrame.setX(mensuration.x);
+  rootObjectFrame.setY(mensuration.y);
+}
+
+function setOrigin(context, setOfRootObject) {
+  var Y = [];
+  var X = [];
+  var size = 0;
+
+  setOfRootObject.forEach(function (layer) {
+    var layerSize = layer.frame().height();
+    var origin = layer.origin();
+    Y.push(origin.y - size);
+    X.push(origin.x - size);
+    if (layerSize > size) size = layerSize;
+  });
+
+  var yOrigin = Y.length !== 0 ? Math.max.apply(Math, Y) : 0;
+  var xOrigin = X.length !== 0 ? Math.max.apply(Math, X) + size : 0;
+
+  return {
+    yOrigin: setOfRootObject.length === 0 ? yOrigin : yOrigin + 100 + size,
+    xOrigin: setOfRootObject.length === 0 ? xOrigin : xOrigin + 100 + size
+  };
+}
+
+/**
+ * @name initImportIcons
+ * @description main function to import multiple icons and mask on new artboard
+ * @param context {Object}
+ * @param params: {Object}
+ */
+async function initImportIcons(context, params) {
+  _utils2['default'].clearSelection(context);
+  params.listIcon.forEach(function (icon, index) {
+    try {
+      var name = _utils2['default'].getIconNameByNSUrl(icon);
+      var newRootObject = createArtboard(context, index, name, params);
+      var ext = String(icon.toString().split('.').pop()).toLowerCase();
+      if (ext === 'pdf') return _svg2['default'].addPDF(context, newRootObject, params, icon);
+      if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') return _svg2['default'].addBITMAP(context, newRootObject, params, icon);
+      var svgData = String(NSString.alloc().initWithContentsOfURL(icon));
+      processSVG(context, newRootObject, params, svgData);
+      workingRootObject.push(newRootObject);
+    } catch (e) {
+      _logger2['default'].error(e);
+    }
+  });
+  _utils2['default'].clearSelection(context);
+}
+
+/**
+ * @name initOrganizeIcons
+ * @param context
+ * @param params
+ */
+function initOrganizeIcons(context, params) {
+
+  params.listIcon.forEach(async function (icon, index) {
+    try {
+      var newRootObject = createArtboard(context, index, icon.name(), params);
+      if (String(icon['class']()) === 'MSBitmapLayer') return _svg2['default'].addBITMAP(context, newRootObject, params, icon);
+      var ancestry = MSImmutableLayerAncestry.ancestryWithMSLayer_(icon);
+      var exportRequest = MSExportRequest.exportRequestsFromLayerAncestry_(ancestry).firstObject();
+      exportRequest.format = 'svg';
+      var exporter = MSExporter.exporterForRequest_colorSpace_(exportRequest, NSColorSpace.sRGBColorSpace());
+      var svgData = NSString.alloc().initWithData_encoding(exporter.data(), NSUTF8StringEncoding);
+      await processSVG(context, newRootObject, params, String(svgData));
+      workingRootObject.push(newRootObject);
+    } catch (e) {
+      _logger2['default'].error(e);
+    }
+  });
+}
+
+/**
+ * @name initImport
+ * @param context
+ * @param params
+ * @param cb
+ */
+function initImport(context, params, cb) {
+  var rootObjects = _utils2['default'].getRootObject(context);
+  params.yOrigin = setOrigin(context, rootObjects).yOrigin;
+  if (params.presets) {
+    var withPresetTitle = rootObjects;
+    params.presets.forEach(function (preset) {
+      setArtboardsSize(params, preset);
+      params.xOrigin = setOrigin(context, workingRootObject).xOrigin;
+      params.artboardSize = preset.artboardSize;
+      params.prefix = _utils2['default'].buildPrefix(context, params.artboardSize);
+      if (withPresetTitle && rootObjects.length === 0) context.document.currentPage().addLayers([newText(preset, params.xOrigin)]);
+      artboardParams.iconsByLine = parseInt(_settings2['default'].getSettings(context, 'default').iconsByLine.data);
+      cb(context, params);
+    });
+  } else {
+    params.prefix = _utils2['default'].buildPrefix(context, params.artboardSize);
+    artboardParams.height = artboardParams.width = params.artboardSize;
+    artboardParams.iconsByLine = parseInt(_settings2['default'].getSettings(context, 'default').iconsByLine.data);
+    cb(context, params);
+  }
+  var importedIcons = params.listIcon.length * (Array.isArray(params.presets) ? params.presets.length : 1);
+  context.document.showMessage('\uD83C\uDF89 Tadaaa! \uD83C\uDF89 ' + importedIcons + ' icon' + (params.listIcon.length > 1 ? 's' : '') + ' imported');
+  return importedIcons;
+}
+
+function newText(preset, xOrigin) {
+  var text = MSTextLayer['new']();
+  text.setStringValue_(String(preset.artboardSize) + 'px');
+  var fontManager = NSFontManager.sharedFontManager();
+  var boldItalic = fontManager.fontWithFamily_traits_weight_size("Helvetica neue", NSBoldFontMask, 0, artboardParams.titleFontSize);
+  text.setFont(boldItalic);
+  text.lineHeight = 48;
+  text.setName(String(preset.artboardSize) + 'px');
+  var textFrame = text.frame();
+  textFrame.setX(xOrigin);
+  textFrame.setY(-(32 + text.lineHeight()));
+  return text;
+}
+
+/**
+ * @name setArtboardsPosition
+ * @param params
+ * @param preset
+ */
+function setArtboardsSize(params, preset) {
+  params.iconPadding = preset.iconPadding;
+  artboardParams.height = artboardParams.width = preset.artboardSize;
+}
+
+/**
+ * @name processSVG
+ * @param context
+ * @param rootObject
+ * @param params
+ * @param svgData
+ * @return {Promise<*>}
+ */
+function processSVG(context, rootObject, params, svgData) {
+  _svg2['default'].addSVG(context, rootObject, params, svgData, true);
+  if (params.withMask) _mask2['default'].addColor(context, rootObject, params);
+  return context.command.setValue_forKey_onLayer(params.iconPadding, 'padding', rootObject);
+}
+
+/**
+ * @name getPaddingAndSize
+ * @description get padding and size by artboard
+ * @param context
+ * @param artboard {Object} : MSArtboardGroup
+ * @returns {{iconPadding: Number, artboardSize: Number}}
+ */
+function getPaddingAndSize(context, artboard) {
+  var iconPadding = context.command.valueForKey_onLayer('padding', artboard);
+
+  if (!iconPadding) {
+    var icon = artboard.layers()[0].rect();
+    iconPadding = Math.min(icon.origin.x, icon.origin.y);
+  }
+
+  return {
+    iconPadding: parseFloat(iconPadding),
+    artboardSize: parseInt(artboard.rect().size.width)
+  };
+}
+
+/**
+ * @name resizeRootObject
+ * @param rootObject
+ * @param size
+ */
+function resizeRootObject(rootObject, size) {
+  var rootObjectFrame = rootObject.frame();
+  rootObjectFrame.setWidth(size);
+  rootObjectFrame.setHeight(size);
+}
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(process, console) {/* globals log */
+
+if (process.env.NODE_ENV !== 'production') {
+  var sketchUtils = __webpack_require__(16)
+  var sketchDebugger = __webpack_require__(18)
+  var actions = __webpack_require__(20)
+
+  function getStack() {
+    return sketchUtils.prepareStackTrace(new Error().stack)
+  }
+}
+
+console._skpmPrefix = 'console> '
+
+function logEverywhere(type, args) {
+  var values = Array.prototype.slice.call(args)
+
+  // log to the System logs
+  values.forEach(function(v) {
+    try {
+      log(console._skpmPrefix + indentString() + v)
+    } catch (e) {
+      log(v)
+    }
+  })
+
+  if (process.env.NODE_ENV !== 'production') {
+    if (!sketchDebugger.isDebuggerPresent()) {
+      return
+    }
+
+    var payload = {
+      ts: Date.now(),
+      type: type,
+      plugin: String(context.scriptPath),
+      values: values.map(sketchUtils.prepareValue),
+      stack: getStack(),
+    }
+
+    sketchDebugger.sendToDebugger(actions.ADD_LOG, payload)
+  }
+}
+
+var indentLevel = 0
+function indentString() {
+  var indent = ''
+  for (var i = 0; i < indentLevel; i++) {
+    indent += '  '
+  }
+  if (indentLevel > 0) {
+    indent += '| '
+  }
+  return indent
+}
+
+var oldGroup = console.group
+
+console.group = function() {
+  // log to the JS context
+  oldGroup && oldGroup.apply(this, arguments)
+  indentLevel += 1
+  if (process.env.NODE_ENV !== 'production') {
+    sketchDebugger.sendToDebugger(actions.GROUP, {
+      plugin: String(context.scriptPath),
+      collapsed: false,
+    })
+  }
+}
+
+var oldGroupCollapsed = console.groupCollapsed
+
+console.groupCollapsed = function() {
+  // log to the JS context
+  oldGroupCollapsed && oldGroupCollapsed.apply(this, arguments)
+  indentLevel += 1
+  if (process.env.NODE_ENV !== 'production') {
+    sketchDebugger.sendToDebugger(actions.GROUP, {
+      plugin: String(context.scriptPath),
+      collapsed: true
+    })
+  }
+}
+
+var oldGroupEnd = console.groupEnd
+
+console.groupEnd = function() {
+  // log to the JS context
+  oldGroupEnd && oldGroupEnd.apply(this, arguments)
+  indentLevel -= 1
+  if (indentLevel < 0) {
+    indentLevel = 0
+  }
+  if (process.env.NODE_ENV !== 'production') {
+    sketchDebugger.sendToDebugger(actions.GROUP_END, {
+      plugin: context.scriptPath,
+    })
+  }
+}
+
+var counts = {}
+var oldCount = console.count
+
+console.count = function(label) {
+  label = typeof label !== 'undefined' ? label : 'Global'
+  counts[label] = (counts[label] || 0) + 1
+
+  // log to the JS context
+  oldCount && oldCount.apply(this, arguments)
+  return logEverywhere('log', [label + ': ' + counts[label]])
+}
+
+var timers = {}
+var oldTime = console.time
+
+console.time = function(label) {
+  // log to the JS context
+  oldTime && oldTime.apply(this, arguments)
+
+  label = typeof label !== 'undefined' ? label : 'default'
+  if (timers[label]) {
+    return logEverywhere('warn', ['Timer "' + label + '" already exists'])
+  }
+
+  timers[label] = Date.now()
+  return
+}
+
+var oldTimeEnd = console.timeEnd
+
+console.timeEnd = function(label) {
+  // log to the JS context
+  oldTimeEnd && oldTimeEnd.apply(this, arguments)
+
+  label = typeof label !== 'undefined' ? label : 'default'
+  if (!timers[label]) {
+    return logEverywhere('warn', ['Timer "' + label + '" does not exist'])
+  }
+
+  var duration = Date.now() - timers[label]
+  delete timers[label]
+  return logEverywhere('log', [label + ': ' + (duration / 1000) + 'ms'])
+}
+
+var oldLog = console.log
+
+console.log = function() {
+  // log to the JS context
+  oldLog && oldLog.apply(this, arguments)
+  return logEverywhere('log', arguments)
+}
+
+var oldWarn = console.warn
+
+console.warn = function() {
+  // log to the JS context
+  oldWarn && oldWarn.apply(this, arguments)
+  return logEverywhere('warn', arguments)
+}
+
+var oldError = console.error
+
+console.error = function() {
+  // log to the JS context
+  oldError && oldError.apply(this, arguments)
+  return logEverywhere('error', arguments)
+}
+
+var oldAssert = console.assert
+
+console.assert = function(condition, text) {
+  // log to the JS context
+  oldAssert && oldAssert.apply(this, arguments)
+  if (!condition) {
+    return logEverywhere('assert', [text])
+  }
+  return undefined
+}
+
+var oldInfo = console.info
+
+console.info = function() {
+  // log to the JS context
+  oldInfo && oldInfo.apply(this, arguments)
+  return logEverywhere('info', arguments)
+}
+
+var oldClear = console.clear
+
+console.clear = function() {
+  oldClear && oldClear()
+  if (process.env.NODE_ENV !== 'production') {
+    return sketchDebugger.sendToDebugger(actions.CLEAR_LOGS)
+  }
+}
+
+console._skpmEnabled = true
+
+module.exports = console
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(14), __webpack_require__(8)))
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* globals coscript, sketch */
+var fiberAvailable = __webpack_require__(15)
+
+var setTimeout
+var clearTimeout
+
+var fibers = []
+
+if (fiberAvailable()) {
+  var fibers = []
+
+  setTimeout = function (func, delay, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10) {
+    // fibers takes care of keeping coscript around
+    var id = fibers.length
+    fibers.push(coscript.scheduleWithInterval_jsFunction(
+      (delay || 0) / 1000,
+      function () {
+        func(param1, param2, param3, param4, param5, param6, param7, param8, param9, param10)
+      }
+    ))
+    return id
+  }
+
+  clearTimeout = function (id) {
+    var timeout = fibers[id]
+    if (timeout) {
+      timeout.cancel() // fibers takes care of keeping coscript around
+      fibers[id] = undefined // garbage collect the fiber
+    }
+  }
+} else {
+  setTimeout = function (func, delay, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10) {
+    coscript.shouldKeepAround = true
+    var id = fibers.length
+    fibers.push(true)
+    coscript.scheduleWithInterval_jsFunction(
+      (delay || 0) / 1000,
+      function () {
+        if (fibers[id]) { // if not cleared
+          func(param1, param2, param3, param4, param5, param6, param7, param8, param9, param10)
+        }
+        clearTimeout(id)
+        if (fibers.every(function (_id) { return !_id })) { // if everything is cleared
+          coscript.shouldKeepAround = false
+        }
+      }
+    )
+    return id
+  }
+
+  clearTimeout = function (id) {
+    fibers[id] = false
+  }
+}
+
+module.exports = {
+  setTimeout: setTimeout,
+  clearTimeout: clearTimeout
+}
+
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports) {
+
+/* eslint-disable no-not-accumulator-reassign/no-not-accumulator-reassign, no-var, vars-on-top, prefer-template, prefer-arrow-callback, func-names, prefer-destructuring, object-shorthand */
+
+module.exports = function prepareStackTrace(stackTrace) {
+  var stack = stackTrace.split('\n')
+  stack = stack.map(function (s) {
+    return s.replace(/\sg/, '')
+  })
+
+  stack = stack.map(function (entry) {
+    // entry is something like `functionName@path/to/my/file:line:column`
+    // or `path/to/my/file:line:column`
+    // or `path/to/my/file`
+    // or `path/to/@my/file:line:column`
+    var parts = entry.split('@')
+    var fn = parts.shift()
+    var filePath = parts.join('@') // the path can contain @
+
+    if (fn.indexOf('/Users/') === 0) {
+      // actually we didn't have a fn so just put it back in the filePath
+      filePath = fn + (filePath ? ('@' + filePath) : '')
+      fn = null
+    }
+
+    if (!filePath) {
+      // we should always have a filePath, so if we don't have one here, it means that the function what actually anonymous and that it is the filePath instead
+      filePath = entry
+      fn = null
+    }
+
+    var filePathParts = filePath.split(':')
+    filePath = filePathParts[0]
+
+    // the file is the last part of the filePath
+    var file = filePath.split('/')
+    file = file[file.length - 1]
+
+    return {
+      fn: fn,
+      file: file,
+      filePath: filePath,
+      line: filePathParts[1],
+      column: filePathParts[2],
+    }
+  })
+
+  return stack
+}
+
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports) {
+
+module.exports = function toArray(object) {
+  if (Array.isArray(object)) {
+    return object
+  }
+  var arr = []
+  for (var j = 0; j < (object || []).length; j += 1) {
+    arr.push(object[j])
+  }
+  return arr
+}
+
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(console) {Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.importIcons = importIcons;
+exports.updateIconsOnSelectedArtboards = updateIconsOnSelectedArtboards;
+exports.organizeIcons = organizeIcons;
+exports.addMaskOnSelectedArtboards = addMaskOnSelectedArtboards;
+exports.removeMaskOnSelectedArtboards = removeMaskOnSelectedArtboards;
+exports.setSettings = setSettings;
+exports.executeImport = executeImport;
+
+var _utils = __webpack_require__(0);
+
+var _utils2 = _interopRequireDefault(_utils);
+
+var _artboard = __webpack_require__(7);
+
+var _artboard2 = _interopRequireDefault(_artboard);
+
+var _mask = __webpack_require__(3);
+
+var _mask2 = _interopRequireDefault(_mask);
+
+var _modals = __webpack_require__(22);
+
+var _modals2 = _interopRequireDefault(_modals);
+
+var _files = __webpack_require__(23);
+
+var _files2 = _interopRequireDefault(_files);
+
+var _svg = __webpack_require__(4);
+
+var _svg2 = _interopRequireDefault(_svg);
+
+var _modals3 = __webpack_require__(6);
+
+var _settings = __webpack_require__(24);
+
+var _settings2 = _interopRequireDefault(_settings);
+
+var _settings3 = __webpack_require__(2);
+
+var _settings4 = _interopRequireDefault(_settings3);
+
+var _analytics = __webpack_require__(25);
+
+var _analytics2 = _interopRequireDefault(_analytics);
+
+var _dom = __webpack_require__(26);
+
+var _dom2 = _interopRequireDefault(_dom);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+/**
+ * @name importIcons
+ * @description trigger to start feature to import icons
+ * @param context
+ */
+function importIcons(context) {
+  _utils2['default'].runFramework(context);
+  var params = (0, _modals3.importModal)(context);
+  if (params.button !== 1000) return;
+  params.listIcon = _files2['default'].selectIconsFiles();
+  if (!params.listIcon.length) return;
+  var importedIcons = _artboard2['default'].initImport(context, params, _artboard2['default'].initImportIcons);
+  var label = params.withMask ? 'import-mask' : 'import';
+  _analytics2['default'].action(context, 'icons', 'import', label, importedIcons);
+}
+
+/**
+ * @name updateIconsOnSelectedArtboards
+ * @description trigger to start feature to update icon
+ * @param context
+ */
+function updateIconsOnSelectedArtboards(context) {
+  var selectedArtboardsAndSymbols = _utils2['default'].getSelectedArtboardsAndSymbols(context);
+  if (selectedArtboardsAndSymbols.length === 0) return _modals2['default'].newErrorModal('No artboards selected', 'Please select one or more artboards to replace icons.');
+  var params = {};
+  params.listIcon = _files2['default'].selectIconsFiles();
+  if (!params.listIcon.length) return;
+  if (selectedArtboardsAndSymbols.length > params.listIcon.length && params.listIcon.length !== 1) return _modals2['default'].newErrorModal('Too much artboards selected', 'Please select as many artboards as icons.');
+  if (selectedArtboardsAndSymbols.length < params.listIcon.length && params.listIcon.length !== 1) return _modals2['default'].newErrorModal('Too much icons selected', 'Please select as many icons as artboards.');
+  var replacedIcons = _svg2['default'].initUpdateIconsSelectedArtboards(context, selectedArtboardsAndSymbols, params);
+  _analytics2['default'].action(context, 'icons', 'replace', 'replace', replacedIcons);
+}
+
+/**
+ * @name organizeIcons
+ * @param context
+ */
+function organizeIcons(context) {
+  var selectedLayers = context.selection;
+  if (selectedLayers.length === 0) return _modals2['default'].newErrorModal('No layers selected', 'Please select one or more layers.');
+  _utils2['default'].runFramework(context);
+  var params = (0, _modals3.importModal)(context);
+  if (params.button !== 1000) return;
+  params.listIcon = selectedLayers;
+  _artboard2['default'].initImport(context, params, _artboard2['default'].initOrganizeIcons);
+  params.listIcon.forEach(function (icon) {
+    return icon.removeFromParent();
+  });
+  var label = params.withMask ? 'organize-mask' : 'organize';
+  _analytics2['default'].action(context, 'icons', 'organize', label, params.listIcon.length);
+}
+
+/**
+ * @name addMaskOnSelectedArtboards
+ * @description trigger to start feature to add mask
+ * @param context
+ */
+function addMaskOnSelectedArtboards(context) {
+  _utils2['default'].runFramework(context);
+  var selectedArtboardsAndSymbols = _utils2['default'].getSelectedArtboardsAndSymbols(context);
+  if (selectedArtboardsAndSymbols.length === 0) return _modals2['default'].newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.');
+  var params = (0, _modals3.maskModal)(context);
+  if (params.button !== 1000) return;
+  _mask2['default'].initAddMaskOnSelectedArtboards(context, params, selectedArtboardsAndSymbols);
+  _analytics2['default'].action(context, 'icons', 'mask', 'mask', selectedArtboardsAndSymbols.length);
+}
+
+/**
+ * @name removeMaskOnSelectedArtboards
+ * @description remove masks layer
+ * @param context
+ */
+function removeMaskOnSelectedArtboards(context) {
+  var selectedArtboardsAndSymbols = _utils2['default'].getSelectedArtboardsAndSymbols(context);
+  if (selectedArtboardsAndSymbols.length === 0) return _modals2['default'].newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.');
+  selectedArtboardsAndSymbols.forEach(function (rootElement) {
+    _mask2['default'].removeMask(context, rootElement.object);
+  });
+  _analytics2['default'].action(context, 'icons', 'remove mask', 'remove mask', selectedArtboardsAndSymbols.length);
+}
+
+/**
+ * @name setSettings
+ * @description set settings
+ * @param context
+ */
+function setSettings(context) {
+  var params = (0, _settings2['default'])(context);
+  if (params.button === 1001) return;
+  _settings4['default'].registerSettings(context, params);
+  _analytics2['default'].action(context, 'settings', 'settings', 'settings');
+}
+
+async function executeImport(context) {
+
+  if (String(context.document.hudClientName()) === 'icons.sketch') {
+    var params = {
+      artboardSize: 16,
+      iconPadding: 2
+    };
+
+    if (MSDocument.currentDocument().artboards().length !== 0) {
+      MSDocument.currentDocument().artboards().forEach(function (artboard) {
+        artboard.removeFromParent();
+      });
+    }
+
+    var result = [];
+    _files2['default'].getFilesByUrls([NSURL.fileURLWithPath('/tmp/icons')], result);
+    params.listIcon = result;
+    console.log('>>>>>>>>>>> step 1', result);
+    await _artboard2['default'].initImport(context, params, _artboard2['default'].initImportIcons);
+    console.log('>>>>>>>>>>> step 2');
+    var document = _dom2['default'].fromNative(context.document);
+    document.save('~/icons.sketch');
+    document.close();
+  }
+}
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8)))
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports) {
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+//
+//  MochaJSDelegate.js
+//  MochaJSDelegate
+//
+//  Created by Matt Curtis
+//  Copyright (c) 2015. All rights reserved.
+//
+exports["default"] = MochaJSDelegate;
+
+
+function MochaJSDelegate(selectorHandlerDict) {
+  var uniqueClassName = "MochaJSDelegate_DynamicClass_" + NSUUID.UUID().UUIDString();
+
+  var delegateClassDesc = MOClassDescription.allocateDescriptionForClassWithName_superclass_(uniqueClassName, NSObject);
+
+  delegateClassDesc.registerClass();
+
+  //	Handler storage
+
+  var handlers = {};
+
+  //	Define interface
+
+  this.setHandlerForSelector = function (selectorString, func) {
+    var handlerHasBeenSet = selectorString in handlers;
+    var selector = NSSelectorFromString(selectorString);
+
+    handlers[selectorString] = func;
+
+    if (!handlerHasBeenSet) {
+      /*
+        For some reason, Mocha acts weird about arguments:
+        https://github.com/logancollins/Mocha/issues/28
+        We have to basically create a dynamic handler with a likewise dynamic number of predefined arguments.
+      */
+
+      var dynamicHandler = function dynamicHandler() {
+        var functionToCall = handlers[selectorString];
+
+        if (!functionToCall) return;
+
+        return functionToCall.apply(delegateClassDesc, arguments);
+      };
+
+      var args = [],
+          regex = /:/g;
+      while (match = regex.exec(selectorString)) {
+        args.push("arg" + args.length);
+      }dynamicFunction = eval("(function(" + args.join(",") + "){ return dynamicHandler.apply(this, arguments); })");
+
+      delegateClassDesc.addInstanceMethodWithSelector_function_(selector, dynamicFunction);
+    }
+  };
+
+  this.removeHandlerForSelector = function (selectorString) {
+    delete handlers[selectorString];
+  };
+
+  this.getHandlerForSelector = function (selectorString) {
+    return handlers[selectorString];
+  };
+
+  this.getAllHandlers = function () {
+    return handlers;
+  };
+
+  this.getClass = function () {
+    return NSClassFromString(uniqueClassName);
+  };
+
+  this.getClassInstance = function () {
+    return NSClassFromString(uniqueClassName)["new"]();
+  };
+
+  //	Conveience
+
+  if ((typeof selectorHandlerDict === "undefined" ? "undefined" : _typeof(selectorHandlerDict)) == "object") {
+    for (var selectorString in selectorHandlerDict) {
+      this.setHandlerForSelector(selectorString, selectorHandlerDict[selectorString]);
+    }
+  }
+}
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(setTimeout, clearTimeout) {// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(9)["setTimeout"], __webpack_require__(9)["clearTimeout"]))
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports) {
+
+module.exports = function () {
+  return typeof coscript !== 'undefined' && coscript.createFiber
+}
+
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var prepareValue = __webpack_require__(17)
+
+module.exports.toArray = __webpack_require__(11)
+module.exports.prepareStackTrace = __webpack_require__(10)
+module.exports.prepareValue = prepareValue
+module.exports.prepareObject = prepareValue.prepareObject
+module.exports.prepareArray = prepareValue.prepareArray
+
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* eslint-disable no-not-accumulator-reassign/no-not-accumulator-reassign, no-var, vars-on-top, prefer-template, prefer-arrow-callback, func-names, prefer-destructuring, object-shorthand */
+var prepareStackTrace = __webpack_require__(10)
+var toArray = __webpack_require__(11)
+
+function prepareArray(array, options) {
+  return array.map(function(i) {
+    return prepareValue(i, options)
+  })
+}
+
+function prepareObject(object, options) {
+  const deep = {}
+  Object.keys(object).forEach(function(key) {
+    deep[key] = prepareValue(object[key], options)
+  })
+  return deep
+}
+
+function getName(x) {
+  return {
+    type: 'String',
+    primitive: 'String',
+    value: String(x.name()),
+  }
+}
+
+function getSelector(x) {
+  return {
+    type: 'String',
+    primitive: 'String',
+    value: String(x.selector()),
+  }
+}
+
+function introspectMochaObject(value, options) {
+  options = options || {}
+  var mocha = value.class().mocha()
+  var introspection = {
+    properties: {
+      type: 'Array',
+      primitive: 'Array',
+      value: toArray(
+        mocha['properties' + (options.withAncestors ? 'WithAncestors' : '')]()
+      ).map(getName),
+    },
+    classMethods: {
+      type: 'Array',
+      primitive: 'Array',
+      value: toArray(
+        mocha['classMethods' + (options.withAncestors ? 'WithAncestors' : '')]()
+      ).map(getSelector),
+    },
+    instanceMethods: {
+      type: 'Array',
+      primitive: 'Array',
+      value: toArray(
+        mocha['instanceMethods' + (options.withAncestors ? 'WithAncestors' : '')]()
+      ).map(getSelector),
+    },
+    protocols: {
+      type: 'Array',
+      primitive: 'Array',
+      value: toArray(
+        mocha['protocols' + (options.withAncestors ? 'WithAncestors' : '')]()
+      ).map(getName),
+    },
+  }
+  if (mocha.treeAsDictionary && options.withTree) {
+    introspection.treeAsDictionary = {
+      type: 'Object',
+      primitive: 'Object',
+      value: prepareObject(mocha.treeAsDictionary())
+    }
+  }
+  return introspection
+}
+
+function prepareValue(value, options) {
+  var type = 'String'
+  var primitive = 'String'
+  const typeOf = typeof value
+  if (value instanceof Error) {
+    type = 'Error'
+    primitive = 'Error'
+    value = {
+      message: value.message,
+      name: value.name,
+      stack: prepareStackTrace(value.stack),
+    }
+  } else if (Array.isArray(value)) {
+    type = 'Array'
+    primitive = 'Array'
+    value = prepareArray(value, options)
+  } else if (value === null || value === undefined || Number.isNaN(value)) {
+    type = 'Empty'
+    primitive = 'Empty'
+    value = String(value)
+  } else if (typeOf === 'object') {
+    if (value.isKindOfClass && typeof value.class === 'function') {
+      type = String(value.class())
+      // TODO: Here could come some meta data saved as value
+      if (
+        type === 'NSDictionary' ||
+        type === '__NSDictionaryM' ||
+        type === '__NSSingleEntryDictionaryI' ||
+        type === '__NSDictionaryI' ||
+        type === '__NSCFDictionary'
+      ) {
+        primitive = 'Object'
+        value = prepareObject(Object(value), options)
+      } else if (
+        type === 'NSArray' ||
+        type === 'NSMutableArray' ||
+        type === '__NSArrayM' ||
+        type === '__NSSingleObjectArrayI' ||
+        type === '__NSArray0'
+      ) {
+        primitive = 'Array'
+        value = prepareArray(toArray(value), options)
+      } else if (
+        type === 'NSString' ||
+        type === '__NSCFString' ||
+        type === 'NSTaggedPointerString' ||
+        type === '__NSCFConstantString'
+      ) {
+        primitive = 'String'
+        value = String(value)
+      } else if (type === '__NSCFNumber' || type === 'NSNumber') {
+        primitive = 'Number'
+        value = 0 + value
+      } else if (type === 'MOStruct') {
+        type = String(value.name())
+        primitive = 'Object'
+        value = value.memberNames().reduce(function(prev, k) {
+          prev[k] = prepareValue(value[k], options)
+          return prev
+        }, {})
+      } else if (value.class().mocha) {
+        primitive = 'Mocha'
+        value = (options || {}).skipMocha ? type : introspectMochaObject(value, options)
+      } else {
+        primitive = 'Unknown'
+        value = type
+      }
+    } else {
+      type = 'Object'
+      primitive = 'Object'
+      value = prepareObject(value, options)
+    }
+  } else if (typeOf === 'function') {
+    type = 'Function'
+    primitive = 'Function'
+    value = String(value)
+  } else if (value === true || value === false) {
+    type = 'Boolean'
+    primitive = 'Boolean'
+  } else if (typeOf === 'number') {
+    primitive = 'Number'
+    type = 'Number'
+  }
+
+  return {
+    value,
+    type,
+    primitive,
+  }
+}
+
+module.exports = prepareValue
+module.exports.prepareObject = prepareObject
+module.exports.prepareArray = prepareArray
+
+
+/***/ }),
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* eslint-disable no-not-accumulator-reassign/no-not-accumulator-reassign, no-var, vars-on-top, prefer-template, prefer-arrow-callback, func-names, prefer-destructuring, object-shorthand */
+var remoteWebview = __webpack_require__(19)
+
+module.exports.identifier = 'skpm.debugger'
+
+module.exports.isDebuggerPresent = remoteWebview.isWebviewPresent.bind(
+  this,
+  module.exports.identifier
+)
+
+module.exports.sendToDebugger = function sendToDebugger(name, payload) {
+  return remoteWebview.sendToWebview(
+    module.exports.identifier,
+    'sketchBridge(' +
+      JSON.stringify({
+        name: name,
+        payload: payload,
+      }) +
+      ');'
+  )
+}
+
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports) {
+
+/* globals NSThread */
+
+var threadDictionary = NSThread.mainThread().threadDictionary()
+
+module.exports.isWebviewPresent = function isWebviewPresent (identifier) {
+  return !!threadDictionary[identifier]
+}
+
+module.exports.sendToWebview = function sendToWebview (identifier, evalString) {
+  if (!module.exports.isWebviewPresent(identifier)) {
+    throw new Error('Webview ' + identifier + ' not found')
+  }
+
+  var webview = threadDictionary[identifier]
+    .contentView()
+    .subviews()
+  webview = webview[webview.length - 1]
+
+  return webview.stringByEvaluatingJavaScriptFromString(evalString)
+}
+
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports) {
+
+module.exports.SET_TREE = 'elements/SET_TREE'
+module.exports.SET_PAGE_METADATA = 'elements/SET_PAGE_METADATA'
+module.exports.SET_LAYER_METADATA = 'elements/SET_LAYER_METADATA'
+module.exports.ADD_LOG = 'logs/ADD_LOG'
+module.exports.CLEAR_LOGS = 'logs/CLEAR_LOGS'
+module.exports.GROUP = 'logs/GROUP'
+module.exports.GROUP_END = 'logs/GROUP_END'
+module.exports.TIMER_START = 'logs/TIMER_START'
+module.exports.TIMER_END = 'logs/TIMER_END'
+module.exports.ADD_REQUEST = 'network/ADD_REQUEST'
+module.exports.SET_RESPONSE = 'network/SET_RESPONSE'
+module.exports.ADD_ACTION = 'actions/ADD_ACTION'
+module.exports.SET_SCRIPT_RESULT = 'playground/SET_SCRIPT_RESULT'
+
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports, __webpack_require__) {
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _mask = __webpack_require__(3);
+
+var _mask2 = _interopRequireDefault(_mask);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+exports['default'] = {
+  switchToV4: switchToV4
+};
+
+
+function switchToV4(context, rootObject) {
+  var mask = rootObject.lastLayer();
+  var params = { color: null, colorLib: null, colorPicker: null };
+  if (String(mask['class']()) === 'MSSymbolInstance') {
+    var color = mask.symbolMaster();
+    var foreign = color.foreignSymbol();
+    params.color = color;
+    if (foreign) {
+      params.color = String(foreign.originalMaster().symbolID());
+      params.colorLib = foreign;
+    }
+  } else {
+    params.colorPicker = mask.style().fills()[0].color();
+  }
+
+  _mask2['default'].registerMask(context, rootObject, params);
+}
+
+/***/ }),
+/* 22 */
+/***/ (function(module, exports, __webpack_require__) {
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _libraries = __webpack_require__(5);
+
+var _libraries2 = _interopRequireDefault(_libraries);
+
+var _utils = __webpack_require__(0);
+
+var _utils2 = _interopRequireDefault(_utils);
+
+var _logger = __webpack_require__(1);
+
+var _logger2 = _interopRequireDefault(_logger);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+exports['default'] = {
+  newModal: newModal,
+  runModal: runModal,
+  getMainButtonParam: getMainButtonParam,
+  createArtboardFields: createArtboardFields,
+  createCheckBoxes: createCheckBoxes,
+  createMaskFields: createMaskFields,
+  appendsFields: appendsFields,
+  getParams: getParams,
+  setNextKey: setNextKey,
+  newErrorModal: newErrorModal
+
+  /**
+   * @name newModal
+   * @description instantiate modal
+   * @param context
+   * @param viewSize {Object}
+   * @param modalParams
+   * @returns {{modal: *, view: *, viewSize: *}}
+   */
+};
+function newModal(context, viewSize, modalParams) {
+
+  var modal = COSAlertWindow['new']();
+
+  var view = NSView.alloc().initWithFrame(NSMakeRect(0, 0, viewSize.width, viewSize.height));
+  modal.addAccessoryView(view);
+  modal.setMessageText(modalParams.messageText);
+  modal.setInformativeText(modalParams.informativeText);
+  modal.addButtonWithTitle('Continue');
+  modal.addButtonWithTitle('Cancel');
+  modal.layout();
+
+  return { modal: modal, view: view, viewSize: viewSize };
+}
+
+/**
+ * @name runModal
+ * @description run modal
+ * @param modal
+ * @returns {Object} : NSView
+ */
+function runModal(_ref) {
+  var modal = _ref.modal;
+
+  return modal.runModal();
+}
+
+/**
+ * @name getMainButtonParam
+ * @description get value of main button of view
+ * @param button
+ * @returns {Object}
+ */
+function getMainButtonParam(button) {
+  return { button: button };
+}
+
+/**
+ * @name createArtboardFields
+ * @description create fields for new artboards params
+ * @returns {[Object,Object]}
+ */
+function createArtboardFields() {
+
+  var textBox = NSTextField.alloc().initWithFrame(NSMakeRect(0, 10, 130, 20));
+  textBox.setStringValue('24');
+
+  var textBoxPadding = NSTextField.alloc().initWithFrame(NSMakeRect(140, 10, 130, 20));
+  textBoxPadding.setStringValue('3');
+
+  return [{
+    item: textBox,
+    getter: function () {
+      function getter() {
+        return parseInt(textBox.stringValue());
+      }
+
+      return getter;
+    }(),
+    name: 'artboardSize',
+    label: _utils2['default'].createLabel('Size', 0, 30, 130, 20)
+  }, {
+    item: textBoxPadding,
+    getter: function () {
+      function getter() {
+        return parseInt(textBoxPadding.stringValue());
+      }
+
+      return getter;
+    }(),
+    name: 'iconPadding',
+    label: _utils2['default'].createLabel('Padding', 140, 30, 130, 20)
+  }];
+}
+
+/**
+ * @name createCheckBoxMask
+ * @description create field for checkbox for add mask
+ * @returns {[Object]}
+ */
+function createCheckBoxes() {
+
+  var symbolCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(0, 30, 200, 14));
+  symbolCheckBox.setButtonType(NSSwitchButton);
+  symbolCheckBox.setState(true);
+  symbolCheckBox.setFont(NSFont.systemFontOfSize_(13));
+  symbolCheckBox.setTitle('Convert to symbol');
+
+  var maskCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(0, 5, 200, 14));
+  maskCheckBox.setButtonType(NSSwitchButton);
+  maskCheckBox.setState(false);
+  maskCheckBox.setFont(NSFont.systemFontOfSize_(13));
+  maskCheckBox.setTitle('Add color mask');
+
+  return [{
+    item: symbolCheckBox,
+    name: 'convertSymbol',
+    getter: symbolCheckBox.state
+  }, {
+    item: maskCheckBox,
+    name: 'withMask',
+    getter: maskCheckBox.state
+  }];
+}
+
+/**
+ * @name createMaskFields
+ * @description create fields for mask params to add mask
+ * @param context {Object}
+ * @param modal {Object}
+ * @param checkboxFields {Object}
+ * @returns {[null,null]}
+ */
+function createMaskFields(context, modal, checkboxFields) {
+
+  var colorLibsMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(0, 0, 130, 20));
+  var colorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(140, 0, 130, 20));
+
+  colorLibsMenu.setEnabled(false);
+  colorMenu.setEnabled(false);
+
+  colorLibsMenu.menu = _libraries2['default'].initLibsSelectList(AppController.sharedInstance().librariesController().availableLibraries(), colorMenu);
+
+  if (checkboxFields) {
+    checkboxFields[1].item.setCOSJSTargetFunction(function (mask) {
+      if (mask.state()) {
+        colorLibsMenu.setEnabled(true);
+        // documentColorMenu.setEnabled(true)
+        if (colorMenu.selectedItem()) colorMenu.setEnabled(true);
+      } else {
+        colorLibsMenu.setEnabled(false);
+        colorMenu.setEnabled(false);
+        // documentColorMenu.setEnabled(false)
+      }
+    });
+  } else {
+    colorLibsMenu.setEnabled(true);
+  }
+
+  return [{
+    item: colorMenu,
+    label: _utils2['default'].createLabel('Color', 140, 25, 130, 20),
+    name: 'color',
+    getter: function () {
+      function getter() {
+        var currentItem = this.item.selectedItem();
+        return currentItem ? currentItem.representedObject() : null;
+      }
+
+      return getter;
+    }()
+  }, {
+    item: colorLibsMenu,
+    label: _utils2['default'].createLabel('Colors Library', 0, 25, 130, 20),
+    name: 'colorLib',
+    getter: function () {
+      function getter() {
+        var currentItem = this.item.selectedItem();
+        return currentItem ? currentItem.representedObject() : null;
+      }
+
+      return getter;
+    }()
+  }];
+}
+
+/**
+ * @name appendsFields
+ * @description append fields on view to create modal
+ * @param view {Object} : NSView
+ * @param viewSize {Object} :
+ * @param withLabelBottom {Boolean}
+ * @param allFields
+ */
+function appendsFields(_ref2, allFields, withLabelBottom) {
+  var view = _ref2.view,
+      viewSize = _ref2.viewSize;
+
+  allFields.reverse().forEach(function (fields) {
+    var y = withLabelBottom ? view.subviews().length * 50 + 25 : view.subviews().length * 50;
+    var viewCell = NSView.alloc().initWithFrame(NSMakeRect(0, y, viewSize.width, 50));
+    fields.forEach(function (field) {
+      if (field.label) viewCell.addSubview(field.label);
+      if (field.item) viewCell.addSubview(field.item);
+    });
+    view.addSubview(viewCell);
+  });
+}
+
+/**
+ * @name getParams
+ * @description get value of multiple fields
+ * @param allFields [Array,Array,...]
+ * @returns {Object}
+ */
+function getParams(allFields) {
+  var result = {};
+  allFields.forEach(function (fields) {
+    fields.forEach(function (field) {
+      result[field.name] = field.getter();
+    });
+  });
+
+  return result;
+}
+
+/**
+ * @name setNextKey
+ * @description set tab path in form
+ * @param fields
+ */
+function setNextKey(fields) {
+  fields.forEach(function (field, index) {
+    if (fields[index + 1] && field.item) field.item.setNextKeyView(fields[index + 1].item);
+  });
+}
+
+/**
+ * @name newErrorModal
+ * @description display error  modal
+ * @param message
+ */
+function newErrorModal(message, informativeText) {
+  var modal = COSAlertWindow['new']();
+  modal.setMessageText(message);
+  modal.setInformativeText(informativeText);
+  modal.runModal();
+}
+
+/***/ }),
+/* 23 */
+/***/ (function(module, exports, __webpack_require__) {
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _logger = __webpack_require__(1);
+
+var _logger2 = _interopRequireDefault(_logger);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
+exports["default"] = {
+  selectIconsFiles: selectIconsFiles,
+  getFilesByUrls: getFilesByUrls
+};
+
+
+var AVAILABLE_EXT = ["svg", "pdf", "png", "jpg", "jpeg"];
+
+/**
+ * @name selectIconsFiles
+ * @description display modal selection file and return them
+ * @returns {Array}
+ */
+function selectIconsFiles() {
+
+  var panel = NSOpenPanel.openPanel();
+  panel.setAllowsMultipleSelection(true);
+  panel.setCanChooseDirectories(true);
+  panel.setAllowedFileTypes(AVAILABLE_EXT);
+  panel.setCanChooseFiles(true);
+  panel.setPrompt("Select");
+
+  if (panel.runModal() !== NSFileHandlingPanelOKButton) return [];
+
+  var result = [];
+
+  getFilesByUrls(panel.URLs(), result);
+
+  return result;
+}
+
+/**
+ * @name getFilesByUrls
+ * @description get file from list of folder and path
+ * @param urls {Array}
+ * @param result {Array}
+ * @returns {Array}
+ */
+function getFilesByUrls(urls, result) {
+
+  for (var i = 0; i < urls.length; i++) {
+    if (!!urls[i].hasDirectoryPath()) {
+      getFilesByUrls(NSFileManager.defaultManager().contentsOfDirectoryAtURL_includingPropertiesForKeys_options_error(urls[i], null, null, null), result);
+    } else {
+      var ext = String(urls[i].pathExtension()).toLowerCase();
+      if (AVAILABLE_EXT.indexOf(ext) !== -1) {
+        result.push(urls[i]);
+      }
+    }
+  }
+}
+
+/***/ }),
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _modals = __webpack_require__(6);
+
+var _utils = __webpack_require__(0);
+
+var _utils2 = _interopRequireDefault(_utils);
+
+var _settings = __webpack_require__(2);
+
+var _settings2 = _interopRequireDefault(_settings);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+exports['default'] = settingsModal;
+
+
+function settingsModal(context) {
+
+  this.settingsValues = _settings2['default'].getSettings(context, 'placeholder');
+
+  this.modalParams = {
+    messageText: 'Settings',
+    informativeText: 'Customize your imports using presets and other features.',
+    height: (Object.keys(this.settingsValues).length + 1) * 73,
+    width: 340,
+    lineHeight: 45
+  };
+
+  this.coeffCurrentHeight = 0;
+  this.adjustHeight = 0;
+  this.marginLeftColRight = 130;
+  this.adjust = -5;
+  this.lineOne = 15;
+  this.lineTwo = 0;
+
+  (0, _modals.constructBase)('Save');
+
+  makePresetParams();
+  prefixRootObjectParams();
+  quantityIconsByLine();
+  marginBetweenRootObject();
+  convertStrokeToFillParams();
+
+  return {
+    button: this.modal.runModal(),
+    presets: String(this.presets.stringValue()).replace(/ /g, ''),
+    iconsByLine: parseInt(this.iconsByLine.stringValue()) || null,
+    convertStroke: this.convertStroke.state(),
+    marginBetweenRootObject: this.marginBetweenRootObject.stringValue().replace(/ /g, ''),
+    prefixRootObject: this.prefixRootObject.stringValue()
+  };
+}
+
+function makePresetParams() {
+  this.coeffCurrentHeight++;
+  var yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + this.adjust;
+
+  var textBoxLabel = _utils2['default'].createLabel('Size Presets', 0, yAxis, this.marginLeftColRight, 20);
+  this.view.addSubview(textBoxLabel);
+
+  var presetsBox = NSTextField.alloc().initWithFrame(NSMakeRect(this.marginLeftColRight, yAxis, 145, 21));
+
+  if (_settings2['default'].hasValue(this.settingsValues.presets)) {
+    presetsBox.setStringValue(String(this.settingsValues.presets.value));
+  } else {
+    presetsBox.setPlaceholderString(String(this.settingsValues.presets.placeholder));
+  }
+
+  this.view.addSubview(presetsBox);
+
+  this.coeffCurrentHeight++;
+  addDescription('Set your artboard sizes and padding.', this.lineOne);
+  addDescription('Format: size-padding', this.lineTwo);
+
+  this.presets = presetsBox;
+}
+
+function convertStrokeToFillParams() {
+
+  this.coeffCurrentHeight++;
+  var yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + 30;
+
+  var convertStrokeCheckboxLabel = _utils2['default'].createLabel('Stroke to Fill', 0, yAxis, this.marginLeftColRight, 20);
+  this.view.addSubview(convertStrokeCheckboxLabel);
+
+  var convertStrokeCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(this.marginLeftColRight, yAxis, 200, 21));
+  convertStrokeCheckBox.setButtonType(NSSwitchButton);
+  convertStrokeCheckBox.setState(parseInt(this.settingsValues.convertStroke.data));
+  convertStrokeCheckBox.setFont(NSFont.systemFontOfSize_(13));
+  convertStrokeCheckBox.setTitle('Auto-Convert');
+  this.view.addSubview(convertStrokeCheckBox);
+
+  this.coeffCurrentHeight++;
+  addDescription('This will allow you to add a dynamic color mask ', this.lineOne + 30);
+  addDescription('over your outlined icons.', this.lineTwo + 30);
+
+  this.convertStroke = convertStrokeCheckBox;
+}
+
+function quantityIconsByLine() {
+  this.coeffCurrentHeight++;
+  var yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + this.adjust;
+
+  var iconByLineParamsLabel = _utils2['default'].createLabel('Icons Grid', 0, yAxis, this.marginLeftColRight, 20);
+  this.view.addSubview(iconByLineParamsLabel);
+  var sizeBox = NSTextField.alloc().initWithFrame(NSMakeRect(this.marginLeftColRight, yAxis, 50, 21));
+
+  if (String(this.settingsValues.iconsByLine.value) === 'null') {
+    sizeBox.setPlaceholderString('10');
+  } else {
+    sizeBox.setStringValue(String(this.settingsValues.iconsByLine.value));
+  }
+
+  this.view.addSubview(sizeBox);
+  var sizeBoxUnit = _utils2['default'].createLabel('icons per row', this.marginLeftColRight + 55, yAxis, 100, 20);
+  this.view.addSubview(sizeBoxUnit);
+
+  this.coeffCurrentHeight++;
+  addDescription('Set the number of imported icons per row.', this.lineOne);
+  // addDescription('Format: size-padding', this.lineTwo)
+
+  this.iconsByLine = sizeBox;
+}
+
+function marginBetweenRootObject() {
+  this.coeffCurrentHeight++;
+  var yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + 15;
+
+  var marginBetweenRootObjectParamsLabel = _utils2['default'].createLabel('Spacing', 0, yAxis, this.marginLeftColRight, 20);
+  this.view.addSubview(marginBetweenRootObjectParamsLabel);
+  var sizeBox = NSTextField.alloc().initWithFrame(NSMakeRect(this.marginLeftColRight, yAxis, 50, 21));
+
+  if (_settings2['default'].hasValue(this.settingsValues.marginBetweenRootObject)) {
+    sizeBox.setStringValue(String(this.settingsValues.marginBetweenRootObject.value));
+  } else {
+    sizeBox.setPlaceholderString(String(this.settingsValues.marginBetweenRootObject.placeholder));
+  }
+
+  this.view.addSubview(sizeBox);
+  var sizeBoxUnit = _utils2['default'].createLabel('px or %', this.marginLeftColRight + 55, yAxis, 100, 20);
+  this.view.addSubview(sizeBoxUnit);
+
+  this.coeffCurrentHeight++;
+  addDescription('Set the spacing between the imported icons.', this.lineOne + 15);
+  // addDescription('Format: size-padding', this.lineTwo)
+
+  this.marginBetweenRootObject = sizeBox;
+}
+
+function prefixRootObjectParams() {
+  this.coeffCurrentHeight++;
+  var yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + this.adjust;
+
+  var prefixRootObjectParamsLabel = _utils2['default'].createLabel('Add Prefix ', 0, yAxis, this.marginLeftColRight, 20);
+  this.view.addSubview(prefixRootObjectParamsLabel);
+  var sizeBox = NSTextField.alloc().initWithFrame(NSMakeRect(this.marginLeftColRight, yAxis, 145, 21));
+
+  if (_settings2['default'].hasValue(this.settingsValues.prefixRootObject)) {
+    sizeBox.setStringValue(String(this.settingsValues.prefixRootObject.value));
+  } else {
+    sizeBox.setPlaceholderString(String(this.settingsValues.prefixRootObject.placeholder));
+  }
+
+  this.view.addSubview(sizeBox);
+
+  this.coeffCurrentHeight++;
+  addDescription('Add a path structure to the name of yours icons.', this.lineOne);
+  addDescription('$size is equal to the size of the artboard.', this.lineTwo);
+
+  this.prefixRootObject = sizeBox;
+}
+
+function addDescription(text, ajust) {
+
+  var yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + ajust;
+
+  var descriptionLabel = _utils2['default'].createLabel(text, 0, yAxis, 400, 20, true);
+
+  this.view.addSubview(descriptionLabel);
+}
+
+/***/ }),
+/* 25 */
+/***/ (function(module, exports) {
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var kUUIDKey = 'google.analytics.uuid';
+var uuid = NSUserDefaults.standardUserDefaults().objectForKey(kUUIDKey);
+if (!uuid) {
+  uuid = NSUUID.UUID().UUIDString();
+  NSUserDefaults.standardUserDefaults().setObject_forKey(uuid, kUUIDKey);
+}
+
+function jsonToQueryString(json) {
+  return '?' + Object.keys(json).map(function (key) {
+    return encodeURIComponent(key) + '=' + encodeURIComponent(json[key]);
+  }).join('&');
+}
+
+exports['default'] = {
+  action: action
+};
+
+
+function action(context, category, action, label, value) {
+  var payload = {
+    v: 1,
+    t: 'event',
+    cid: uuid,
+    tid: 'UA-115448236-1',
+    ec: category,
+    ea: action,
+    el: label,
+    ev: value
+  };
+  send(payload);
+}
+
+function send(payload) {
+
+  try {
+    var url = NSURL.URLWithString(NSString.stringWithFormat("https://www.google-analytics.com/collect%@", jsonToQueryString(payload)));
+
+    if (url) {
+      var task = NSTask.alloc().init();
+      task.setLaunchPath("/usr/bin/curl");
+      task.setArguments(['-X', 'POST', String(url)]);
+      var outputPipe = NSPipe.pipe();
+      task.setStandardOutput(outputPipe);
+      task.launch();
+    }
+  } catch (e) {}
+}
+
+/***/ }),
+/* 26 */
+/***/ (function(module, exports) {
+
+module.exports = require("sketch/dom");
+
+/***/ })
+/******/ ]);
+  if (key === 'default' && typeof exports === 'function') {
+    exports(context);
+  } else {
+    exports[key](context);
+  }
+}
+that['importIcons'] = __skpm_run.bind(this, 'importIcons');
+that['onRun'] = __skpm_run.bind(this, 'default');
+that['updateIconsOnSelectedArtboards'] = __skpm_run.bind(this, 'updateIconsOnSelectedArtboards');
+that['addMaskOnSelectedArtboards'] = __skpm_run.bind(this, 'addMaskOnSelectedArtboards');
+that['addMaskOnSelectedArtboards'] = __skpm_run.bind(this, 'addMaskOnSelectedArtboards');
+that['removeMaskOnSelectedArtboards'] = __skpm_run.bind(this, 'removeMaskOnSelectedArtboards');
+that['setSettings'] = __skpm_run.bind(this, 'setSettings');
+that['organizeIcons'] = __skpm_run.bind(this, 'organizeIcons');
+that['executeImport'] = __skpm_run.bind(this, 'executeImport')

@@ -68,6 +68,11 @@
       "identifier": "organize.icons.selected.layer",
       "icon": "icons/icon-square-1.jpg",
       "description" : "Organize selected icons"
+    },
+    {
+      "script": "./commands.js",
+      "handler": "executeImport",
+      "identifier": "execute.import"
     }
   ],
   "menu" : {

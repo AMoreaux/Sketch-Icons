@@ -221,6 +221,7 @@ function svgHasStroke(rootObject) {
       hasBorder = true
     }
   })
+
   return hasBorder
 }
 

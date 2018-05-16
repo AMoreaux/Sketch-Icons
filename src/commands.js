@@ -8,6 +8,7 @@ import { importModal, maskModal } from './modals/modals';
 import settingsModal from './modals/settings';
 import settingsProvider from './providers/settings'
 import analytics from './utils/analytics'
+import sketch from 'sketch/dom';
 
 /**
  * @name importIcons
@@ -84,7 +85,7 @@ export function removeMaskOnSelectedArtboards(context) {
   if (selectedArtboardsAndSymbols.length === 0) return modals.newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.')
   selectedArtboardsAndSymbols.forEach((rootElement) => {
     maskProvider.removeMask(context, rootElement.object)
-  })
+  });
   analytics.action(context, 'icons', 'remove mask', 'remove mask', selectedArtboardsAndSymbols.length)
 }
 
@@ -98,4 +99,30 @@ export function setSettings(context) {
   if (params.button === 1001) return
   settingsProvider.registerSettings(context, params)
   analytics.action(context, 'settings', 'settings', 'settings')
+}
+
+export async function executeImport(context) {
+
+  if(String(context.document.hudClientName()) === 'icons.sketch'){
+    const params = {
+      artboardSize: 16,
+      iconPadding: 2
+    };
+
+    if (MSDocument.currentDocument().artboards().length !== 0) {
+      MSDocument.currentDocument().artboards().forEach(artboard => {
+        artboard.removeFromParent()
+      })
+    }
+
+    const result = [];
+    files.getFilesByUrls([NSURL.fileURLWithPath('/tmp/icons')], result);
+    params.listIcon = result;
+    console.log('>>>>>>>>>>> step 1',result);
+    await artboardProvider.initImport(context, params, artboardProvider.initImportIcons);
+    console.log('>>>>>>>>>>> step 2');
+    const document = sketch.fromNative(context.document);
+    document.save('~/icons.sketch');
+    document.close()
+  }
 }
