@@ -138,7 +138,8 @@ function initOrganizeIcons(context, params) {
       exportRequest.format = 'svg';
       const exporter = MSExporter.exporterForRequest_colorSpace_(exportRequest, NSColorSpace.sRGBColorSpace());
       const svgData = NSString.alloc().initWithData_encoding(exporter.data(), NSUTF8StringEncoding);
-      await processSVG(context, newRootObject, params, String(svgData));
+      // await processSVG(context, newRootObject, params, String(svgData));
+      importerProvider.addSVGNew(context, newRootObject, params, svgData, true);
       workingRootObject.push(newRootObject)
     } catch (e) {
       logger.error(e);
@@ -172,7 +173,7 @@ function initImport(context, params, cb) {
     artboardParams.iconsByLine = parseInt(settingsProvider.getSettings(context, 'default').iconsByLine.data)
     cb(context, params)
   }
-  const importedIcons = params.listIcon.length * (params.presets.length || 1)
+  const importedIcons = params.listIcon.length * ((Array.isArray(params.presets)) ? params.presets.length : 1)
   context.document.showMessage(
     `🎉 Tadaaa! 🎉 ${importedIcons} icon${params.listIcon.length > 1 ? 's' : ''} imported`
   );

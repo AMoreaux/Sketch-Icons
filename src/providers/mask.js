@@ -3,6 +3,7 @@ import svgProvider from './svg'
 import librariesProvider from './libraries'
 import logger from '../utils/logger'
 import switchVersion from '../utils/switchV3ToV4';
+import settingsProvider from "./settings";
 
 export default {
   initAddMaskOnSelectedArtboards,
@@ -20,9 +21,11 @@ export default {
  * @param rootObjects {Array} : MSArtboardGroup
  */
 function initAddMaskOnSelectedArtboards(context, params, rootObjects) {
+  const settingsParams = settingsProvider.getSettings(context, 'default');
   rootObjects.forEach(async (rootObject) => {
     try {
-      if (utils.hasMask(rootObject.object) && !utils.svgHasStroke(rootObject.object)) removeMask(context, rootObject.object)
+      if (utils.svgHasStroke(rootObject.object) && settingsParams.convertStroke.data === '1') svgProvider.convertStrokeToFill(rootObject.object)
+      if (utils.hasMask(rootObject.object) && !utils.svgHasStroke(rootObject.object)) removeMask(context, rootObject.object);
       await addColor(context, rootObject.object, params)
     } catch (e) {
       console.log('>>>>>>>>>>>', e);
@@ -89,16 +92,16 @@ function removeMask(context, rootObject) {
     return applyColor(rootObject, { colorPicker: MSImmutableColor.blackColor() })
   }
 
-  const iconLayer = rootObject.firstLayer()
+  const iconLayer = rootObject.firstLayer();
 
-  if (iconLayer.hasClippingMask()) {
+  if (rootObject.layers().count() > 1 && iconLayer.hasClippingMask()) {
     iconLayer.hasClippingMask = false;
-    iconLayer.clippingMaskMode = 1
-    const style = rootObject.firstLayer().style()
-    const fillColor = style.fills()[0].color()
-    style.removeAllStyleFills()
-    style.addStylePartOfType(0).color = fillColor
-
+    iconLayer.clippingMaskMode = 1;
+    const style = rootObject.firstLayer().style();
+    const fills = style.fills();
+    const fillColor = (fills.count() > 0) ? style.fills()[0].color() : MSColor.blackColor();
+    style.removeAllStyleFills();
+    style.addStylePartOfType(0).color = fillColor;
     rootObject.lastLayer().removeFromParent()
   }
 }
@@ -202,7 +205,16 @@ function createMaskFromNean(context, rootObject, color) {
 function getMaskSymbolFromLib(context, colorSymbolMaster, colorLibrary) {
   utils.clearSelection(context)
   const librairiesController = AppController.sharedInstance().librariesController()
-  const symbolMaster = (colorLibrary) ? librairiesController.importForeignSymbol_fromLibrary_intoDocument(colorSymbolMaster, colorLibrary, context.document.documentData()).symbolMaster() : colorSymbolMaster
+  // const symbolMaster = (colorLibrary) ? librairiesController.importForeignSymbol_fromLibrary_intoDocument(colorSymbolMaster, colorLibrary, context.document.documentData()).symbolMaster() : colorSymbolMaster
+
+  let importedSymbol;
+  if (MSApplicationMetadata.metadata().appVersion >= 50) {
+    const shareableObjectReference = MSShareableObjectReference.referenceForShareableObject_inLibrary(colorSymbolMaster,colorLibrary);
+    importedSymbol = librairiesController.importShareableObjectReference_intoDocument(shareableObjectReference,context.document.documentData());
+  } else {
+    importedSymbol = librairiesController.importForeignSymbol_fromLibrary_intoDocument_(colorSymbolMaster,colorLibrary,context.document.documentData());
+  }
+  const symbolMaster = (colorLibrary) ? importedSymbol.symbolMaster() : colorSymbolMaster;
   return symbolMaster.newSymbolInstance();
 }
 

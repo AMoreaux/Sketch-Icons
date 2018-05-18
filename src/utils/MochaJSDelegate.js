@@ -7,74 +7,64 @@
 //
 export default MochaJSDelegate;
 
-function MochaJSDelegate(selectorHandlerDict) {
-  var uniqueClassName = "MochaJSDelegate_DynamicClass_" + NSUUID.UUID().UUIDString();
+function MochaJSDelegate(selectorHandlerDict, superclass) {
+  var uniqueClassName = 'MochaJSDelegate_DynamicClass_' + NSUUID.UUID().UUIDString()
 
-  var delegateClassDesc = MOClassDescription.allocateDescriptionForClassWithName_superclass_(uniqueClassName, NSObject);
+  var delegateClassDesc = MOClassDescription.allocateDescriptionForClassWithName_superclass_(uniqueClassName, superclass || NSObject)
 
-  delegateClassDesc.registerClass();
+  delegateClassDesc.registerClass()
 
-  //	Handler storage
+  // Storage Handlers
+  var handlers = {}
 
-  var handlers = {};
-
-  //	Define interface
-
+  // Define interface
   this.setHandlerForSelector = function (selectorString, func) {
-    var handlerHasBeenSet = (selectorString in handlers);
-    var selector = NSSelectorFromString(selectorString);
+    var handlerHasBeenSet = (selectorString in handlers)
+    var selector = NSSelectorFromString(selectorString)
 
-    handlers[selectorString] = func;
+    handlers[selectorString] = func
 
+    /*
+      For some reason, Mocha acts weird about arguments: https://github.com/logancollins/Mocha/issues/28
+      We have to basically create a dynamic handler with a likewise dynamic number of predefined arguments.
+    */
     if (!handlerHasBeenSet) {
-      /*
-        For some reason, Mocha acts weird about arguments:
-        https://github.com/logancollins/Mocha/issues/28
-        We have to basically create a dynamic handler with a likewise dynamic number of predefined arguments.
-      */
+      var args = []
+      var regex = /:/g
+      while (regex.exec(selectorString)) {
+        args.push('arg' + args.length)
+      }
 
-      var dynamicHandler = function () {
-        var functionToCall = handlers[selectorString];
+      var dynamicFunction = eval('(function (' + args.join(', ') + ') { return handlers[selectorString].apply(this, arguments); })')
 
-        if (!functionToCall) return;
-
-        return functionToCall.apply(delegateClassDesc, arguments);
-      };
-
-      var args = [], regex = /:/g;
-      while (match = regex.exec(selectorString)) args.push("arg" + args.length);
-
-      dynamicFunction = eval("(function(" + args.join(",") + "){ return dynamicHandler.apply(this, arguments); })");
-
-      delegateClassDesc.addInstanceMethodWithSelector_function_(selector, dynamicFunction);
+      delegateClassDesc.addInstanceMethodWithSelector_function_(selector, dynamicFunction)
     }
-  };
+  }
 
   this.removeHandlerForSelector = function (selectorString) {
-    delete handlers[selectorString];
-  };
+    delete handlers[selectorString]
+  }
 
   this.getHandlerForSelector = function (selectorString) {
-    return handlers[selectorString];
-  };
+    return handlers[selectorString]
+  }
 
   this.getAllHandlers = function () {
-    return handlers;
-  };
+    return handlers
+  }
 
   this.getClass = function () {
-    return NSClassFromString(uniqueClassName);
-  };
+    return NSClassFromString(uniqueClassName)
+  }
 
   this.getClassInstance = function () {
-    return NSClassFromString(uniqueClassName).new();
-  };
+    return NSClassFromString(uniqueClassName).new()
+  }
 
-  //	Conveience
-
-  if (typeof selectorHandlerDict == "object") {
+  // Convenience
+  if (typeof selectorHandlerDict === 'object') {
     for (var selectorString in selectorHandlerDict) {
-      this.setHandlerForSelector(selectorString, selectorHandlerDict[selectorString]);
+      this.setHandlerForSelector(selectorString, selectorHandlerDict[selectorString])
     }
   }
 }

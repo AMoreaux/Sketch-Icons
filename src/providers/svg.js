@@ -8,7 +8,9 @@ export default {
   addSVG,
   addPDF,
   addBITMAP,
-  cleanSvg
+  cleanSvg,
+  convertStrokeToFill,
+  addSVGNew
 };
 
 /**
@@ -55,7 +57,7 @@ function initUpdateIconsSelectedArtboards(context, rootObjects, params) {
 function addSVG(context, rootObject, params, svgData, withResize) {
   let viewBox;
 
-  const settingsParams = settingsProvider.getSettings(context, 'default')
+  const settingsParams = settingsProvider.getSettings(context, 'default');
 
   svgData = NSString.stringWithString(svgData);
 
@@ -70,7 +72,7 @@ function addSVG(context, rootObject, params, svgData, withResize) {
 
   rootObject.addLayer(svgLayer);
 
-  removeNoFillChildren(rootObject)
+  // removeNoFillChildren(rootObject)
 
   if (utils.svgHasStroke(rootObject) && settingsParams.convertStroke.data === '1') convertStrokeToFill(rootObject)
 
@@ -80,14 +82,50 @@ function addSVG(context, rootObject, params, svgData, withResize) {
   center(params.artboardSize, rootObject.firstLayer());
 }
 
+function addSVGNew(context, rootObject, params, svgData) {
+  svgData = NSString.stringWithString(svgData);
+  const svgImporter = MSSVGImporter.svgImporter();
+  svgImporter.prepareToImportFromData(svgData.dataUsingEncoding(NSUTF8StringEncoding));
+  const svgLayer = svgImporter.importAsLayer();
+  rootObject.addLayers([svgLayer]);
+  const svgLayerFrame = svgLayer.frame();
+  const width = svgLayerFrame.width();
+  const height = svgLayerFrame.height();
+
+  svgLayerFrame.constrainProportions = true;
+
+  if (width >= height) {
+    svgLayer.setWidthRespectingProportions((params.artboardSize - 2 * params.iconPadding) + 0.01)
+  } else {
+    svgLayer.setHeightRespectingProportions((params.artboardSize - 2 * params.iconPadding) + 0.01)
+  }
+  svgLayerFrame.setX((params.artboardSize - svgLayerFrame.width()) / 2);
+  svgLayerFrame.setY((params.artboardSize - svgLayerFrame.height()) / 2);
+}
+
 function addPDF(context, rootObject, params, icon) {
+
+  const rootObjectPosition = rootObject.origin();
+
   const pdfImporter = MSPDFImporter.pdfImporter();
   pdfImporter.prepareToImportFromURL(icon);
   const pdfLayer = pdfImporter.importAsLayer();
-  rootObject.addLayer(pdfLayer);
-  resizeIcon(rootObject, params.iconPadding);
-  center(params.artboardSize, rootObject.firstLayer());
-  rootObject.firstLayer().setName(rootObject.name());
+  rootObject.addLayers(pdfLayer.layers());
+  rootObject.resizeToFitChildren();
+  rootObject.resizesContent = true;
+  const rootObjectFrame = rootObject.frame();
+  rootObjectFrame.setWidth(params.artboardSize - 2 * params.iconPadding);
+  rootObjectFrame.setHeight(params.artboardSize - 2 * params.iconPadding);
+  rootObject.resizesContent = false;
+  rootObjectFrame.setWidth(params.artboardSize);
+  rootObjectFrame.setHeight(params.artboardSize);
+  rootObject.layers().forEach((layer) => {
+    const layerFrame = layer.frame();
+    layerFrame.setX(params.iconPadding)
+    layerFrame.setY(params.iconPadding)
+  })
+  rootObjectFrame.setX(rootObjectPosition.x)
+  rootObjectFrame.setY(rootObjectPosition.y)
 }
 
 function addBITMAP(context, rootObject, params, icon) {
@@ -123,7 +161,7 @@ function addRectToResize(svgString, viewBox) {
 function cleanSvg(rootObject) {
   unGroup(rootObject);
   rootObject.firstLayer().setName(rootObject.name());
-  removeNoFillLayer(rootObject);
+  // removeNoFillLayer(rootObject);
   mergeLayer(rootObject);
   rootObject.firstLayer().resizeToFitChildrenWithOption(1);
 }
@@ -229,37 +267,37 @@ function removeDeleteMeRect(rootObject) {
   }
 }
 
-/**
- * @description remove transparent layers
- * @name removeNoFillLayer
- * @param rootObject
- */
-function removeNoFillLayer(rootObject) {
-  const indexes = NSMutableIndexSet.indexSet();
-  rootObject.layers().forEach((layer, index) => {
-    if (!layer.style().hasEnabledFill() && !layer.style().hasEnabledBorder()) indexes.addIndex(index);
-  });
-  rootObject.removeLayersAtIndexes(indexes);
-}
+// /**
+//  * @description remove transparent layers
+//  * @name removeNoFillLayer
+//  * @param rootObject
+//  */
+// function removeNoFillLayer(rootObject) {
+//   const indexes = NSMutableIndexSet.indexSet();
+//   rootObject.layers().forEach((layer, index) => {
+//     if (!layer.style().hasEnabledFill() && !layer.style().hasEnabledBorder()) indexes.addIndex(index);
+//   });
+//   rootObject.removeLayersAtIndexes(indexes);
+// }
 
-/**
- * @description remove transparent layers
- * @name removeNoFillLayer
- * @param rootObject
- */
-function removeNoFillChildren(rootObject) {
-  const toDelete = []
-  rootObject.firstLayer().children().forEach(layer => {
-    const style = layer.styledLayer().style()
-    if (style.hasEnabledFill() && style.contextSettings().opacity() === 0) {
-      toDelete.push(layer);
-    }
-  });
-
-  toDelete.forEach(layer => {
-    layer.removeFromParent()
-  })
-}
+// /**
+//  * @description remove transparent layers
+//  * @name removeNoFillLayer
+//  * @param rootObject
+//  */
+// function removeNoFillChildren(rootObject) {
+//   const toDelete = []
+//   rootObject.firstLayer().children().forEach(layer => {
+//     const style = layer.styledLayer().style()
+//     if (style.hasEnabledFill() && style.contextSettings().opacity() === 0) {
+//       toDelete.push(layer);
+//     }
+//   });
+//
+//   toDelete.forEach(layer => {
+//     layer.removeFromParent()
+//   })
+// }
 
 /**
  * @name mergeLayer
@@ -281,7 +319,7 @@ function mergeLayer(rootObject) {
     if (children.booleanOperationCanBeReset()) children.setBooleanOperation(-1);
   });
 
-  layers[0].resizeToFitChildrenWithOption(0);
+  // layers[0].resizeToFitChildrenWithOption(0);
   layers[0].setName(rootObject.name());
 }
 

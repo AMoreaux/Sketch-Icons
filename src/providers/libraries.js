@@ -57,11 +57,11 @@ function loadLibrary(library){
  * @param colorMenu {Object} : NSPopUpButton
  * @returns {Object} : NSMenu
  */
-function initLibsSelectList(context, libraries, colorMenu) {
+function initLibsSelectList(context, libraries, colorMenu, global) {
 
   function addListener(item) {
     item.setCOSJSTargetFunction((libraryItem) => {
-      updateColorMenu(context, libraryItem, colorMenu)
+      updateColorMenu(context, libraryItem, colorMenu, global)
     })
   }
 
@@ -78,12 +78,12 @@ function initLibsSelectList(context, libraries, colorMenu) {
     addListener(item)
   })
 
-  updateColorMenu(context, currentDocument, colorMenu)
+  updateColorMenu(context, currentDocument, colorMenu, global)
 
   return colorLibsMenu
 }
 
-function updateColorMenu(context, libraryItem, colorMenu){
+function updateColorMenu(context, libraryItem, colorMenu, global){
   let colors = []
   if(!libraryItem.representedObject()){
     colors = getColorSymbolsFromDocument(context.document.documentData())
@@ -92,9 +92,9 @@ function updateColorMenu(context, libraryItem, colorMenu){
   }
   if(colors.length > 0){
     initColorSelectList(colorMenu, colors);
-    setEnabledColorMenu(true)
+    setEnabledColorMenu(true, global)
   }else {
-    setEnabledColorMenu(false)
+    setEnabledColorMenu(false, global)
   }
 }
 

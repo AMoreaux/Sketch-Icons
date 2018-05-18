@@ -1,12 +1,11 @@
 'use strict'
+const path = require('path');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+const merge = require('lodash.merge');
+const { skpm } = require('./package.json');
 
-const CopyWebpackPlugin = require('copy-webpack-plugin')
-const merge = require('lodash.merge')
-const { skpm } = require('./package.json')
-const path = require('path')
-
-const pluginResourcesPath = `${skpm.main}/Contents/Resources`
-const pluginSketchPath = `${skpm.main}/Contents/Sketch`
+const pluginResourcesPath = `${skpm.main}/Contents/Resources`;
+const pluginSketchPath = `${skpm.main}/Contents/Sketch`;
 
 const ressourcesConfig = {
   plugins: [
@@ -25,14 +24,14 @@ const ressourcesConfig = {
       }
     ])
   ]
-}
+};
 
 
 
 module.exports = function (config, isPluginCommand) {
-  config.resolve.extensions = ['.js', '.jsx']
+  config.resolve.extensions = ['.js', '.jsx'];
 
   if (isPluginCommand) {
     merge(config, ressourcesConfig)
   }
-}
+};

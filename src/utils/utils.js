@@ -116,7 +116,6 @@ function createWebview(context, pickerButton, setColor) {
   const windowObject = webView.windowScriptObject();
   const delegate = new MochaJSDelegate({
     "webView:didFinishLoadForFrame:": (function (webView, webFrame) {
-
       logger.log('loaded')
     }),
     "webView:didChangeLocationWithinPageForFrame:": (function (webView, webFrame) {
@@ -221,6 +220,7 @@ function svgHasStroke(rootObject) {
       hasBorder = true
     }
   })
+
   return hasBorder
 }
 
