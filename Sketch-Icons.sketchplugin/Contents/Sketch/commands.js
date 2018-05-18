@@ -171,7 +171,8 @@ function organizeIcons(context) {
 
   _utils.default.runFramework(context);
 
-  const params = (0, _modals2.importModal)(context);
+  const params = _modals2.importModal.call({}, context);
+
   if (params.button !== 1000) return;
   params.listIcon = selectedLayers;
 
@@ -195,7 +196,9 @@ function addMaskOnSelectedArtboards(context) {
   const selectedArtboardsAndSymbols = _utils.default.getSelectedArtboardsAndSymbols(context);
 
   if (selectedArtboardsAndSymbols.length === 0) return _modals.default.newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.');
-  const params = (0, _modals2.maskModal)(context);
+
+  const params = _modals2.maskModal.call({}, context);
+
   if (params.button !== 1000) return;
 
   _mask.default.initAddMaskOnSelectedArtboards(context, params, selectedArtboardsAndSymbols);
@@ -227,7 +230,8 @@ function removeMaskOnSelectedArtboards(context) {
 
 
 function setSettings(context) {
-  const params = (0, _settings.default)(context);
+  const params = _settings.default.call({}, context);
+
   if (params.button === 1001) return;
 
   _settings2.default.registerSettings(context, params);
@@ -321,7 +325,6 @@ function importModal(context) {
   this.isLibrarySource = true;
   this.adjustHeight = 0;
   constructBase.call(this, 'Continue');
-  console.log('>>>>>>>>>>>');
 
   if (usePresets) {
     makePresetsParams.call(this);
@@ -329,27 +332,18 @@ function importModal(context) {
     makeArtboardParams.call(this);
   }
 
-  console.log('>>>>>>>>>>>');
   this.view.addSubview(_utils.default.createDivider(NSMakeRect(0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - 10, this.modalParams.width, 1)));
   this.adjustHeight = 5;
   makeSymbolParams.call(this);
-  console.log('>>>>>>>>>>>');
   this.view.addSubview(_utils.default.createDivider(NSMakeRect(0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - 15, this.modalParams.width, 1)));
   this.adjustHeight = 8;
   makeMaskCheckboxParams.call(this);
-  console.log('>>>>>>>>>>>');
   makeMaskRadioButtonParams.call(this);
-  console.log('>>>>>>>>>>>');
   makeMaskLibraryParams.call(this, context);
-  console.log('>>>>>>>>>>>');
   setEnabledColorLibraryMenu.call(this, false);
-  console.log('>>>>>>>>>>>');
   setEnabledColorMenu.call(this, false);
-  console.log('>>>>>>>>>>>');
   setEnabledRadioButton.call(this, false);
-  console.log('>>>>>>>>>>>');
   makeMaskColorPickerParams.call(this, context);
-  console.log('>>>>>>>>>>>');
   addListenerOnMaskCheckbox.call(this);
   const result = {
     button: this.modal.runModal(),
@@ -542,7 +536,7 @@ function makeMaskRadioButtonParams() {
   cells[1].setTitle("From Color picker");
   cells[1].setFont(NSFont.systemFontOfSize_(13));
   this.view.addSubview(matrixFormat);
-  setListenerRadioButon(cells);
+  setListenerRadioButon.call(this, cells);
   this.radioParams = matrixFormat;
   this.radioButtonLabel = radioButtonLabel;
 }
@@ -603,15 +597,15 @@ function makeMaskColorPickerParams(context) {
 function addListenerOnMaskCheckbox() {
   this.checkboxMaskParams.setCOSJSTargetFunction(mask => {
     if (mask.state()) {
-      setEnabledRadioButton(true);
-      setEnabledColorLibraryMenu(true);
-      if (this.colorsMenuParams.numberOfItems() > 0) setEnabledColorMenu(true);
+      setEnabledRadioButton.call(this, true);
+      setEnabledColorLibraryMenu.call(this, true);
+      if (this.colorsMenuParams.numberOfItems() > 0) setEnabledColorMenu.call(this, true);
     } else {
-      setEnabledRadioButton(false);
-      setEnabledColorLibraryMenu(false);
-      setEnabledColorMenu(false);
-      addLibraryColorsFields();
-      removePickerButton();
+      setEnabledRadioButton.call(this, false);
+      setEnabledColorLibraryMenu.call(this, false);
+      setEnabledColorMenu.call(this, false);
+      addLibraryColorsFields.call(this);
+      removePickerButton.call(this);
       this.radioParams.cells()[0].state = true;
       this.radioParams.cells()[1].state = false;
     }
@@ -621,18 +615,18 @@ function addListenerOnMaskCheckbox() {
 function setListenerRadioButon(cells) {
   function setState(item) {
     if (String(item.selectedCells()[0].title()) === 'From Symbols') {
-      addLibraryColorsFields();
-      removePickerButton();
+      addLibraryColorsFields.call(this);
+      removePickerButton.call(this);
       this.isLibrarySource = true;
     } else {
-      removeLibraryColorsFields();
-      addPickerButton();
+      removeLibraryColorsFields.call(this);
+      addPickerButton.call(this);
       this.isLibrarySource = false;
     }
   }
 
-  cells[0].setCOSJSTargetFunction(setState);
-  cells[1].setCOSJSTargetFunction(setState);
+  cells[0].setCOSJSTargetFunction(setState.bind(this));
+  cells[1].setCOSJSTargetFunction(setState.bind(this));
 }
 
 function setEnabledColorLibraryMenu(enabled) {
@@ -715,158 +709,159 @@ var _default = settingsModal;
 exports.default = _default;
 
 function settingsModal(context) {
-  let global = {};
-  global.settingsValues = _settings.default.getSettings(context, 'placeholder');
-  global.modalParams = {
+  this.settingsValues = _settings.default.getSettings(context, 'placeholder');
+  this.modalParams = {
     messageText: 'Settings',
     informativeText: 'Customize your imports using presets and other features.',
-    height: (Object.keys(global.settingsValues).length + 1) * 73,
+    height: (Object.keys(this.settingsValues).length + 1) * 73,
     width: 340,
     lineHeight: 45
   };
-  global.coeffCurrentHeight = 0;
-  global.adjustHeight = 0;
-  global.marginLeftColRight = 130;
-  global.adjust = -5;
-  global.lineOne = 15;
-  global.lineTwo = 0;
-  (0, _modals.constructBase)('Save', global);
-  makePresetParams(global);
-  prefixRootObjectParams(global);
-  quantityIconsByLine(global);
-  marginBetweenRootObject(global);
-  convertStrokeToFillParams(global);
+  this.coeffCurrentHeight = 0;
+  this.adjustHeight = 0;
+  this.marginLeftColRight = 130;
+  this.adjust = -5;
+  this.lineOne = 15;
+  this.lineTwo = 0;
+
+  _modals.constructBase.call(this, 'Save');
+
+  makePresetParams.call(this);
+  prefixRootObjectParams.call(this);
+  quantityIconsByLine.call(this);
+  marginBetweenRootObject.call(this);
+  convertStrokeToFillParams.call(this);
   return {
-    button: global.modal.runModal(),
-    presets: String(global.presets.stringValue()).replace(/ /g, ''),
-    iconsByLine: parseInt(global.iconsByLine.stringValue()) || null,
-    convertStroke: global.convertStroke.state(),
-    marginBetweenRootObject: global.marginBetweenRootObject.stringValue().replace(/ /g, ''),
-    prefixRootObject: global.prefixRootObject.stringValue()
+    button: this.modal.runModal(),
+    presets: String(this.presets.stringValue()).replace(/ /g, ''),
+    iconsByLine: parseInt(this.iconsByLine.stringValue()) || null,
+    convertStroke: this.convertStroke.state(),
+    marginBetweenRootObject: this.marginBetweenRootObject.stringValue().replace(/ /g, ''),
+    prefixRootObject: this.prefixRootObject.stringValue()
   };
 }
 
-function makePresetParams(global) {
-  global.coeffCurrentHeight++;
-  let yAxis = global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight + global.adjust;
+function makePresetParams() {
+  this.coeffCurrentHeight++;
+  let yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + this.adjust;
 
-  const textBoxLabel = _utils.default.createLabel('Size Presets', 0, yAxis, global.marginLeftColRight, 20);
+  const textBoxLabel = _utils.default.createLabel('Size Presets', 0, yAxis, this.marginLeftColRight, 20);
 
-  global.view.addSubview(textBoxLabel);
-  const presetsBox = NSTextField.alloc().initWithFrame(NSMakeRect(global.marginLeftColRight, yAxis, 145, 21));
+  this.view.addSubview(textBoxLabel);
+  const presetsBox = NSTextField.alloc().initWithFrame(NSMakeRect(this.marginLeftColRight, yAxis, 145, 21));
 
-  if (_settings.default.hasValue(global.settingsValues.presets)) {
-    presetsBox.setStringValue(String(global.settingsValues.presets.value));
+  if (_settings.default.hasValue(this.settingsValues.presets)) {
+    presetsBox.setStringValue(String(this.settingsValues.presets.value));
   } else {
-    presetsBox.setPlaceholderString(String(global.settingsValues.presets.placeholder));
+    presetsBox.setPlaceholderString(String(this.settingsValues.presets.placeholder));
   }
 
-  global.view.addSubview(presetsBox);
-  global.coeffCurrentHeight++;
-  addDescription('Set your artboard sizes and padding.', global.lineOne, global);
-  addDescription('Format: size-padding', global.lineTwo, global);
-  global.presets = presetsBox;
+  this.view.addSubview(presetsBox);
+  this.coeffCurrentHeight++;
+  addDescription.call(this, 'Set your artboard sizes and padding.', this.lineOne);
+  addDescription.call(this, 'Format: size-padding', this.lineTwo);
+  this.presets = presetsBox;
 }
 
-function convertStrokeToFillParams(global) {
-  global.coeffCurrentHeight++;
-  const yAxis = global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight + 30;
+function convertStrokeToFillParams() {
+  this.coeffCurrentHeight++;
+  const yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + 30;
 
-  const convertStrokeCheckboxLabel = _utils.default.createLabel('Stroke to Fill', 0, yAxis, global.marginLeftColRight, 20);
+  const convertStrokeCheckboxLabel = _utils.default.createLabel('Stroke to Fill', 0, yAxis, this.marginLeftColRight, 20);
 
-  global.view.addSubview(convertStrokeCheckboxLabel);
-  const convertStrokeCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(global.marginLeftColRight, yAxis, 200, 21));
+  this.view.addSubview(convertStrokeCheckboxLabel);
+  const convertStrokeCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(this.marginLeftColRight, yAxis, 200, 21));
   convertStrokeCheckBox.setButtonType(NSSwitchButton);
-  convertStrokeCheckBox.setState(parseInt(global.settingsValues.convertStroke.data));
+  convertStrokeCheckBox.setState(parseInt(this.settingsValues.convertStroke.data));
   convertStrokeCheckBox.setFont(NSFont.systemFontOfSize_(13));
   convertStrokeCheckBox.setTitle('Auto-Convert');
-  global.view.addSubview(convertStrokeCheckBox);
-  global.coeffCurrentHeight++;
-  addDescription('global will allow you to add a dynamic color mask ', global.lineOne + 30, global);
-  addDescription('over your outlined icons.', global.lineTwo + 30, global);
-  global.convertStroke = convertStrokeCheckBox;
+  this.view.addSubview(convertStrokeCheckBox);
+  this.coeffCurrentHeight++;
+  addDescription.call(this, 'this will allow you to add a dynamic color mask ', this.lineOne + 30);
+  addDescription.call(this, 'over your outlined icons.', this.lineTwo + 30);
+  this.convertStroke = convertStrokeCheckBox;
 }
 
-function quantityIconsByLine(global) {
-  global.coeffCurrentHeight++;
-  const yAxis = global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight + global.adjust;
+function quantityIconsByLine() {
+  this.coeffCurrentHeight++;
+  const yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + this.adjust;
 
-  const iconByLineParamsLabel = _utils.default.createLabel('Icons Grid', 0, yAxis, global.marginLeftColRight, 20);
+  const iconByLineParamsLabel = _utils.default.createLabel('Icons Grid', 0, yAxis, this.marginLeftColRight, 20);
 
-  global.view.addSubview(iconByLineParamsLabel);
-  const sizeBox = NSTextField.alloc().initWithFrame(NSMakeRect(global.marginLeftColRight, yAxis, 50, 21));
+  this.view.addSubview(iconByLineParamsLabel);
+  const sizeBox = NSTextField.alloc().initWithFrame(NSMakeRect(this.marginLeftColRight, yAxis, 50, 21));
 
-  if (String(global.settingsValues.iconsByLine.value) === 'null') {
+  if (String(this.settingsValues.iconsByLine.value) === 'null') {
     sizeBox.setPlaceholderString('10');
   } else {
-    sizeBox.setStringValue(String(global.settingsValues.iconsByLine.value));
+    sizeBox.setStringValue(String(this.settingsValues.iconsByLine.value));
   }
 
-  global.view.addSubview(sizeBox);
+  this.view.addSubview(sizeBox);
 
-  const sizeBoxUnit = _utils.default.createLabel('icons per row', global.marginLeftColRight + 55, yAxis, 100, 20);
+  const sizeBoxUnit = _utils.default.createLabel('icons per row', this.marginLeftColRight + 55, yAxis, 100, 20);
 
-  global.view.addSubview(sizeBoxUnit);
-  global.coeffCurrentHeight++;
-  addDescription('Set the number of imported icons per row.', global.lineOne, global); // addDescription('Format: size-padding', global.lineTwo)
+  this.view.addSubview(sizeBoxUnit);
+  this.coeffCurrentHeight++;
+  addDescription.call(this, 'Set the number of imported icons per row.', this.lineOne); // addDescription('Format: size-padding', this.lineTwo)
 
-  global.iconsByLine = sizeBox;
+  this.iconsByLine = sizeBox;
 }
 
-function marginBetweenRootObject(global) {
-  global.coeffCurrentHeight++;
-  const yAxis = global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight + 15;
+function marginBetweenRootObject() {
+  this.coeffCurrentHeight++;
+  const yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + 15;
 
-  const marginBetweenRootObjectParamsLabel = _utils.default.createLabel('Spacing', 0, yAxis, global.marginLeftColRight, 20);
+  const marginBetweenRootObjectParamsLabel = _utils.default.createLabel('Spacing', 0, yAxis, this.marginLeftColRight, 20);
 
-  global.view.addSubview(marginBetweenRootObjectParamsLabel);
-  const sizeBox = NSTextField.alloc().initWithFrame(NSMakeRect(global.marginLeftColRight, yAxis, 50, 21));
+  this.view.addSubview(marginBetweenRootObjectParamsLabel);
+  const sizeBox = NSTextField.alloc().initWithFrame(NSMakeRect(this.marginLeftColRight, yAxis, 50, 21));
 
-  if (_settings.default.hasValue(global.settingsValues.marginBetweenRootObject)) {
-    sizeBox.setStringValue(String(global.settingsValues.marginBetweenRootObject.value));
+  if (_settings.default.hasValue(this.settingsValues.marginBetweenRootObject)) {
+    sizeBox.setStringValue(String(this.settingsValues.marginBetweenRootObject.value));
   } else {
-    sizeBox.setPlaceholderString(String(global.settingsValues.marginBetweenRootObject.placeholder));
+    sizeBox.setPlaceholderString(String(this.settingsValues.marginBetweenRootObject.placeholder));
   }
 
-  global.view.addSubview(sizeBox);
+  this.view.addSubview(sizeBox);
 
-  const sizeBoxUnit = _utils.default.createLabel('px or %', global.marginLeftColRight + 55, yAxis, 100, 20);
+  const sizeBoxUnit = _utils.default.createLabel('px or %', this.marginLeftColRight + 55, yAxis, 100, 20);
 
-  global.view.addSubview(sizeBoxUnit);
-  global.coeffCurrentHeight++;
-  addDescription('Set the spacing between the imported icons.', global.lineOne + 15, global); // addDescription('Format: size-padding', global.lineTwo)
+  this.view.addSubview(sizeBoxUnit);
+  this.coeffCurrentHeight++;
+  addDescription.call(this, 'Set the spacing between the imported icons.', this.lineOne + 15); // addDescription('Format: size-padding', this.lineTwo)
 
-  global.marginBetweenRootObject = sizeBox;
+  this.marginBetweenRootObject = sizeBox;
 }
 
-function prefixRootObjectParams(global) {
-  global.coeffCurrentHeight++;
-  const yAxis = global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight + global.adjust;
+function prefixRootObjectParams() {
+  this.coeffCurrentHeight++;
+  const yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + this.adjust;
 
-  const prefixRootObjectParamsLabel = _utils.default.createLabel('Add Prefix ', 0, yAxis, global.marginLeftColRight, 20);
+  const prefixRootObjectParamsLabel = _utils.default.createLabel('Add Prefix ', 0, yAxis, this.marginLeftColRight, 20);
 
-  global.view.addSubview(prefixRootObjectParamsLabel);
-  const sizeBox = NSTextField.alloc().initWithFrame(NSMakeRect(global.marginLeftColRight, yAxis, 145, 21));
+  this.view.addSubview(prefixRootObjectParamsLabel);
+  const sizeBox = NSTextField.alloc().initWithFrame(NSMakeRect(this.marginLeftColRight, yAxis, 145, 21));
 
-  if (_settings.default.hasValue(global.settingsValues.prefixRootObject)) {
-    sizeBox.setStringValue(String(global.settingsValues.prefixRootObject.value));
+  if (_settings.default.hasValue(this.settingsValues.prefixRootObject)) {
+    sizeBox.setStringValue(String(this.settingsValues.prefixRootObject.value));
   } else {
-    sizeBox.setPlaceholderString(String(global.settingsValues.prefixRootObject.placeholder));
+    sizeBox.setPlaceholderString(String(this.settingsValues.prefixRootObject.placeholder));
   }
 
-  global.view.addSubview(sizeBox);
-  global.coeffCurrentHeight++;
-  addDescription('Add a path structure to the name of yours icons.', global.lineOne, global);
-  addDescription('$size is equal to the size of the artboard.', global.lineTwo, global);
-  global.prefixRootObject = sizeBox;
+  this.view.addSubview(sizeBox);
+  this.coeffCurrentHeight++;
+  addDescription.call(this, 'Add a path structure to the name of yours icons.', this.lineOne);
+  addDescription.call(this, '$size is equal to the size of the artboard.', this.lineTwo);
+  this.prefixRootObject = sizeBox;
 }
 
-function addDescription(text, ajust, global) {
-  const yAxis = global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight + ajust;
+function addDescription(text, ajust) {
+  const yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + ajust;
 
   const descriptionLabel = _utils.default.createLabel(text, 0, yAxis, 400, 20, true);
 
-  global.view.addSubview(descriptionLabel);
+  this.view.addSubview(descriptionLabel);
 }
 
 module.exports = exports["default"];
@@ -1308,14 +1303,14 @@ function initLibsSelectList(context, libraries, colorMenu) {
   const colorLibsMenu = NSMenu.alloc().init();
   const currentDocument = NSMenuItem.alloc().init();
   currentDocument.title = 'Current file';
-  addListener(currentDocument);
+  addListener.call(this, currentDocument);
   colorLibsMenu.addItem(currentDocument);
   libraries.forEach(library => {
     let item = NSMenuItem.alloc().init();
     item.title = library.name();
     item.representedObject = library;
     colorLibsMenu.addItem(item);
-    addListener(item);
+    addListener.call(this, item);
   });
   updateColorMenu.call(this, context, currentDocument, colorMenu);
   return colorLibsMenu;
@@ -1325,13 +1320,13 @@ function updateColorMenu(context, libraryItem, colorMenu) {
   let colors = [];
 
   if (!libraryItem.representedObject()) {
-    colors = getColorSymbolsFromDocument(context.document.documentData());
+    colors = getColorSymbolsFromDocument.call(this, context.document.documentData());
   } else {
-    colors = loadColorFromSelectedLib(libraryItem, colorMenu);
+    colors = loadColorFromSelectedLib.call(this, libraryItem, colorMenu);
   }
 
   if (colors.length > 0) {
-    initColorSelectList(colorMenu, colors);
+    initColorSelectList.call(this, colorMenu, colors);
 
     _modals.setEnabledColorMenu.call(this, true);
   } else {

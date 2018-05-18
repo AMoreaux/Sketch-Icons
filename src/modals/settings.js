@@ -6,179 +6,178 @@ export default settingsModal;
 
 function settingsModal(context) {
 
-  let global = {};
 
-  global.settingsValues = settingsProvider.getSettings(context, 'placeholder')
+  this.settingsValues = settingsProvider.getSettings(context, 'placeholder')
 
-  global.modalParams = {
+  this.modalParams = {
     messageText: 'Settings',
     informativeText: 'Customize your imports using presets and other features.',
-    height: (Object.keys(global.settingsValues).length + 1) * 73,
+    height: (Object.keys(this.settingsValues).length + 1) * 73,
     width: 340,
     lineHeight: 45
   };
 
-  global.coeffCurrentHeight = 0;
-  global.adjustHeight = 0;
-  global.marginLeftColRight = 130;
-  global.adjust = -5;
-  global.lineOne = 15;
-  global.lineTwo = 0;
+  this.coeffCurrentHeight = 0;
+  this.adjustHeight = 0;
+  this.marginLeftColRight = 130;
+  this.adjust = -5;
+  this.lineOne = 15;
+  this.lineTwo = 0;
 
-  constructBase('Save', global);
+  constructBase.call(this, 'Save');
 
-  makePresetParams(global);
-  prefixRootObjectParams(global)
-  quantityIconsByLine(global)
-  marginBetweenRootObject(global)
-  convertStrokeToFillParams(global)
+  makePresetParams.call(this);
+  prefixRootObjectParams.call(this)
+  quantityIconsByLine.call(this)
+  marginBetweenRootObject.call(this)
+  convertStrokeToFillParams.call(this)
 
   return {
-    button: global.modal.runModal(),
-    presets: String(global.presets.stringValue()).replace(/ /g, ''),
-    iconsByLine: parseInt(global.iconsByLine.stringValue()) || null,
-    convertStroke: global.convertStroke.state(),
-    marginBetweenRootObject: global.marginBetweenRootObject.stringValue().replace(/ /g, ''),
-    prefixRootObject: global.prefixRootObject.stringValue()
+    button: this.modal.runModal(),
+    presets: String(this.presets.stringValue()).replace(/ /g, ''),
+    iconsByLine: parseInt(this.iconsByLine.stringValue()) || null,
+    convertStroke: this.convertStroke.state(),
+    marginBetweenRootObject: this.marginBetweenRootObject.stringValue().replace(/ /g, ''),
+    prefixRootObject: this.prefixRootObject.stringValue()
   };
 }
 
-function makePresetParams(global) {
-  global.coeffCurrentHeight++;
-  let yAxis = global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight + global.adjust
+function makePresetParams() {
+  this.coeffCurrentHeight++;
+  let yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + this.adjust
 
-  const textBoxLabel = utils.createLabel('Size Presets', 0, yAxis, global.marginLeftColRight, 20);
-  global.view.addSubview(textBoxLabel);
+  const textBoxLabel = utils.createLabel('Size Presets', 0, yAxis, this.marginLeftColRight, 20);
+  this.view.addSubview(textBoxLabel);
 
   const presetsBox = NSTextField.alloc().initWithFrame(
-    NSMakeRect(global.marginLeftColRight, yAxis, 145, 21)
+    NSMakeRect(this.marginLeftColRight, yAxis, 145, 21)
   );
 
-  if (settingsProvider.hasValue(global.settingsValues.presets)) {
-    presetsBox.setStringValue(String(global.settingsValues.presets.value));
+  if (settingsProvider.hasValue(this.settingsValues.presets)) {
+    presetsBox.setStringValue(String(this.settingsValues.presets.value));
   } else {
-    presetsBox.setPlaceholderString(String(global.settingsValues.presets.placeholder));
+    presetsBox.setPlaceholderString(String(this.settingsValues.presets.placeholder));
   }
 
-  global.view.addSubview(presetsBox);
+  this.view.addSubview(presetsBox);
 
-  global.coeffCurrentHeight++;
-  addDescription('Set your artboard sizes and padding.', global.lineOne, global)
-  addDescription('Format: size-padding', global.lineTwo, global)
+  this.coeffCurrentHeight++;
+  addDescription.call(this, 'Set your artboard sizes and padding.', this.lineOne)
+  addDescription.call(this, 'Format: size-padding', this.lineTwo)
 
-  global.presets = presetsBox
+  this.presets = presetsBox
 
 }
 
-function convertStrokeToFillParams(global) {
+function convertStrokeToFillParams() {
 
-  global.coeffCurrentHeight++;
-  const yAxis = global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight + 30
+  this.coeffCurrentHeight++;
+  const yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + 30
 
-  const convertStrokeCheckboxLabel = utils.createLabel('Stroke to Fill', 0, yAxis, global.marginLeftColRight, 20)
-  global.view.addSubview(convertStrokeCheckboxLabel);
+  const convertStrokeCheckboxLabel = utils.createLabel('Stroke to Fill', 0, yAxis, this.marginLeftColRight, 20)
+  this.view.addSubview(convertStrokeCheckboxLabel);
 
   const convertStrokeCheckBox = NSButton.alloc().initWithFrame(
-    NSMakeRect(global.marginLeftColRight, yAxis, 200, 21)
+    NSMakeRect(this.marginLeftColRight, yAxis, 200, 21)
   );
   convertStrokeCheckBox.setButtonType(NSSwitchButton);
-  convertStrokeCheckBox.setState(parseInt(global.settingsValues.convertStroke.data));
+  convertStrokeCheckBox.setState(parseInt(this.settingsValues.convertStroke.data));
   convertStrokeCheckBox.setFont(NSFont.systemFontOfSize_(13));
   convertStrokeCheckBox.setTitle('Auto-Convert');
-  global.view.addSubview(convertStrokeCheckBox);
+  this.view.addSubview(convertStrokeCheckBox);
 
-  global.coeffCurrentHeight++;
-  addDescription('global will allow you to add a dynamic color mask ', global.lineOne + 30, global)
-  addDescription('over your outlined icons.', global.lineTwo + 30, global)
+  this.coeffCurrentHeight++;
+  addDescription.call(this, 'this will allow you to add a dynamic color mask ', this.lineOne + 30)
+  addDescription.call(this, 'over your outlined icons.', this.lineTwo + 30)
 
-  global.convertStroke = convertStrokeCheckBox;
+  this.convertStroke = convertStrokeCheckBox;
 }
 
-function quantityIconsByLine(global) {
-  global.coeffCurrentHeight++;
-  const yAxis = global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight + global.adjust
+function quantityIconsByLine() {
+  this.coeffCurrentHeight++;
+  const yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + this.adjust
 
-  const iconByLineParamsLabel = utils.createLabel('Icons Grid', 0, yAxis, global.marginLeftColRight, 20);
-  global.view.addSubview(iconByLineParamsLabel);
+  const iconByLineParamsLabel = utils.createLabel('Icons Grid', 0, yAxis, this.marginLeftColRight, 20);
+  this.view.addSubview(iconByLineParamsLabel);
   const sizeBox = NSTextField.alloc().initWithFrame(
-    NSMakeRect(global.marginLeftColRight, yAxis, 50, 21)
+    NSMakeRect(this.marginLeftColRight, yAxis, 50, 21)
   );
 
-  if (String(global.settingsValues.iconsByLine.value) === 'null') {
+  if (String(this.settingsValues.iconsByLine.value) === 'null') {
     sizeBox.setPlaceholderString('10')
   } else {
-    sizeBox.setStringValue(String(global.settingsValues.iconsByLine.value));
+    sizeBox.setStringValue(String(this.settingsValues.iconsByLine.value));
   }
 
-  global.view.addSubview(sizeBox);
-  const sizeBoxUnit = utils.createLabel('icons per row', global.marginLeftColRight + 55, yAxis, 100, 20)
-  global.view.addSubview(sizeBoxUnit);
+  this.view.addSubview(sizeBox);
+  const sizeBoxUnit = utils.createLabel('icons per row', this.marginLeftColRight + 55, yAxis, 100, 20)
+  this.view.addSubview(sizeBoxUnit);
 
-  global.coeffCurrentHeight++;
-  addDescription('Set the number of imported icons per row.', global.lineOne, global)
-  // addDescription('Format: size-padding', global.lineTwo)
+  this.coeffCurrentHeight++;
+  addDescription.call(this,'Set the number of imported icons per row.', this.lineOne)
+  // addDescription('Format: size-padding', this.lineTwo)
 
-  global.iconsByLine = sizeBox;
+  this.iconsByLine = sizeBox;
 }
 
-function marginBetweenRootObject(global) {
-  global.coeffCurrentHeight++;
-  const yAxis = global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight + 15
+function marginBetweenRootObject() {
+  this.coeffCurrentHeight++;
+  const yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + 15
 
-  const marginBetweenRootObjectParamsLabel = utils.createLabel('Spacing', 0, yAxis, global.marginLeftColRight, 20);
-  global.view.addSubview(marginBetweenRootObjectParamsLabel);
+  const marginBetweenRootObjectParamsLabel = utils.createLabel('Spacing', 0, yAxis, this.marginLeftColRight, 20);
+  this.view.addSubview(marginBetweenRootObjectParamsLabel);
   const sizeBox = NSTextField.alloc().initWithFrame(
-    NSMakeRect(global.marginLeftColRight, yAxis, 50, 21)
+    NSMakeRect(this.marginLeftColRight, yAxis, 50, 21)
   );
 
-  if (settingsProvider.hasValue(global.settingsValues.marginBetweenRootObject)) {
-    sizeBox.setStringValue(String(global.settingsValues.marginBetweenRootObject.value));
+  if (settingsProvider.hasValue(this.settingsValues.marginBetweenRootObject)) {
+    sizeBox.setStringValue(String(this.settingsValues.marginBetweenRootObject.value));
   } else {
-    sizeBox.setPlaceholderString(String(global.settingsValues.marginBetweenRootObject.placeholder));
+    sizeBox.setPlaceholderString(String(this.settingsValues.marginBetweenRootObject.placeholder));
   }
 
-  global.view.addSubview(sizeBox);
-  const sizeBoxUnit = utils.createLabel('px or %', global.marginLeftColRight + 55, yAxis, 100, 20)
-  global.view.addSubview(sizeBoxUnit);
+  this.view.addSubview(sizeBox);
+  const sizeBoxUnit = utils.createLabel('px or %', this.marginLeftColRight + 55, yAxis, 100, 20)
+  this.view.addSubview(sizeBoxUnit);
 
-  global.coeffCurrentHeight++;
-  addDescription('Set the spacing between the imported icons.', global.lineOne + 15, global)
-  // addDescription('Format: size-padding', global.lineTwo)
+  this.coeffCurrentHeight++;
+  addDescription.call(this,'Set the spacing between the imported icons.', this.lineOne + 15)
+  // addDescription('Format: size-padding', this.lineTwo)
 
-  global.marginBetweenRootObject = sizeBox;
+  this.marginBetweenRootObject = sizeBox;
 }
 
-function prefixRootObjectParams(global) {
-  global.coeffCurrentHeight++;
-  const yAxis = global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight + global.adjust
+function prefixRootObjectParams() {
+  this.coeffCurrentHeight++;
+  const yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + this.adjust
 
-  const prefixRootObjectParamsLabel = utils.createLabel('Add Prefix ', 0, yAxis, global.marginLeftColRight, 20);
-  global.view.addSubview(prefixRootObjectParamsLabel);
+  const prefixRootObjectParamsLabel = utils.createLabel('Add Prefix ', 0, yAxis, this.marginLeftColRight, 20);
+  this.view.addSubview(prefixRootObjectParamsLabel);
   const sizeBox = NSTextField.alloc().initWithFrame(
-    NSMakeRect(global.marginLeftColRight, yAxis, 145, 21)
+    NSMakeRect(this.marginLeftColRight, yAxis, 145, 21)
   );
 
-  if (settingsProvider.hasValue(global.settingsValues.prefixRootObject)) {
-    sizeBox.setStringValue(String(global.settingsValues.prefixRootObject.value));
+  if (settingsProvider.hasValue(this.settingsValues.prefixRootObject)) {
+    sizeBox.setStringValue(String(this.settingsValues.prefixRootObject.value));
   } else {
-    sizeBox.setPlaceholderString(String(global.settingsValues.prefixRootObject.placeholder));
+    sizeBox.setPlaceholderString(String(this.settingsValues.prefixRootObject.placeholder));
   }
 
-  global.view.addSubview(sizeBox);
+  this.view.addSubview(sizeBox);
 
-  global.coeffCurrentHeight++;
-  addDescription('Add a path structure to the name of yours icons.', global.lineOne, global)
-  addDescription('$size is equal to the size of the artboard.', global.lineTwo, global)
+  this.coeffCurrentHeight++;
+  addDescription.call(this, 'Add a path structure to the name of yours icons.', this.lineOne)
+  addDescription.call(this, '$size is equal to the size of the artboard.', this.lineTwo)
 
-  global.prefixRootObject = sizeBox;
+  this.prefixRootObject = sizeBox;
 }
 
 
-function addDescription(text, ajust, global) {
+function addDescription(text, ajust) {
 
-  const yAxis = global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight + ajust
+  const yAxis = this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight + ajust
 
   const descriptionLabel = utils.createLabel(text, 0, yAxis, 400, 20, true);
 
-  global.view.addSubview(descriptionLabel);
+  this.view.addSubview(descriptionLabel);
 }

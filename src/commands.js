@@ -50,7 +50,7 @@ export function organizeIcons(context) {
   const selectedLayers = context.selection;
   if (selectedLayers.length === 0) return modals.newErrorModal('No layers selected', 'Please select one or more layers.')
   utils.runFramework(context)
-  const params = importModal(context)
+  const params = importModal.call({}, context)
   if (params.button !== 1000) return
   params.listIcon = selectedLayers
   artboardProvider.initImport(context, params, artboardProvider.initOrganizeIcons)
@@ -68,7 +68,7 @@ export function addMaskOnSelectedArtboards(context) {
   utils.runFramework(context)
   const selectedArtboardsAndSymbols = utils.getSelectedArtboardsAndSymbols(context);
   if (selectedArtboardsAndSymbols.length === 0) return modals.newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.')
-  const params = maskModal(context)
+  const params = maskModal.call({}, context)
   if (params.button !== 1000) return
   maskProvider.initAddMaskOnSelectedArtboards(context, params, selectedArtboardsAndSymbols)
   analytics.action(context, 'icons', 'mask', 'mask', selectedArtboardsAndSymbols.length)
@@ -94,7 +94,7 @@ export function removeMaskOnSelectedArtboards(context) {
  * @param context
  */
 export function setSettings(context) {
-  const params = settingsModal(context)
+  const params = settingsModal.call({}, context)
   if (params.button === 1001) return
   settingsProvider.registerSettings(context, params)
   analytics.action(context, 'settings', 'settings', 'settings')

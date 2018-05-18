@@ -2,6 +2,7 @@ import utils from '../utils/utils'
 import logger from '../utils/logger'
 import libraries from '../providers/libraries'
 import settingsProvider from '../providers/settings'
+
 const disabledColor = NSColor.colorWithCalibratedRed_green_blue_alpha(170 / 255, 170 / 255, 170 / 255, 1)
 export {
   setEnabledColorMenu,
@@ -72,34 +73,24 @@ function importModal(context) {
   this.adjustHeight = 0;
 
   constructBase.call(this, 'Continue')
-  console.log('>>>>>>>>>>>');
   if (usePresets) {
     makePresetsParams.call(this)
   } else {
     makeArtboardParams.call(this)
   }
-  console.log('>>>>>>>>>>>');
 
   this.view.addSubview(utils.createDivider(NSMakeRect(0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - 10, this.modalParams.width, 1)));
   this.adjustHeight = 5
   makeSymbolParams.call(this)
-  console.log('>>>>>>>>>>>');
   this.view.addSubview(utils.createDivider(NSMakeRect(0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - 15, this.modalParams.width, 1)));
   this.adjustHeight = 8
   makeMaskCheckboxParams.call(this)
-  console.log('>>>>>>>>>>>');
   makeMaskRadioButtonParams.call(this)
-  console.log('>>>>>>>>>>>');
   makeMaskLibraryParams.call(this, context)
-  console.log('>>>>>>>>>>>');
-  setEnabledColorLibraryMenu.call(this,false)
-  console.log('>>>>>>>>>>>');
+  setEnabledColorLibraryMenu.call(this, false)
   setEnabledColorMenu.call(this, false)
-  console.log('>>>>>>>>>>>');
   setEnabledRadioButton.call(this, false)
-  console.log('>>>>>>>>>>>');
   makeMaskColorPickerParams.call(this, context)
-  console.log('>>>>>>>>>>>');
   addListenerOnMaskCheckbox.call(this)
 
   const result = {
@@ -315,7 +306,7 @@ function makeMaskRadioButtonParams() {
 
   this.view.addSubview(matrixFormat);
 
-  setListenerRadioButon(cells)
+  setListenerRadioButon.call(this, cells)
 
   this.radioParams = matrixFormat
   this.radioButtonLabel = radioButtonLabel
@@ -388,15 +379,15 @@ function addListenerOnMaskCheckbox() {
 
   this.checkboxMaskParams.setCOSJSTargetFunction((mask) => {
     if (mask.state()) {
-      setEnabledRadioButton(true)
-      setEnabledColorLibraryMenu(true)
-      if (this.colorsMenuParams.numberOfItems() > 0) setEnabledColorMenu(true)
+      setEnabledRadioButton.call(this, true)
+      setEnabledColorLibraryMenu.call(this, true)
+      if (this.colorsMenuParams.numberOfItems() > 0) setEnabledColorMenu.call(this, true)
     } else {
-      setEnabledRadioButton(false)
-      setEnabledColorLibraryMenu(false)
-      setEnabledColorMenu(false)
-      addLibraryColorsFields()
-      removePickerButton()
+      setEnabledRadioButton.call(this, false)
+      setEnabledColorLibraryMenu.call(this, false)
+      setEnabledColorMenu.call(this, false)
+      addLibraryColorsFields.call(this)
+      removePickerButton.call(this)
       this.radioParams.cells()[0].state = true
       this.radioParams.cells()[1].state = false
     }
@@ -406,18 +397,18 @@ function addListenerOnMaskCheckbox() {
 function setListenerRadioButon(cells) {
   function setState(item) {
     if (String(item.selectedCells()[0].title()) === 'From Symbols') {
-      addLibraryColorsFields()
-      removePickerButton()
+      addLibraryColorsFields.call(this)
+      removePickerButton.call(this)
       this.isLibrarySource = true
     } else {
-      removeLibraryColorsFields()
-      addPickerButton()
+      removeLibraryColorsFields.call(this)
+      addPickerButton.call(this)
       this.isLibrarySource = false
     }
   }
 
-  cells[0].setCOSJSTargetFunction(setState);
-  cells[1].setCOSJSTargetFunction(setState);
+  cells[0].setCOSJSTargetFunction(setState.bind(this));
+  cells[1].setCOSJSTargetFunction(setState.bind(this));
 }
 
 function setEnabledColorLibraryMenu(enabled) {

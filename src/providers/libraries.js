@@ -68,14 +68,14 @@ function initLibsSelectList(context, libraries, colorMenu) {
   const colorLibsMenu = NSMenu.alloc().init()
   const currentDocument = NSMenuItem.alloc().init()
   currentDocument.title = 'Current file'
-  addListener(currentDocument)
+  addListener.call(this,currentDocument)
   colorLibsMenu.addItem(currentDocument)
   libraries.forEach((library) => {
     let item = NSMenuItem.alloc().init()
     item.title = library.name()
     item.representedObject = library
     colorLibsMenu.addItem(item)
-    addListener(item)
+    addListener.call(this,item)
   })
 
   updateColorMenu.call(this, context, currentDocument, colorMenu)
@@ -86,12 +86,12 @@ function initLibsSelectList(context, libraries, colorMenu) {
 function updateColorMenu(context, libraryItem, colorMenu){
   let colors = []
   if(!libraryItem.representedObject()){
-    colors = getColorSymbolsFromDocument(context.document.documentData())
+    colors = getColorSymbolsFromDocument.call(this, context.document.documentData())
   }else{
-    colors = loadColorFromSelectedLib(libraryItem, colorMenu)
+    colors = loadColorFromSelectedLib.call(this, libraryItem, colorMenu)
   }
   if(colors.length > 0){
-    initColorSelectList(colorMenu, colors);
+    initColorSelectList.call(this, colorMenu, colors);
     setEnabledColorMenu.call(this, true)
   }else {
     setEnabledColorMenu.call(this, false)
