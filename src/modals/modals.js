@@ -2,7 +2,6 @@ import utils from '../utils/utils'
 import logger from '../utils/logger'
 import libraries from '../providers/libraries'
 import settingsProvider from '../providers/settings'
-let global = {};
 const disabledColor = NSColor.colorWithCalibratedRed_green_blue_alpha(170 / 255, 170 / 255, 170 / 255, 1)
 export {
   setEnabledColorMenu,
@@ -12,7 +11,7 @@ export {
 }
 
 function maskModal(context) {
-  global.modalParams = {
+  this.modalParams = {
     messageText: 'Configure your color mask',
     informativeText: 'Select your library and choose a color to apply as mask. Your layers will all be combined.',
     height: 160,
@@ -20,89 +19,98 @@ function maskModal(context) {
     lineHeight: 35
   };
 
-  global.coeffCurrentHeight = 0;
-  global.isLibrarySource = true;
-  global.adjustHeight = 0;
+  this.coeffCurrentHeight = 0;
+  this.isLibrarySource = true;
+  this.adjustHeight = 0;
 
-  constructBase('Continue', global);
+  constructBase.call(this, 'Continue');
 
-  makeMaskRadioButtonParams(global);
-  makeMaskLibraryParams(context, global);
-  makeMaskColorPickerParams(context, global);
+  makeMaskRadioButtonParams.call(this);
+  makeMaskLibraryParams.call(this, context);
+  makeMaskColorPickerParams.call(this, context);
 
   const result = {
-    button: global.modal.runModal()
+    button: this.modal.runModal()
   };
 
-  if (global.isLibrarySource) {
-    let colorMenu = global.colorsMenuParams.selectedItem();
-    result.color = (colorMenu) ? global.colorsMenuParams.representedObject() : null;
+  if (this.isLibrarySource) {
+    let colorMenu = this.colorsMenuParams.selectedItem();
+    result.color = (colorMenu) ? this.colorsMenuParams.representedObject() : null;
 
-    let colorLib = global.colorLibsMenuParams.selectedItem();
-    result.colorLib = (colorLib) ? global.colorLibsMenuParams.representedObject() : null;
+    let colorLib = this.colorLibsMenuParams.selectedItem();
+    result.colorLib = (colorLib) ? this.colorLibsMenuParams.representedObject() : null;
   } else {
-    result.colorPicker = global.colorPickerColor
+    result.colorPicker = this.colorPickerColor
   }
 
   return result
 }
 
 function importModal(context) {
-  let global = {};
   let usePresets;
-  global.settingsValues = settingsProvider.getSettings(context, 'default');
+  this.settingsValues = settingsProvider.getSettings(context, 'default');
 
-  global.modalParams = {
+  this.modalParams = {
     messageText: 'Configure your import',
     informativeText: 'Your icons will be arranged in artboards. Set size and padding of your artboards.',
     width: 300,
     lineHeight: 35
   };
 
-  if (settingsProvider.hasValue(global.settingsValues.presets)) {
-    global.modalParams.height = 300 + global.settingsValues.presets.data.split(',').length * 30
+  if (settingsProvider.hasValue(this.settingsValues.presets)) {
+    this.modalParams.height = 300 + this.settingsValues.presets.data.split(',').length * 30
     usePresets = true
   } else {
-    global.modalParams.height = 300;
+    this.modalParams.height = 300;
     usePresets = false
   }
 
-  global.modalParams.height = settingsProvider.hasValue(global.settingsValues.presets) ? 300 + global.settingsValues.presets.data.split(',').length * 30 : 300
+  this.modalParams.height = settingsProvider.hasValue(this.settingsValues.presets) ? 300 + this.settingsValues.presets.data.split(',').length * 30 : 300
 
-  global.coeffCurrentHeight = 0;
-  global.isLibrarySource = true;
-  global.adjustHeight = 0;
+  this.coeffCurrentHeight = 0;
+  this.isLibrarySource = true;
+  this.adjustHeight = 0;
 
-  constructBase('Continue', global)
+  constructBase.call(this, 'Continue')
+  console.log('>>>>>>>>>>>');
   if (usePresets) {
-    makePresetsParams(global)
+    makePresetsParams.call(this)
   } else {
-    makeArtboardParams(global)
+    makeArtboardParams.call(this)
   }
+  console.log('>>>>>>>>>>>');
 
-  global.view.addSubview(utils.createDivider(NSMakeRect(0, global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight - 10, global.modalParams.width, 1)));
-  global.adjustHeight = 5
-  makeSymbolParams(global)
-  global.view.addSubview(utils.createDivider(NSMakeRect(0, global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight - 15, global.modalParams.width, 1)));
-  global.adjustHeight = 8
-  makeMaskCheckboxParams(global)
-  makeMaskRadioButtonParams(global)
-  makeMaskLibraryParams(context, global)
-  setEnabledColorLibraryMenu(false, global)
-  setEnabledColorMenu(false, global)
-  setEnabledRadioButton(false, global)
-  makeMaskColorPickerParams(context, global)
-  addListenerOnMaskCheckbox(global)
+  this.view.addSubview(utils.createDivider(NSMakeRect(0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - 10, this.modalParams.width, 1)));
+  this.adjustHeight = 5
+  makeSymbolParams.call(this)
+  console.log('>>>>>>>>>>>');
+  this.view.addSubview(utils.createDivider(NSMakeRect(0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - 15, this.modalParams.width, 1)));
+  this.adjustHeight = 8
+  makeMaskCheckboxParams.call(this)
+  console.log('>>>>>>>>>>>');
+  makeMaskRadioButtonParams.call(this)
+  console.log('>>>>>>>>>>>');
+  makeMaskLibraryParams.call(this, context)
+  console.log('>>>>>>>>>>>');
+  setEnabledColorLibraryMenu.call(this,false)
+  console.log('>>>>>>>>>>>');
+  setEnabledColorMenu.call(this, false)
+  console.log('>>>>>>>>>>>');
+  setEnabledRadioButton.call(this, false)
+  console.log('>>>>>>>>>>>');
+  makeMaskColorPickerParams.call(this, context)
+  console.log('>>>>>>>>>>>');
+  addListenerOnMaskCheckbox.call(this)
 
   const result = {
-    button: global.modal.runModal(),
-    convertSymbol: global.symbolParams.state(),
-    withMask: !!global.checkboxMaskParams.state()
+    button: this.modal.runModal(),
+    convertSymbol: this.symbolParams.state(),
+    withMask: !!this.checkboxMaskParams.state()
   }
 
   if (usePresets) {
     result.presets = []
-    global.presets.forEach(preset => {
+    this.presets.forEach(preset => {
       if (preset.presetCheckBox.state()) {
         result.presets.push({
           artboardSize: parseInt(preset.sizeBox.stringValue()),
@@ -111,29 +119,28 @@ function importModal(context) {
       }
     })
   } else {
-    result.artboardSize = parseInt(global.artboardSize.stringValue())
-    result.iconPadding = parseInt(global.artboardPadding.stringValue())
+    result.artboardSize = parseInt(this.artboardSize.stringValue())
+    result.iconPadding = parseInt(this.artboardPadding.stringValue())
   }
 
-  if (result.withMask && global.isLibrarySource) {
-    let colorMenu = global.colorsMenuParams.selectedItem()
-    result.color = (colorMenu) ? global.colorsMenuParams.representedObject() : null
+  if (result.withMask && this.isLibrarySource) {
+    let colorMenu = this.colorsMenuParams.selectedItem()
+    result.color = (colorMenu) ? this.colorsMenuParams.representedObject() : null
 
-    let colorLib = global.colorLibsMenuParams.selectedItem()
-    result.colorLib = (colorLib) ? global.colorLibsMenuParams.representedObject() : null
+    let colorLib = this.colorLibsMenuParams.selectedItem()
+    result.colorLib = (colorLib) ? this.colorLibsMenuParams.representedObject() : null
 
     if (!result.color) result.withMask = false
   } else if (result.withMask) {
-    result.colorPicker = global.colorPickerColor || MSColor.blackColor()
+    result.colorPicker = this.colorPickerColor || MSColor.blackColor()
   }
   return result
 }
 
 function artboardModal(context) {
-  let global = {};
-  global.settingsValues = settingsProvider.getSettings(context, 'placeholder')
+  this.settingsValues = settingsProvider.getSettings(context, 'placeholder')
 
-  global.modalParams = {
+  this.modalParams = {
     messageText: 'Configure your icons',
     informativeText: 'Your icons will be moved in artboards. Set size and padding of your artboards.',
     height: 100,
@@ -141,34 +148,34 @@ function artboardModal(context) {
     lineHeight: 35
   }
 
-  global.coeffCurrentHeight = 0
-  global.adjustHeight = 0
+  this.coeffCurrentHeight = 0
+  this.adjustHeight = 0
 
-  constructBase(global)
-  makeArtboardParams(global)
+  constructBase()
+  makeArtboardParams()
 
   return {
-    button: global.modal.runModal(),
-    artboardSize: parseInt(global.artboardSize.stringValue()),
-    iconPadding: parseInt(global.artboardPadding.stringValue()),
+    button: this.modal.runModal(),
+    artboardSize: parseInt(this.artboardSize.stringValue()),
+    iconPadding: parseInt(this.artboardPadding.stringValue()),
   }
 }
 
-function constructBase(button1 = 'Continue', global) {
+function constructBase(button1 = 'Continue') {
 
-  global.modal = COSAlertWindow.new();
+  this.modal = COSAlertWindow.new();
 
-  global.view = NSView.alloc().initWithFrame(NSMakeRect(0, 0, global.modalParams.width, global.modalParams.height));
+  this.view = NSView.alloc().initWithFrame(NSMakeRect(0, 0, this.modalParams.width, this.modalParams.height));
 
-  global.modal.addAccessoryView(global.view);
-  global.modal.setMessageText(global.modalParams.messageText);
-  global.modal.addButtonWithTitle(button1);
-  global.modal.setInformativeText(global.modalParams.informativeText);
-  global.modal.addButtonWithTitle('Cancel');
+  this.modal.addAccessoryView(this.view);
+  this.modal.setMessageText(this.modalParams.messageText);
+  this.modal.addButtonWithTitle(button1);
+  this.modal.setInformativeText(this.modalParams.informativeText);
+  this.modal.addButtonWithTitle('Cancel');
 }
 
-function makePresetsParams(global) {
-  const presets = global.settingsValues.presets.data.split(',').map(preset => {
+function makePresetsParams() {
+  const presets = this.settingsValues.presets.data.split(',').map(preset => {
     const properties = preset.split('-')
     return {
       artboardSize: properties[0],
@@ -176,54 +183,54 @@ function makePresetsParams(global) {
     }
   })
 
-  global.presets = []
+  this.presets = []
 
-  const presetLabel = utils.createLabel(`Presets`, 0, global.modalParams.height - global.modalParams.lineHeight, 150, 20)
-  global.view.addSubview(presetLabel)
+  const presetLabel = utils.createLabel(`Presets`, 0, this.modalParams.height - this.modalParams.lineHeight, 150, 20)
+  this.view.addSubview(presetLabel)
 
-  const sizeLabel = utils.createLabel(`Size`, 180, global.modalParams.height - global.modalParams.lineHeight, 100, 20)
-  global.view.addSubview(sizeLabel)
+  const sizeLabel = utils.createLabel(`Size`, 180, this.modalParams.height - this.modalParams.lineHeight, 100, 20)
+  this.view.addSubview(sizeLabel)
 
-  const paddingLabel = utils.createLabel(`Padding`, 240, global.modalParams.height - global.modalParams.lineHeight, 100, 20)
-  global.view.addSubview(paddingLabel)
+  const paddingLabel = utils.createLabel(`Padding`, 240, this.modalParams.height - this.modalParams.lineHeight, 100, 20)
+  this.view.addSubview(paddingLabel)
 
-  global.coeffCurrentHeight++
+  this.coeffCurrentHeight++
 
   presets.forEach((preset) => {
-    global.coeffCurrentHeight++
-    makePreset(preset, global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight, global)
+    this.coeffCurrentHeight++
+    makePreset.call(this, preset, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, this)
   })
 }
 
-function makeArtboardParams(global) {
+function makeArtboardParams() {
 
-  global.coeffCurrentHeight++
+  this.coeffCurrentHeight++
 
-  const textBoxLabel = utils.createLabel('Artboard size', 0, global.modalParams.height - global.modalParams.lineHeight, 150, 20)
-  global.view.addSubview(textBoxLabel)
-  const textBox = NSTextField.alloc().initWithFrame(NSMakeRect(150, global.modalParams.height - global.modalParams.lineHeight, 50, 20));
+  const textBoxLabel = utils.createLabel('Artboard size', 0, this.modalParams.height - this.modalParams.lineHeight, 150, 20)
+  this.view.addSubview(textBoxLabel)
+  const textBox = NSTextField.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight, 50, 20));
   textBox.setStringValue(24);
-  global.view.addSubview(textBox)
-  const textBoxUnit = utils.createLabel('px', 205, global.modalParams.height - global.modalParams.lineHeight, 50, 20)
-  global.view.addSubview(textBoxUnit)
+  this.view.addSubview(textBox)
+  const textBoxUnit = utils.createLabel('px', 205, this.modalParams.height - this.modalParams.lineHeight, 50, 20)
+  this.view.addSubview(textBoxUnit)
 
-  global.coeffCurrentHeight++
+  this.coeffCurrentHeight++
 
-  const paddingBoxLabel = utils.createLabel('Artboard Padding', 0, global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight, 150, 20)
-  global.view.addSubview(paddingBoxLabel)
-  const paddingBox = NSTextField.alloc().initWithFrame(NSMakeRect(150, global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight, 50, 20));
+  const paddingBoxLabel = utils.createLabel('Artboard Padding', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 150, 20)
+  this.view.addSubview(paddingBoxLabel)
+  const paddingBox = NSTextField.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 50, 20));
   paddingBox.setStringValue(4);
-  global.view.addSubview(paddingBox)
-  const paddingBoxUnit = utils.createLabel('px', 205, global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight, 50, 20)
-  global.view.addSubview(paddingBoxUnit)
+  this.view.addSubview(paddingBox)
+  const paddingBoxUnit = utils.createLabel('px', 205, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 50, 20)
+  this.view.addSubview(paddingBoxUnit)
 
-  global.artboardPadding = paddingBox
-  global.artboardSize = textBox
+  this.artboardPadding = paddingBox
+  this.artboardSize = textBox
 
-  global.artboardSize.setNextKeyView(global.artboardPadding)
+  this.artboardSize.setNextKeyView(this.artboardPadding)
 }
 
-function makePreset(preset, yAxis, global) {
+function makePreset(preset, yAxis) {
 
   const presetCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(150, yAxis, 30, 20));
   presetCheckBox.setState(true);
@@ -231,69 +238,69 @@ function makePreset(preset, yAxis, global) {
   presetCheckBox.setFont(NSFont.systemFontOfSize_(13));
   presetCheckBox.setTitle('')
 
-  global.view.addSubview(presetCheckBox)
+  this.view.addSubview(presetCheckBox)
 
   const sizeBox = NSTextField.alloc().initWithFrame(NSMakeRect(180, yAxis, 50, 20));
   sizeBox.setStringValue(preset.artboardSize);
-  global.view.addSubview(sizeBox)
+  this.view.addSubview(sizeBox)
 
   const paddingBox = NSTextField.alloc().initWithFrame(NSMakeRect(240, yAxis, 50, 20));
   paddingBox.setStringValue(preset.padding);
-  global.view.addSubview(paddingBox)
+  this.view.addSubview(paddingBox)
 
   const newPreset = { sizeBox, paddingBox, presetCheckBox }
 
   addListenerPreset(newPreset)
 
-  global.presets.push(newPreset)
+  this.presets.push(newPreset)
 }
 
-function makeSymbolParams(global) {
+function makeSymbolParams() {
 
-  global.coeffCurrentHeight++
+  this.coeffCurrentHeight++
 
-  const maskCheckboxLabel = utils.createLabel('Symbols', 0, global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight - global.adjustHeight, 150, 20)
-  global.view.addSubview(maskCheckboxLabel)
+  const maskCheckboxLabel = utils.createLabel('Symbols', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 150, 20)
+  this.view.addSubview(maskCheckboxLabel)
 
-  const symbolCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(150, global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight - global.adjustHeight, 200, 20));
+  const symbolCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 200, 20));
   symbolCheckBox.setButtonType(NSSwitchButton);
   symbolCheckBox.setState(true);
   symbolCheckBox.setFont(NSFont.systemFontOfSize_(13));
   symbolCheckBox.setTitle('Convert to symbol')
-  global.view.addSubview(symbolCheckBox);
+  this.view.addSubview(symbolCheckBox);
 
-  global.symbolParams = symbolCheckBox
+  this.symbolParams = symbolCheckBox
 }
 
-function makeMaskCheckboxParams(global) {
+function makeMaskCheckboxParams() {
 
-  global.coeffCurrentHeight++
+  this.coeffCurrentHeight++
 
-  const maskCheckboxLabel = utils.createLabel('Mask', 0, global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight - global.adjustHeight, 150, 20)
-  global.view.addSubview(maskCheckboxLabel)
+  const maskCheckboxLabel = utils.createLabel('Mask', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 150, 20)
+  this.view.addSubview(maskCheckboxLabel)
 
-  const maskCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(150, global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight - global.adjustHeight, 200, 20));
+  const maskCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 200, 20));
   maskCheckBox.setButtonType(NSSwitchButton);
   maskCheckBox.setState(false);
   maskCheckBox.setFont(NSFont.systemFontOfSize_(13));
   maskCheckBox.setTitle('Add color mask')
-  global.view.addSubview(maskCheckBox);
+  this.view.addSubview(maskCheckBox);
 
-  global.checkboxMaskParams = maskCheckBox
+  this.checkboxMaskParams = maskCheckBox
 }
 
-function makeMaskRadioButtonParams(global) {
+function makeMaskRadioButtonParams() {
 
-  global.coeffCurrentHeight++;
-  global.coeffCurrentHeight++;
+  this.coeffCurrentHeight++;
+  this.coeffCurrentHeight++;
 
-  const radioButtonLabel = utils.createLabel('Color Source', 0, global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight - global.adjustHeight + 40, 150, 20)
-  global.view.addSubview(radioButtonLabel)
+  const radioButtonLabel = utils.createLabel('Color Source', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight + 40, 150, 20)
+  this.view.addSubview(radioButtonLabel)
 
   const buttonFormat = NSButtonCell.alloc().init();
   buttonFormat.setButtonType(NSRadioButton);
   const matrixFormat = NSMatrix.alloc().initWithFrame_mode_prototype_numberOfRows_numberOfColumns(
-    NSMakeRect(150, global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight - global.adjustHeight, 300, 60),
+    NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 300, 60),
     NSRadioModeMatrix,
     buttonFormat,
     2,
@@ -306,44 +313,44 @@ function makeMaskRadioButtonParams(global) {
   cells[1].setTitle("From Color picker");
   cells[1].setFont(NSFont.systemFontOfSize_(13));
 
-  global.view.addSubview(matrixFormat);
+  this.view.addSubview(matrixFormat);
 
-  setListenerRadioButon(cells, global)
+  setListenerRadioButon(cells)
 
-  global.radioParams = matrixFormat
-  global.radioButtonLabel = radioButtonLabel
+  this.radioParams = matrixFormat
+  this.radioButtonLabel = radioButtonLabel
 }
 
-function makeMaskLibraryParams(context, global) {
+function makeMaskLibraryParams(context) {
 
-  global.coeffCurrentHeight++
+  this.coeffCurrentHeight++
 
-  const colorLibsLabel = utils.createLabel('Document Source', 0, global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight - global.adjustHeight, 150, 25)
-  global.view.addSubview(colorLibsLabel)
-  const colorLibsMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(150, global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight - global.adjustHeight, 130, 30));
+  const colorLibsLabel = utils.createLabel('Document Source', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 150, 25)
+  this.view.addSubview(colorLibsLabel)
+  const colorLibsMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 130, 30));
 
-  global.coeffCurrentHeight++
+  this.coeffCurrentHeight++
 
-  const colorMenuLabel = utils.createLabel('Color', 0, global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight - global.adjustHeight, 150, 25)
-  global.view.addSubview(colorMenuLabel)
-  const colorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(150, global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight - global.adjustHeight, 130, 30));
+  const colorMenuLabel = utils.createLabel('Color', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 150, 25)
+  this.view.addSubview(colorMenuLabel)
+  const colorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 130, 30));
 
-  global.view.addSubview(colorLibsMenu);
-  global.view.addSubview(colorMenu);
+  this.view.addSubview(colorLibsMenu);
+  this.view.addSubview(colorMenu);
 
-  global.colorLibsMenuParams = colorLibsMenu
-  global.colorsMenuParams = colorMenu
-  global.colorLibsMenuParamsLabel = colorLibsLabel
-  global.colorsMenuParamsLabel = colorMenuLabel
+  this.colorLibsMenuParams = colorLibsMenu
+  this.colorsMenuParams = colorMenu
+  this.colorLibsMenuParamsLabel = colorLibsLabel
+  this.colorsMenuParamsLabel = colorMenuLabel
 
-  colorLibsMenu.menu = libraries.initLibsSelectList(context, AppController.sharedInstance().librariesController().availableLibraries(), colorMenu, global);
+  colorLibsMenu.menu = libraries.initLibsSelectList.call(this, context, AppController.sharedInstance().librariesController().availableLibraries(), colorMenu);
 }
 
-function makeMaskColorPickerParams(context, global) {
+function makeMaskColorPickerParams(context) {
 
-  const colorPickerLabel = utils.createLabel('Color picker', 0, global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight - global.adjustHeight + 20, 150, 20)
+  const colorPickerLabel = utils.createLabel('Color picker', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight + 20, 150, 20)
 
-  const pickerView = NSView.alloc().initWithFrame(NSMakeRect(150, global.modalParams.height - global.modalParams.lineHeight * global.coeffCurrentHeight - global.adjustHeight, 130, 60));
+  const pickerView = NSView.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 130, 60));
   pickerView.setWantsLayer(true)
   pickerView.layer().setBackgroundColor(CGColorCreateGenericRGB(1, 1, 1, 1.0))
   pickerView.layer().setBorderColor(CGColorCreateGenericRGB(186 / 255, 186 / 255, 186 / 255, 1))
@@ -364,48 +371,48 @@ function makeMaskColorPickerParams(context, global) {
   const main = AMOMain.alloc().init();
 
   pickerButton.setCOSJSTargetFunction(() => {
-    main.openPopover_onView_withWebview(pickerButton, global.view, utils.createWebview(context, pickerButton, (color) => {
-      global.colorPickerColor = color
+    main.openPopover_onView_withWebview(pickerButton, this.view, utils.createWebview(context, pickerButton, (color) => {
+      this.colorPickerColor = color
       hexLabel.setStringValue_(`#${color.immutableModelObject().hexValue()}`)
     }))
   })
 
   pickerView.addSubview(pickerButton)
 
-  global.pickerView = pickerView
-  global.colorPickerLabel = colorPickerLabel
+  this.pickerView = pickerView
+  this.colorPickerLabel = colorPickerLabel
 }
 
-function addListenerOnMaskCheckbox(global) {
+function addListenerOnMaskCheckbox() {
 
 
-  global.checkboxMaskParams.setCOSJSTargetFunction((mask) => {
+  this.checkboxMaskParams.setCOSJSTargetFunction((mask) => {
     if (mask.state()) {
-      setEnabledRadioButton(true, global)
-      setEnabledColorLibraryMenu(true, global)
-      if (global.colorsMenuParams.numberOfItems() > 0) setEnabledColorMenu(true, global)
+      setEnabledRadioButton(true)
+      setEnabledColorLibraryMenu(true)
+      if (this.colorsMenuParams.numberOfItems() > 0) setEnabledColorMenu(true)
     } else {
-      setEnabledRadioButton(false, global)
-      setEnabledColorLibraryMenu(false, global)
-      setEnabledColorMenu(false, global)
-      addLibraryColorsFields(global)
-      removePickerButton(global)
-      global.radioParams.cells()[0].state = true
-      global.radioParams.cells()[1].state = false
+      setEnabledRadioButton(false)
+      setEnabledColorLibraryMenu(false)
+      setEnabledColorMenu(false)
+      addLibraryColorsFields()
+      removePickerButton()
+      this.radioParams.cells()[0].state = true
+      this.radioParams.cells()[1].state = false
     }
   });
 }
 
-function setListenerRadioButon(cells, global) {
+function setListenerRadioButon(cells) {
   function setState(item) {
     if (String(item.selectedCells()[0].title()) === 'From Symbols') {
-      addLibraryColorsFields(global)
-      removePickerButton(global)
-      global.isLibrarySource = true
+      addLibraryColorsFields()
+      removePickerButton()
+      this.isLibrarySource = true
     } else {
-      removeLibraryColorsFields(global)
-      addPickerButton(global)
-      global.isLibrarySource = false
+      removeLibraryColorsFields()
+      addPickerButton()
+      this.isLibrarySource = false
     }
   }
 
@@ -413,46 +420,46 @@ function setListenerRadioButon(cells, global) {
   cells[1].setCOSJSTargetFunction(setState);
 }
 
-function setEnabledColorLibraryMenu(enabled, global) {
+function setEnabledColorLibraryMenu(enabled) {
   const color = (enabled) ? NSColor.controlTextColor() : disabledColor
-  global.colorLibsMenuParamsLabel.setTextColor(color)
-  global.colorLibsMenuParams.setEnabled(enabled)
+  this.colorLibsMenuParamsLabel.setTextColor(color)
+  this.colorLibsMenuParams.setEnabled(enabled)
 
 }
 
-function setEnabledColorMenu(enabled, global) {
-  global.colorsMenuParamsLabel.setTextColor(getStateColor(enabled))
-  global.colorsMenuParams.setEnabled(enabled)
+function setEnabledColorMenu(enabled) {
+  this.colorsMenuParamsLabel.setTextColor(getStateColor(enabled))
+  this.colorsMenuParams.setEnabled(enabled)
 }
 
-function setEnabledRadioButton(enabled, global) {
-  global.radioParams.setEnabled(enabled)
-  global.radioButtonLabel.setTextColor(getStateColor(enabled))
+function setEnabledRadioButton(enabled) {
+  this.radioParams.setEnabled(enabled)
+  this.radioButtonLabel.setTextColor(getStateColor(enabled))
 }
 
-function removeLibraryColorsFields(global) {
-  global.colorLibsMenuParams.removeFromSuperview()
-  global.colorsMenuParams.removeFromSuperview()
-  global.colorLibsMenuParamsLabel.removeFromSuperview()
-  global.colorsMenuParamsLabel.removeFromSuperview()
+function removeLibraryColorsFields() {
+  this.colorLibsMenuParams.removeFromSuperview()
+  this.colorsMenuParams.removeFromSuperview()
+  this.colorLibsMenuParamsLabel.removeFromSuperview()
+  this.colorsMenuParamsLabel.removeFromSuperview()
 }
 
-function addLibraryColorsFields(global) {
-  global.view.addSubview(global.colorLibsMenuParams);
-  global.view.addSubview(global.colorsMenuParams);
-  global.view.addSubview(global.colorLibsMenuParamsLabel);
-  global.view.addSubview(global.colorsMenuParamsLabel);
+function addLibraryColorsFields() {
+  this.view.addSubview(this.colorLibsMenuParams);
+  this.view.addSubview(this.colorsMenuParams);
+  this.view.addSubview(this.colorLibsMenuParamsLabel);
+  this.view.addSubview(this.colorsMenuParamsLabel);
 }
 
-function addPickerButton(global) {
-  global.view.addSubview(global.pickerView);
-  global.view.addSubview(global.colorPickerLabel);
+function addPickerButton() {
+  this.view.addSubview(this.pickerView);
+  this.view.addSubview(this.colorPickerLabel);
 
 }
 
-function removePickerButton(global) {
-  global.pickerView.removeFromSuperview()
-  global.colorPickerLabel.removeFromSuperview()
+function removePickerButton() {
+  this.pickerView.removeFromSuperview()
+  this.colorPickerLabel.removeFromSuperview()
 }
 
 function getStateColor(enabled) {

@@ -29,6 +29,7 @@ const ressourcesConfig = {
 
 
 module.exports = function (config, isPluginCommand) {
+
   config.resolve.extensions = ['.js', '.jsx'];
 
   if (isPluginCommand) {

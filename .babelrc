@@ -4,14 +4,16 @@
       "@babel/preset-env",
       {
         "targets": {
-          "node": "current"
+          "node": "7.10.0"
         }
       }
     ],
     "@babel/preset-react"
   ],
   "plugins": [
-    ["transform-react-jsx"],
+    [
+      "transform-react-jsx"
+    ],
     "babel-plugin-add-module-exports"
   ]
 }

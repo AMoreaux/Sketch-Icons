@@ -16,7 +16,7 @@ import analytics from './utils/analytics'
  */
 export function importIcons(context) {
   utils.runFramework(context)
-  const params = importModal(context)
+  const params = importModal.call({}, context)
   if (params.button !== 1000) return
   params.listIcon = files.selectIconsFiles()
   if (!params.listIcon.length) return
