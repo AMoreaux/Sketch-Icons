@@ -235,8 +235,10 @@ function applyMask(context, rootObject, params) {
   }
 
   const currentArtboardSize = rootObject.rect()
-  mask.setHeightRespectingProportions(currentArtboardSize.size.height)
-  mask.setWidthRespectingProportions(currentArtboardSize.size.width)
+  mask.setHeightRespectingProportions(currentArtboardSize.size.height + 2)
+  mask.setWidthRespectingProportions(currentArtboardSize.size.width + 2)
+  mask.frame().setX(-1)
+  mask.frame().setY(-1)
   mask.setName('🎨 color')
   rootObject.firstLayer().style().disableAllFills()
   rootObject.addLayers([mask])
