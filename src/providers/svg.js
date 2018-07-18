@@ -2,6 +2,7 @@ import maskProvider from './mask';
 import artboardProvider from './artboard';
 import settingsProvider from './settings';
 import utils from '../utils/utils';
+import { Image } from 'sketch/dom';
 
 export default {
   initUpdateIconsSelectedArtboards,
@@ -29,15 +30,24 @@ function initUpdateIconsSelectedArtboards(context, rootObjects, params) {
       ...params
     };
     const replaceBy = (params.listIcon.length === 1) ? params.listIcon[0] : params.listIcon[index];
-
-    const svgData = String(NSString.alloc().initWithContentsOfURL(replaceBy));
+    rootObject.object.removeAllLayers();
     iconParams.withMask = !!(iconParams.colorLib || iconParams.colorPicker || iconParams.color);
 
-    rootObject.object.removeAllLayers();
-
-    addSVG(context, rootObject.object, iconParams, String(svgData), true);
+    const ext = String(replaceBy.toString().split('.').pop()).toLowerCase()
+    if (ext === 'pdf') {
+      addPDF(context, rootObject.object, iconParams, replaceBy)
+      if (iconParams.withMask) maskProvider.addColor(context, rootObject.object, iconParams);
+    }
+    else if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') {
+      addBITMAP(context, rootObject.object, iconParams, replaceBy)
+    }
+    else {
+      const svgData = String(NSString.alloc().initWithContentsOfURL(replaceBy));
+      addSVG(context, rootObject.object, iconParams, String(svgData), true);
+      if (iconParams.withMask) maskProvider.addColor(context, rootObject.object, iconParams);
+    }
     rootObject.object.setName(utils.getIconNameByNSUrl(replaceBy));
-    if (iconParams.withMask) maskProvider.addColor(context, rootObject.object, iconParams);
+
   });
 
   utils.clearSelection(context);
@@ -72,8 +82,6 @@ function addSVG(context, rootObject, params, svgData, withResize) {
 
   rootObject.addLayer(svgLayer);
 
-  // removeNoFillChildren(rootObject)
-
   if (utils.svgHasStroke(rootObject) && settingsParams.convertStroke.data === '1') convertStrokeToFill(rootObject)
 
   if (withResize) resizeIcon(rootObject, params.iconPadding);
@@ -104,28 +112,27 @@ function addSVGNew(context, rootObject, params, svgData) {
 }
 
 function addPDF(context, rootObject, params, icon) {
-
-  const rootObjectPosition = rootObject.origin();
-
   const pdfImporter = MSPDFImporter.pdfImporter();
   pdfImporter.prepareToImportFromURL(icon);
-  const pdfLayer = pdfImporter.importAsLayer();
-  rootObject.addLayers(pdfLayer.layers());
-  rootObject.resizeToFitChildren();
-  rootObject.resizesContent = true;
-  const rootObjectFrame = rootObject.frame();
-  rootObjectFrame.setWidth(params.artboardSize - 2 * params.iconPadding);
-  rootObjectFrame.setHeight(params.artboardSize - 2 * params.iconPadding);
-  rootObject.resizesContent = false;
-  rootObjectFrame.setWidth(params.artboardSize);
-  rootObjectFrame.setHeight(params.artboardSize);
-  rootObject.layers().forEach((layer) => {
-    const layerFrame = layer.frame();
-    layerFrame.setX(params.iconPadding)
-    layerFrame.setY(params.iconPadding)
-  })
-  rootObjectFrame.setX(rootObjectPosition.x)
-  rootObjectFrame.setY(rootObjectPosition.y)
+  let pdfLayer = pdfImporter.importAsLayer();
+  if (String(pdfLayer.class()) === 'MSArtboardGroup') {
+    const group = MSLayerGroup.new();
+    group.addLayers(pdfLayer.layers());
+    group.resizeToFitChildrenWithOption(1);
+    pdfLayer = group;
+  }
+  rootObject.addLayer(pdfLayer);
+  const pdfLayerFrame = pdfLayer.frame();
+  const width = pdfLayerFrame.width();
+  const height = pdfLayerFrame.height();
+  pdfLayerFrame.constrainProportions = true;
+  if (width >= height) {
+    pdfLayer.setWidthRespectingProportions((params.artboardSize - 2 * params.iconPadding) + 0.01)
+  } else {
+    pdfLayer.setHeightRespectingProportions((params.artboardSize - 2 * params.iconPadding) + 0.01)
+  }
+  pdfLayerFrame.setX((params.artboardSize - pdfLayerFrame.width()) / 2);
+  pdfLayerFrame.setY((params.artboardSize - pdfLayerFrame.height()) / 2);
 }
 
 function addBITMAP(context, rootObject, params, icon) {
@@ -133,9 +140,10 @@ function addBITMAP(context, rootObject, params, icon) {
   if (String(icon.class()) === 'MSBitmapLayer') {
     MSLayerGroup.moveLayers_intoGroup([icon], rootObject)
   } else {
-    rootObject.addLayer(MSBitmapLayer.bitmapLayerWithImageFromPath(icon));
-  }
 
+    const img = new Image({ image: icon });
+    rootObject.addLayer(img.sketchObject);
+  }
   resizeIcon(rootObject, params.iconPadding);
   center(params.artboardSize, rootObject.firstLayer());
   rootObject.firstLayer().setName(rootObject.name());
@@ -202,9 +210,9 @@ function resizeIcon(rootObject, iconPadding) {
   svgLayerFrame.constrainProportions = true;
 
   if (width >= height) {
-    svgLayerFrame.setWidth(currentArtboardSize.width - 2 * iconPadding);
+    svgLayerFrame.setWidth((currentArtboardSize.width - 2 * iconPadding) + 0.0000001);
   } else {
-    svgLayerFrame.setHeight(currentArtboardSize.height - 2 * iconPadding);
+    svgLayerFrame.setHeight((currentArtboardSize.height - 2 * iconPadding) + 0.0000001);
   }
 }
 
