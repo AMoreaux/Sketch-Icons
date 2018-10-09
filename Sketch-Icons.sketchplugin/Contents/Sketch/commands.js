@@ -134,7 +134,7 @@ function importIcons(context) {
 
   const importedIcons = _artboard.default.initImport(context, params, _artboard.default.initImportIcons);
 
-  const label = params.withMask ? 'import-mask' : 'import';
+  const label = params.withColor ? 'import-mask' : 'import';
 
   _analytics.default.action(context, 'icons', 'import', label, importedIcons);
 }
@@ -179,7 +179,7 @@ function organizeIcons(context) {
   _artboard.default.initImport(context, params, _artboard.default.initOrganizeIcons);
 
   params.listIcon.forEach(icon => icon.removeFromParent());
-  const label = params.withMask ? 'organize-mask' : 'organize';
+  const label = params.withColor ? 'organize-mask' : 'organize';
 
   _analytics.default.action(context, 'icons', 'organize', label, params.listIcon.length);
 }
@@ -217,7 +217,7 @@ function removeMaskOnSelectedArtboards(context) {
 
   if (selectedArtboardsAndSymbols.length === 0) return _modals.default.newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.');
   selectedArtboardsAndSymbols.forEach(rootElement => {
-    _mask.default.removeMask(context, rootElement.object);
+    _mask.default.removeColor(context, rootElement.object);
   });
 
   _analytics.default.action(context, 'icons', 'remove mask', 'remove mask', selectedArtboardsAndSymbols.length);
@@ -275,15 +275,16 @@ function maskModal(context) {
   this.modalParams = {
     messageText: 'Configure your color mask',
     informativeText: 'Select your library and choose a color to apply as mask. Your layers will all be combined.',
-    height: 160,
+    height: 190,
     width: 300,
     lineHeight: 35
   };
   this.coeffCurrentHeight = 0;
   this.isLibrarySource = true;
   this.adjustHeight = 0;
+  this.colorSource = 'sharedStyle';
   constructBase.call(this, 'Continue');
-  makeMaskRadioButtonParams.call(this);
+  makeMaskRadioButtonParams.call(this, context);
   makeMaskLibraryParams.call(this, context);
   makeMaskColorPickerParams.call(this, context);
   const result = {
@@ -295,6 +296,7 @@ function maskModal(context) {
     result.color = colorMenu ? this.colorsMenuParams.representedObject() : null;
     let colorLib = this.colorLibsMenuParams.selectedItem();
     result.colorLib = colorLib ? this.colorLibsMenuParams.representedObject() : null;
+    result.colorSource = this.colorSource;
   } else {
     result.colorPicker = this.colorPickerColor;
   }
@@ -303,7 +305,6 @@ function maskModal(context) {
 }
 
 function importModal(context) {
-  let usePresets;
   this.settingsValues = _settings.default.getSettings(context, 'default');
   this.modalParams = {
     messageText: 'Configure your import',
@@ -312,18 +313,13 @@ function importModal(context) {
     lineHeight: 35
   };
 
-  if (_settings.default.hasValue(this.settingsValues.presets)) {
-    this.modalParams.height = 300 + this.settingsValues.presets.data.split(',').length * 30;
-    usePresets = true;
-  } else {
-    this.modalParams.height = 300;
-    usePresets = false;
-  }
+  const usePresets = _settings.default.hasValue(this.settingsValues.presets);
 
-  this.modalParams.height = _settings.default.hasValue(this.settingsValues.presets) ? 300 + this.settingsValues.presets.data.split(',').length * 30 : 300;
+  this.modalParams.height = _settings.default.hasValue(this.settingsValues.presets) ? 330 + this.settingsValues.presets.data.split(',').length * 30 : 330;
   this.coeffCurrentHeight = 0;
   this.isLibrarySource = true;
   this.adjustHeight = 0;
+  this.colorSource = 'sharedStyle';
   constructBase.call(this, 'Continue');
 
   if (usePresets) {
@@ -348,7 +344,7 @@ function importModal(context) {
   const result = {
     button: this.modal.runModal(),
     convertSymbol: this.symbolParams.state(),
-    withMask: !!this.checkboxMaskParams.state()
+    withColor: !!this.checkboxMaskParams.state()
   };
 
   if (usePresets) {
@@ -366,13 +362,14 @@ function importModal(context) {
     result.iconPadding = parseInt(this.artboardPadding.stringValue());
   }
 
-  if (result.withMask && this.isLibrarySource) {
+  if (result.withColor && this.isLibrarySource) {
     let colorMenu = this.colorsMenuParams.selectedItem();
     result.color = colorMenu ? this.colorsMenuParams.representedObject() : null;
     let colorLib = this.colorLibsMenuParams.selectedItem();
     result.colorLib = colorLib ? this.colorLibsMenuParams.representedObject() : null;
-    if (!result.color) result.withMask = false;
-  } else if (result.withMask) {
+    if (!result.color) result.withColor = false;
+    result.colorSource = this.colorSource;
+  } else if (result.withColor) {
     result.colorPicker = this.colorPickerColor || MSColor.blackColor();
   }
 
@@ -440,7 +437,7 @@ function makePresetsParams() {
 function makeArtboardParams() {
   this.coeffCurrentHeight++;
 
-  const textBoxLabel = _utils.default.createLabel('Artboard size', 0, this.modalParams.height - this.modalParams.lineHeight, 150, 20);
+  const textBoxLabel = _utils.default.createLabel('Artboard Size', 0, this.modalParams.height - this.modalParams.lineHeight, 150, 20);
 
   this.view.addSubview(textBoxLabel);
   const textBox = NSTextField.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight, 50, 20));
@@ -456,7 +453,7 @@ function makeArtboardParams() {
 
   this.view.addSubview(paddingBoxLabel);
   const paddingBox = NSTextField.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 50, 20));
-  paddingBox.setStringValue(4);
+  paddingBox.setStringValue(0);
   this.view.addSubview(paddingBox);
 
   const paddingBoxUnit = _utils.default.createLabel('px', 205, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight, 50, 20);
@@ -507,19 +504,20 @@ function makeSymbolParams() {
 function makeMaskCheckboxParams() {
   this.coeffCurrentHeight++;
 
-  const maskCheckboxLabel = _utils.default.createLabel('Mask', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 150, 20);
+  const maskCheckboxLabel = _utils.default.createLabel('Color', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 150, 20);
 
   this.view.addSubview(maskCheckboxLabel);
   const maskCheckBox = NSButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 200, 20));
   maskCheckBox.setButtonType(NSSwitchButton);
   maskCheckBox.setState(false);
   maskCheckBox.setFont(NSFont.systemFontOfSize_(13));
-  maskCheckBox.setTitle('Add color mask');
+  maskCheckBox.setTitle('Apply color');
   this.view.addSubview(maskCheckBox);
   this.checkboxMaskParams = maskCheckBox;
 }
 
-function makeMaskRadioButtonParams() {
+function makeMaskRadioButtonParams(context) {
+  this.coeffCurrentHeight++;
   this.coeffCurrentHeight++;
   this.coeffCurrentHeight++;
 
@@ -528,15 +526,17 @@ function makeMaskRadioButtonParams() {
   this.view.addSubview(radioButtonLabel);
   const buttonFormat = NSButtonCell.alloc().init();
   buttonFormat.setButtonType(NSRadioButton);
-  const matrixFormat = NSMatrix.alloc().initWithFrame_mode_prototype_numberOfRows_numberOfColumns(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 300, 60), NSRadioModeMatrix, buttonFormat, 2, 1);
+  const matrixFormat = NSMatrix.alloc().initWithFrame_mode_prototype_numberOfRows_numberOfColumns(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 300, 90), NSRadioModeMatrix, buttonFormat, 3, 1);
   matrixFormat.setCellSize(CGSizeMake(300, 25));
   const cells = matrixFormat.cells();
-  cells[0].setTitle("From Symbols");
+  cells[0].setTitle("From Shared Style");
   cells[0].setFont(NSFont.systemFontOfSize_(13));
-  cells[1].setTitle("From Color picker");
+  cells[1].setTitle("From Symbol");
   cells[1].setFont(NSFont.systemFontOfSize_(13));
+  cells[2].setTitle("From Color picker");
+  cells[2].setFont(NSFont.systemFontOfSize_(13));
   this.view.addSubview(matrixFormat);
-  setListenerRadioButon.call(this, cells);
+  setListenerRadioButon.call(this, cells, context);
   this.radioParams = matrixFormat;
   this.radioButtonLabel = radioButtonLabel;
 }
@@ -550,7 +550,7 @@ function makeMaskLibraryParams(context) {
   const colorLibsMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 130, 30));
   this.coeffCurrentHeight++;
 
-  const colorMenuLabel = _utils.default.createLabel('Color', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 150, 25);
+  const colorMenuLabel = _utils.default.createLabel('Select Color', 0, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 150, 25);
 
   this.view.addSubview(colorMenuLabel);
   const colorMenu = NSPopUpButton.alloc().initWithFrame(NSMakeRect(150, this.modalParams.height - this.modalParams.lineHeight * this.coeffCurrentHeight - this.adjustHeight, 130, 30));
@@ -608,25 +608,40 @@ function addListenerOnMaskCheckbox() {
       removePickerButton.call(this);
       this.radioParams.cells()[0].state = true;
       this.radioParams.cells()[1].state = false;
+      this.radioParams.cells()[2].state = false;
     }
   });
 }
 
-function setListenerRadioButon(cells) {
+function setListenerRadioButon(cells, context) {
   function setState(item) {
-    if (String(item.selectedCells()[0].title()) === 'From Symbols') {
+    const title = String(item.selectedCells()[0].title());
+
+    if (title === 'From Symbol') {
       addLibraryColorsFields.call(this);
       removePickerButton.call(this);
       this.isLibrarySource = true;
-    } else {
+      this.colorSource = 'symbol';
+
+      _libraries.default.updateColorMenu.call(this, this.colorLibsMenuParams.selectedItem(), this.colorsMenuParams);
+    } else if (title === 'From Color picker') {
       removeLibraryColorsFields.call(this);
       addPickerButton.call(this);
       this.isLibrarySource = false;
+    } else {
+      this.isLibrarySource = true;
+      addLibraryColorsFields.call(this);
+      removePickerButton.call(this);
+      this.colorSource = 'sharedStyle';
+
+      _libraries.default.updateColorMenu.call(this, this.colorLibsMenuParams.selectedItem(), this.colorsMenuParams);
     }
   }
 
+  this.context = context;
   cells[0].setCOSJSTargetFunction(setState.bind(this));
   cells[1].setCOSJSTargetFunction(setState.bind(this));
+  cells[2].setCOSJSTargetFunction(setState.bind(this));
 }
 
 function setEnabledColorLibraryMenu(enabled) {
@@ -777,7 +792,7 @@ function convertStrokeToFillParams() {
   convertStrokeCheckBox.setTitle('Auto-Convert');
   this.view.addSubview(convertStrokeCheckBox);
   this.coeffCurrentHeight++;
-  addDescription.call(this, 'this will allow you to add a dynamic color mask ', this.lineOne + 30);
+  addDescription.call(this, 'This will allow you to add a dynamic color ', this.lineOne + 30);
   addDescription.call(this, 'over your outlined icons.', this.lineTwo + 30);
   this.convertStroke = convertStrokeCheckBox;
 }
@@ -1023,6 +1038,7 @@ function initOrganizeIcons(context, params) {
 
       _svg.default.addSVGNew(context, newRootObject, params, svgData, true);
 
+      if (params.withColor) _mask.default.addColor(context, newRootObject, params);
       workingRootObject.push(newRootObject);
     } catch (e) {
       _logger.default.error(e);
@@ -1102,7 +1118,7 @@ function setArtboardsSize(params, preset) {
 function processSVG(context, rootObject, params, svgData) {
   _svg.default.addSVG(context, rootObject, params, svgData, true);
 
-  if (params.withMask) _mask.default.addColor(context, rootObject, params);
+  if (params.withColor) _mask.default.addColor(context, rootObject, params);
   return context.command.setValue_forKey_onLayer(params.iconPadding, 'padding', rootObject);
 }
 /**
@@ -1241,7 +1257,8 @@ var _default = {
   initLibsSelectList,
   getColorFromSymbol,
   getSymbolFromDocument,
-  loadLibrary
+  loadLibrary,
+  updateColorMenu
   /**
    * @name getLibById
    * @description return library by id
@@ -1279,6 +1296,20 @@ function loadColorFromSelectedLib(library, colorMenu) {
   library = library.representedObject();
   return getColorSymbolsFromDocument(library.document());
 }
+/**
+ * @name getSharedFromSelectedLib
+ * @description get shared style form library selected
+ * @param library
+ * @param colorMenu
+ * @returns {Array}
+ */
+
+
+function getSharedFromSelectedLib(library, colorMenu) {
+  colorMenu.removeAllItems();
+  library = library.representedObject();
+  return getSharedStylesFromDocument(library.document());
+}
 
 function loadLibrary(library) {
   return library.loadSynchronously();
@@ -1296,7 +1327,7 @@ function loadLibrary(library) {
 function initLibsSelectList(context, libraries, colorMenu) {
   function addListener(item) {
     item.setCOSJSTargetFunction(libraryItem => {
-      updateColorMenu.call(this, context, libraryItem, colorMenu);
+      updateColorMenu.call(this, libraryItem, colorMenu);
     });
   }
 
@@ -1312,21 +1343,21 @@ function initLibsSelectList(context, libraries, colorMenu) {
     colorLibsMenu.addItem(item);
     addListener.call(this, item);
   });
-  updateColorMenu.call(this, context, currentDocument, colorMenu);
+  updateColorMenu.call(this, currentDocument, colorMenu);
   return colorLibsMenu;
 }
 
-function updateColorMenu(context, libraryItem, colorMenu) {
+function updateColorMenu(libraryItem, colorMenu) {
   let colors = [];
 
   if (!libraryItem.representedObject()) {
-    colors = getColorSymbolsFromDocument.call(this, context.document.documentData());
+    colors = this.colorSource === 'symbol' ? getColorSymbolsFromDocument.call(this, MSDocument.currentDocument().documentData()) : getSharedStylesFromDocument.call(this, MSDocument.currentDocument().documentData());
   } else {
-    colors = loadColorFromSelectedLib.call(this, libraryItem, colorMenu);
+    colors = this.colorSource === 'symbol' ? loadColorFromSelectedLib.call(this, libraryItem, colorMenu) : getSharedFromSelectedLib.call(this, libraryItem, colorMenu);
   }
 
   if (colors.length > 0) {
-    initColorSelectList.call(this, colorMenu, colors);
+    initColorSelectList.call(this, colorMenu, colors, this.colorSource);
 
     _modals.setEnabledColorMenu.call(this, true);
   } else {
@@ -1338,20 +1369,33 @@ function updateColorMenu(context, libraryItem, colorMenu) {
  * @description get list of colors in NSMenu
  * @param popColorMenu {Object} : NSPopUpMenu
  * @param colors
+ * @param colorSource
  * @returns {Object} : NSMenu
  */
 
 
-function initColorSelectList(popColorMenu, colors) {
+function initColorSelectList(popColorMenu, colors, colorSource) {
   const menu = NSMenu.alloc().init();
   menu.cancelTracking();
   colors.forEach(function (color) {
-    let item = NSMenuItem.alloc().init();
-    item.title = color.symbol ? color.symbol.name() : "";
-    let colorRGBA = color.color ? NSColor.colorWithRed_green_blue_alpha(color.color.red(), color.color.green(), color.color.blue(), color.color.alpha()) : NSColor.colorWithRed_green_blue_alpha(color.red(), color.green(), color.blue(), color.alpha());
-    item.representedObject = color.symbol ? color.symbol : colorRGBA;
-    item.image = _utils.default.getImageByColor(colorRGBA);
-    menu.addItem(item);
+    try {
+      let item = NSMenuItem.alloc().init();
+      item.title = colorSource === 'sharedStyle' ? color.name() : color.symbol ? color.symbol.name() : "";
+      let colorRGBA;
+
+      if (colorSource === 'sharedStyle') {
+        const item = color.style().hasEnabledFill() ? color.style().fills()[0].color() : color.style().borders()[0].color();
+        colorRGBA = NSColor.colorWithRed_green_blue_alpha(item.red(), item.green(), item.blue(), item.alpha());
+      } else {
+        colorRGBA = color.color ? NSColor.colorWithRed_green_blue_alpha(color.color.red(), color.color.green(), color.color.blue(), color.color.alpha()) : NSColor.colorWithRed_green_blue_alpha(color.red(), color.green(), color.blue(), color.alpha());
+      }
+
+      item.representedObject = colorSource === 'sharedStyle' ? color : color.symbol || colorRGBA;
+      item.image = _utils.default.getImageByColor(colorRGBA);
+      menu.addItem(item);
+    } catch (e) {
+      console.log('cannot use this style >', color.name());
+    }
   });
   popColorMenu.menu = menu;
   return popColorMenu;
@@ -1368,6 +1412,22 @@ function getColorSymbolsFromDocument(document) {
   document.localSymbols().forEach(function (symbol) {
     const color = getColorFromSymbol(symbol);
     if (color) result.push(color);
+  });
+  return result;
+}
+/**
+ * @name getSharedStylesFromDocument
+ * @param document
+ * @return {Array}
+ */
+
+
+function getSharedStylesFromDocument(document) {
+  const result = [];
+  const sharedStyles = document.layerStyles().sharedStyles();
+  sharedStyles.forEach(elm => {
+    // if (elm.style().hasEnabledFill() || elm.style().hasEnabledBorder()) {
+    result.push(elm); // }
   });
   return result;
 }
@@ -1408,7 +1468,7 @@ function getColorFromSymbol(symbol) {
       color: symbol.backgroundColor(),
       symbol: symbol
     };
-  } else if (layers.length === 1 && layers[0].children().length === 2 && layers[0].style().hasEnabledFill()) {
+  } else if (layers.length === 1 && layers[0].children().length === 1 && layers[0].style().hasEnabledFill()) {
     result = {
       color: layers[0].style().fills()[0].color(),
       symbol: symbol
@@ -1443,7 +1503,7 @@ var _svg = _interopRequireDefault(__webpack_require__(/*! ./svg */ "./src/provid
 
 var _libraries = _interopRequireDefault(__webpack_require__(/*! ./libraries */ "./src/providers/libraries.js"));
 
-var _logger = _interopRequireDefault(__webpack_require__(/*! ../utils/logger */ "./src/utils/logger.js"));
+var _sharedStyles = _interopRequireDefault(__webpack_require__(/*! ./sharedStyles */ "./src/providers/sharedStyles.js"));
 
 var _switchV3ToV = _interopRequireDefault(__webpack_require__(/*! ../utils/switchV3ToV4 */ "./src/utils/switchV3ToV4.js"));
 
@@ -1454,9 +1514,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var _default = {
   initAddMaskOnSelectedArtboards,
   addColor,
-  removeMask,
+  removeColor,
   getMaskPropertiesFromArtboard,
-  registerMask
+  registerColor
   /**
    * @name initAddMaskOnSelectedArtboards
    * @description main function to add mask on selected artboards
@@ -1473,8 +1533,8 @@ function initAddMaskOnSelectedArtboards(context, params, rootObjects) {
 
   rootObjects.forEach(async rootObject => {
     try {
-      if (_utils.default.svgHasStroke(rootObject.object) && settingsParams.convertStroke.data === '1') _svg.default.convertStrokeToFill(rootObject.object);
-      if (_utils.default.hasMask(rootObject.object) && !_utils.default.svgHasStroke(rootObject.object)) removeMask(context, rootObject.object);
+      if (_utils.default.svgHasStroke(rootObject.object) && settingsParams.convertStroke.data === '1') _svg.default.convertStrokeToFill(rootObject.object); // if (utils.hasMask(rootObject.object) && !utils.svgHasStroke(rootObject.object)) removeMask(context, rootObject.object);
+
       await addColor(context, rootObject.object, params);
     } catch (e) {
       console.log('>>>>>>>>>>>', e);
@@ -1494,18 +1554,26 @@ function initAddMaskOnSelectedArtboards(context, params, rootObjects) {
 
 function addColor(context, rootObject, params) {
   if (String(rootObject.firstLayer().class()) === 'MSBitMapLayer') return;
+  removeColor(context, rootObject);
 
-  if (_utils.default.svgHasStroke(rootObject)) {
+  if (params.colorSource === 'sharedStyle') {
+    _svg.default.cleanSvg(rootObject);
+
+    _sharedStyles.default.applySharedStyle(context, rootObject, params);
+  } else if (_utils.default.svgHasStroke(rootObject)) {
     applyColor(rootObject, params);
   } else {
-    if (_utils.default.hasMask(rootObject)) removeMask(context, rootObject);
-
     _svg.default.cleanSvg(rootObject);
 
     applyMask(context, rootObject, params);
   }
 
-  return registerMask(context, rootObject, params);
+  return registerColor(context, rootObject, params);
+}
+
+function removeColor(context, rootObject) {
+  if (_utils.default.hasMask(rootObject) && !_utils.default.svgHasStroke(rootObject)) removeMask(context, rootObject);
+  if (_utils.default.hasSharedStyle(rootObject)) removeSharedStyle(context, rootObject);
 }
 /**
  * @name applyColor
@@ -1518,13 +1586,20 @@ function addColor(context, rootObject, params) {
 function applyColor(rootObject, params) {
   const color = params.colorPicker ? params.colorPicker : _libraries.default.getColorFromSymbol(params.color).color;
   rootObject.children().forEach(layer => {
-    if (layer.styledLayer().style().hasEnabledBorder()) {
-      const style = layer.styledLayer().style();
-      style.enabledBorders().forEach(border => {
-        border.color = color;
-      });
+    if (layer.usedStyle().hasEnabledBorder()) {
+      const style = layer.usedStyle();
+      style.enabledBorders().forEach(border => border.color = color);
     }
   });
+}
+
+function removeSharedStyle(context, rootObject) {
+  const style = rootObject.firstLayer().style();
+  const fills = style.fills();
+  const fillColor = fills.count() > 0 ? style.fills()[0].color() : MSColor.blackColor();
+  style.removeAllStyleFills();
+  style.addStylePartOfType(0).color = fillColor;
+  rootObject.firstLayer().sharedStyle = null;
 }
 /**
  * @name removeMask
@@ -1537,6 +1612,7 @@ function applyColor(rootObject, params) {
 function removeMask(context, rootObject) {
   context.command.setValue_forKey_onLayer(null, "colorLib", rootObject);
   context.command.setValue_forKey_onLayer(null, "color", rootObject);
+  context.command.setValue_forKey_onLayer(null, "source", rootObject);
   context.command.setValue_forKey_onLayer(null, "colorPicker", rootObject);
 
   if (_utils.default.svgHasStroke(rootObject)) {
@@ -1559,7 +1635,7 @@ function removeMask(context, rootObject) {
   }
 }
 /**
- * @name registerMask
+ * @name registerColor
  * @description register properties of mask in artboard metadata
  * @param context
  * @param rootObject
@@ -1567,16 +1643,18 @@ function removeMask(context, rootObject) {
  */
 
 
-function registerMask(context, rootObject, params) {
+function registerColor(context, rootObject, params) {
   if (params.color) {
     const libraryId = params.colorLib ? params.colorLib.libraryID() : null;
-    const colorId = typeof params.color === 'string' ? params.color : params.color.symbolID();
+    const colorId = params.colorSource === 'sharedStyle' ? params.color.objectID() : params.color.symbolID();
     context.command.setValue_forKey_onLayer(libraryId, "colorLib", rootObject);
     context.command.setValue_forKey_onLayer(colorId, "color", rootObject);
+    context.command.setValue_forKey_onLayer(params.colorSource, "source", rootObject);
     context.command.setValue_forKey_onLayer(null, "colorPicker", rootObject);
   } else if (params.colorPicker) {
     context.command.setValue_forKey_onLayer(_utils.default.convertMSColorToString(params.colorPicker), "colorPicker", rootObject);
     context.command.setValue_forKey_onLayer(null, "colorLib", rootObject);
+    context.command.setValue_forKey_onLayer(null, "source", rootObject);
     context.command.setValue_forKey_onLayer(null, "color", rootObject);
   }
 }
@@ -1797,6 +1875,40 @@ module.exports = exports["default"];
 
 /***/ }),
 
+/***/ "./src/providers/sharedStyles.js":
+/*!***************************************!*\
+  !*** ./src/providers/sharedStyles.js ***!
+  \***************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+var _default = {
+  applySharedStyle
+};
+exports.default = _default;
+
+function applySharedStyle(context, rootObject, params) {
+  const foreignStyle = getSharedStyleFromLib(context, params.color, params.colorLib);
+  rootObject.children()[1].sharedStyle = foreignStyle ? foreignStyle.localSharedStyle() : params.color;
+}
+
+function getSharedStyleFromLib(context, sharedStyle, originLibrary) {
+  const librairiesController = AppController.sharedInstance().librariesController();
+  const shareableObjectReference = MSShareableObjectReference.referenceForShareableObject_inLibrary(sharedStyle, originLibrary);
+  return librairiesController.importShareableObjectReference_intoDocument(shareableObjectReference, context.document.documentData());
+}
+
+module.exports = exports["default"];
+
+/***/ }),
+
 /***/ "./src/providers/svg.js":
 /*!******************************!*\
   !*** ./src/providers/svg.js ***!
@@ -1853,18 +1965,18 @@ function initUpdateIconsSelectedArtboards(context, rootObjects, params) {
 
     const replaceBy = params.listIcon.length === 1 ? params.listIcon[0] : params.listIcon[index];
     rootObject.object.removeAllLayers();
-    iconParams.withMask = !!(iconParams.colorLib || iconParams.colorPicker || iconParams.color);
+    iconParams.withColor = !!(iconParams.colorLib || iconParams.colorPicker || iconParams.color);
     const ext = String(replaceBy.toString().split('.').pop()).toLowerCase();
 
     if (ext === 'pdf') {
       addPDF(context, rootObject.object, iconParams, replaceBy);
-      if (iconParams.withMask) _mask.default.addColor(context, rootObject.object, iconParams);
+      if (iconParams.withColor) _mask.default.addColor(context, rootObject.object, iconParams);
     } else if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') {
       addBITMAP(context, rootObject.object, iconParams, replaceBy);
     } else {
       const svgData = String(NSString.alloc().initWithContentsOfURL(replaceBy));
       addSVG(context, rootObject.object, iconParams, String(svgData), true);
-      if (iconParams.withMask) _mask.default.addColor(context, rootObject.object, iconParams);
+      if (iconParams.withColor) _mask.default.addColor(context, rootObject.object, iconParams);
     }
 
     rootObject.object.setName(_utils.default.getIconNameByNSUrl(replaceBy));
@@ -1989,10 +2101,8 @@ function addRectToResize(svgString, viewBox) {
 
 function cleanSvg(rootObject) {
   unGroup(rootObject);
-  rootObject.firstLayer().setName(rootObject.name()); // removeNoFillLayer(rootObject);
-
-  mergeLayer(rootObject);
-  rootObject.firstLayer().resizeToFitChildrenWithOption(1);
+  rootObject.firstLayer().setName(rootObject.name());
+  if (rootObject.layers().length > 1 && String(rootObject.firstLayer().class) !== 'MSLayerGroup') mergeLayer(context, rootObject);
 }
 /**
  * @name center
@@ -2109,7 +2219,7 @@ function removeDeleteMeRect(rootObject) {
 // function removeNoFillChildren(rootObject) {
 //   const toDelete = []
 //   rootObject.firstLayer().children().forEach(layer => {
-//     const style = layer.styledLayer().style()
+//     const style = layer.usedStyle()
 //     if (style.hasEnabledFill() && style.contextSettings().opacity() === 0) {
 //       toDelete.push(layer);
 //     }
@@ -2123,25 +2233,15 @@ function removeDeleteMeRect(rootObject) {
 /**
  * @name mergeLayer
  * @description merge all path in one path
+ * @param context
  * @param rootObject
  */
 
 
-function mergeLayer(rootObject) {
-  const layers = rootObject.layers();
-
-  if (layers.length > 1) {
-    for (let i = 0; i <= layers.length - 1; i++) {
-      layers[1].moveToLayer_beforeLayer(layers[0], layers[1]);
-    }
-  }
-
-  if (rootObject.layers().length > 1) return mergeLayer(rootObject);
-  rootObject.children().forEach(children => {
-    if (children.booleanOperationCanBeReset()) children.setBooleanOperation(-1);
-  }); // layers[0].resizeToFitChildrenWithOption(0);
-
-  layers[0].setName(rootObject.name());
+function mergeLayer(context, rootObject) {
+  const layers = rootObject.layers().slice().filter(layer => String(layer.class()) !== "MSSymbolMaster");
+  context.document.currentPage().changeSelectionBySelectingLayers(layers);
+  context.document.actionsController().actionForID("MSUnionAction").doPerformAction(null);
 }
 /**
  * @name getViewBox
@@ -2174,7 +2274,7 @@ function convertStrokeToFill(rootObject) {
     }
   });
   rootObject.children().forEach(layer => {
-    layer.styledLayer().style().disableAllBorders();
+    layer.usedStyle().disableAllBorders();
   });
 } // function setThicknessProportionnally(svgLayer, diagContainer, viewBox) {
 //
@@ -2183,8 +2283,8 @@ function convertStrokeToFill(rootObject) {
 //   const ratio = diagArtboard / diagViewbox
 //
 //   svgLayer.children().forEach((layer) => {
-//     if (layer.styledLayer().style().hasEnabledBorder() && String(layer.class()) === 'MSShapePathLayer') {
-//       const style = layer.styledLayer().style()
+//     if (layer.usedStyle().hasEnabledBorder() && String(layer.class()) === 'MSShapePathLayer') {
+//       const style = layer.usedStyle()
 //       const thickness = style.firstEnabledBorder().thickness()
 //       style.firstEnabledBorder().thickness = Math.round(thickness * ratio)
 //     }
@@ -2536,7 +2636,7 @@ function createCheckBoxes() {
     getter: symbolCheckBox.state
   }, {
     item: maskCheckBox,
-    name: 'withMask',
+    name: 'withColor',
     getter: maskCheckBox.state
   }];
 }
@@ -2706,7 +2806,7 @@ function switchToV4(context, rootObject) {
     params.colorPicker = mask.style().fills()[0].color();
   }
 
-  _mask.default.registerMask(context, rootObject, params);
+  _mask.default.registerColor(context, rootObject, params);
 }
 
 module.exports = exports["default"];
@@ -2746,6 +2846,7 @@ var _default = {
   runFramework,
   getImageByColor,
   hasMask,
+  hasSharedStyle,
   layerToSvg,
   svgHasStroke,
   convertMSColorToString,
@@ -2922,9 +3023,11 @@ function getImageByColor(color, colorSize = {
   const image = NSImage.alloc().init();
   image.size = size;
   image.lockFocus();
-  const colorCell = MSBackgroundColorView.alloc().init();
-  colorCell.backgroundColor = color;
-  colorCell.drawRect(NSMakeRect(0, 0, colorSize.width, colorSize.height));
+  color.setFill();
+  NSBezierPath.fillRect(NSMakeRect(0, 0, colorSize.width, colorSize.height)); // const colorCell = NSView.alloc().init()
+  // colorCell.backgroundColor = color
+  // colorCell.drawRect(NSMakeRect(0, 0, colorSize.width, colorSize.height))
+
   image.unlockFocus();
   return image;
 }
@@ -2939,6 +3042,10 @@ function hasMask(artboard) {
   return !!artboard.firstLayer().hasClippingMask();
 }
 
+function hasSharedStyle(artboard) {
+  return !!artboard.firstLayer().sharedStyle();
+}
+
 function layerToSvg(layer) {
   const svgExporter = SketchSVGExporter.alloc().init();
   const svgData = svgExporter.exportLayers([layer.immutableModelObject()]);
@@ -2948,7 +3055,7 @@ function layerToSvg(layer) {
 function svgHasStroke(rootObject) {
   let hasBorder = false;
   rootObject.children().forEach(layer => {
-    if (layer.styledLayer().style().hasEnabledBorder()) {
+    if (layer.usedStyle().hasEnabledBorder()) {
       hasBorder = true;
     }
   });
@@ -2960,7 +3067,7 @@ function getBorderColor(rootObject) {
   const layers = rootObject.children();
 
   for (let i = 0; i < layers.length; i++) {
-    let style = layers[i].styledLayer().style();
+    let style = layers[i].usedStyle();
     color = style.firstEnabledBorder();
     if (color) break;
   }

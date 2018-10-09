@@ -1,7 +1,7 @@
 {
   "compatibleVersion": 47,
   "bundleVersion": 1,
-  "version": "4.0.6",
+  "version": "5.0.0",
   "name": "Sketch-Icons",
   "identifier": "com.amoreaux.sketch-icons",
   "description": "Import your icons, apply a color mask and create a dynamic icons library.",
@@ -31,26 +31,26 @@
       "script": "commands.js",
       "handler": "addMaskOnSelectedArtboards",
       "shortcut": "command shift m",
-      "name": "Apply color mask...",
+      "name": "Apply color...",
       "identifier": "mask.selected.artboard",
       "icon": "icons/icon-square-1.jpg",
-      "description": "Apply mask on selected artboards"
+      "description": "Apply color on selected artboards"
     },
     {
       "script": "commands.js",
       "handler": "addMaskOnSelectedArtboards",
-      "name": "Replace color mask...",
+      "name": "Replace color...",
       "identifier": "update.mask.selected.artboard",
       "icon": "icons/icon-square-1.jpg",
-      "description": "Replace mask on selected artboard"
+      "description": "Replace color on selected artboard"
     },
     {
       "script": "commands.js",
       "handler": "removeMaskOnSelectedArtboards",
-      "name": "Remove color mask",
+      "name": "Remove color",
       "identifier": "remove.mask.selected.artboard",
       "icon": "icons/icon-square-1.jpg",
-      "description": "Remove mask on selected artboard"
+      "description": "Remove color on selected artboard"
     },
     {
       "script": "commands.js",

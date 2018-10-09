@@ -87,7 +87,7 @@ function convertStrokeToFillParams() {
   this.view.addSubview(convertStrokeCheckBox);
 
   this.coeffCurrentHeight++;
-  addDescription.call(this, 'this will allow you to add a dynamic color mask ', this.lineOne + 30)
+  addDescription.call(this, 'This will allow you to add a dynamic color ', this.lineOne + 30)
   addDescription.call(this, 'over your outlined icons.', this.lineTwo + 30)
 
   this.convertStroke = convertStrokeCheckBox;

@@ -140,6 +140,7 @@ function initOrganizeIcons(context, params) {
       const svgData = NSString.alloc().initWithData_encoding(exporter.data(), NSUTF8StringEncoding);
       // await processSVG(context, newRootObject, params, String(svgData));
       importerProvider.addSVGNew(context, newRootObject, params, svgData, true);
+      if (params.withColor) maskProvider.addColor(context, newRootObject, params);
       workingRootObject.push(newRootObject)
     } catch (e) {
       logger.error(e);
@@ -214,7 +215,7 @@ function setArtboardsSize(params, preset) {
  */
 function processSVG(context, rootObject, params, svgData) {
   importerProvider.addSVG(context, rootObject, params, svgData, true);
-  if (params.withMask) maskProvider.addColor(context, rootObject, params);
+  if (params.withColor) maskProvider.addColor(context, rootObject, params);
   return context.command.setValue_forKey_onLayer(params.iconPadding, 'padding', rootObject);
 }
 

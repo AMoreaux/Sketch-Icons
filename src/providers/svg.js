@@ -31,12 +31,12 @@ function initUpdateIconsSelectedArtboards(context, rootObjects, params) {
     };
     const replaceBy = (params.listIcon.length === 1) ? params.listIcon[0] : params.listIcon[index];
     rootObject.object.removeAllLayers();
-    iconParams.withMask = !!(iconParams.colorLib || iconParams.colorPicker || iconParams.color);
+    iconParams.withColor = !!(iconParams.colorLib || iconParams.colorPicker || iconParams.color);
 
     const ext = String(replaceBy.toString().split('.').pop()).toLowerCase()
     if (ext === 'pdf') {
       addPDF(context, rootObject.object, iconParams, replaceBy)
-      if (iconParams.withMask) maskProvider.addColor(context, rootObject.object, iconParams);
+      if (iconParams.withColor) maskProvider.addColor(context, rootObject.object, iconParams);
     }
     else if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') {
       addBITMAP(context, rootObject.object, iconParams, replaceBy)
@@ -44,7 +44,7 @@ function initUpdateIconsSelectedArtboards(context, rootObjects, params) {
     else {
       const svgData = String(NSString.alloc().initWithContentsOfURL(replaceBy));
       addSVG(context, rootObject.object, iconParams, String(svgData), true);
-      if (iconParams.withMask) maskProvider.addColor(context, rootObject.object, iconParams);
+      if (iconParams.withColor) maskProvider.addColor(context, rootObject.object, iconParams);
     }
     rootObject.object.setName(utils.getIconNameByNSUrl(replaceBy));
 
@@ -169,9 +169,7 @@ function addRectToResize(svgString, viewBox) {
 function cleanSvg(rootObject) {
   unGroup(rootObject);
   rootObject.firstLayer().setName(rootObject.name());
-  // removeNoFillLayer(rootObject);
-  mergeLayer(rootObject);
-  rootObject.firstLayer().resizeToFitChildrenWithOption(1);
+  if(rootObject.layers().length > 1 && String(rootObject.firstLayer().class) !== 'MSLayerGroup') mergeLayer(context, rootObject);
 }
 
 /**
@@ -296,7 +294,7 @@ function removeDeleteMeRect(rootObject) {
 // function removeNoFillChildren(rootObject) {
 //   const toDelete = []
 //   rootObject.firstLayer().children().forEach(layer => {
-//     const style = layer.styledLayer().style()
+//     const style = layer.usedStyle()
 //     if (style.hasEnabledFill() && style.contextSettings().opacity() === 0) {
 //       toDelete.push(layer);
 //     }
@@ -310,25 +308,13 @@ function removeDeleteMeRect(rootObject) {
 /**
  * @name mergeLayer
  * @description merge all path in one path
+ * @param context
  * @param rootObject
  */
-function mergeLayer(rootObject) {
-  const layers = rootObject.layers();
-
-  if (layers.length > 1) {
-    for (let i = 0; i <= layers.length - 1; i++) {
-      layers[1].moveToLayer_beforeLayer(layers[0], layers[1]);
-    }
-  }
-
-  if (rootObject.layers().length > 1) return mergeLayer(rootObject);
-
-  rootObject.children().forEach(children => {
-    if (children.booleanOperationCanBeReset()) children.setBooleanOperation(-1);
-  });
-
-  // layers[0].resizeToFitChildrenWithOption(0);
-  layers[0].setName(rootObject.name());
+function mergeLayer(context, rootObject) {
+  const layers = rootObject.layers().slice().filter(layer => String(layer.class()) !== "MSSymbolMaster");
+  context.document.currentPage().changeSelectionBySelectingLayers(layers);
+  context.document.actionsController().actionForID("MSUnionAction").doPerformAction(null);
 }
 
 /**
@@ -360,7 +346,7 @@ function convertStrokeToFill(rootObject) {
   })
 
   rootObject.children().forEach(layer => {
-    layer.styledLayer().style().disableAllBorders()
+    layer.usedStyle().disableAllBorders()
   })
 }
 
@@ -371,8 +357,8 @@ function convertStrokeToFill(rootObject) {
 //   const ratio = diagArtboard / diagViewbox
 //
 //   svgLayer.children().forEach((layer) => {
-//     if (layer.styledLayer().style().hasEnabledBorder() && String(layer.class()) === 'MSShapePathLayer') {
-//       const style = layer.styledLayer().style()
+//     if (layer.usedStyle().hasEnabledBorder() && String(layer.class()) === 'MSShapePathLayer') {
+//       const style = layer.usedStyle()
 //       const thickness = style.firstEnabledBorder().thickness()
 //       style.firstEnabledBorder().thickness = Math.round(thickness * ratio)
 //     }

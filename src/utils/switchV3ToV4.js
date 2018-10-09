@@ -19,5 +19,5 @@ function switchToV4(context, rootObject) {
     params.colorPicker = mask.style().fills()[0].color()
   }
 
-  maskProvider.registerMask(context, rootObject, params)
+  maskProvider.registerColor(context, rootObject, params)
 }

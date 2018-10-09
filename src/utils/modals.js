@@ -113,7 +113,7 @@ function createCheckBoxes() {
     getter: symbolCheckBox.state
   }, {
     item: maskCheckBox,
-    name: 'withMask',
+    name: 'withColor',
     getter: maskCheckBox.state
   }]
 }

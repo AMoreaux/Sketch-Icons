@@ -12,6 +12,7 @@ export default {
   runFramework,
   getImageByColor,
   hasMask,
+  hasSharedStyle,
   layerToSvg,
   svgHasStroke,
   convertMSColorToString,
@@ -190,9 +191,12 @@ function getImageByColor(color, colorSize = { width: 14, height: 14 }) {
   const image = NSImage.alloc().init()
   image.size = size
   image.lockFocus()
-  const colorCell = MSBackgroundColorView.alloc().init()
-  colorCell.backgroundColor = color
-  colorCell.drawRect(NSMakeRect(0, 0, colorSize.width, colorSize.height))
+  color.setFill();
+  NSBezierPath.fillRect(NSMakeRect(0, 0, colorSize.width, colorSize.height));
+
+  // const colorCell = NSView.alloc().init()
+  // colorCell.backgroundColor = color
+  // colorCell.drawRect(NSMakeRect(0, 0, colorSize.width, colorSize.height))
   image.unlockFocus()
 
   return image
@@ -207,6 +211,11 @@ function hasMask(artboard) {
   return !!artboard.firstLayer().hasClippingMask()
 }
 
+function hasSharedStyle(artboard) {
+  return !!artboard.firstLayer().sharedStyle()
+}
+
+
 function layerToSvg(layer) {
   const svgExporter = SketchSVGExporter.alloc().init();
   const svgData = svgExporter.exportLayers([layer.immutableModelObject()]);
@@ -216,10 +225,10 @@ function layerToSvg(layer) {
 function svgHasStroke(rootObject) {
   let hasBorder = false
   rootObject.children().forEach((layer) => {
-    if (layer.styledLayer().style().hasEnabledBorder()) {
+    if (layer.usedStyle().hasEnabledBorder()) {
       hasBorder = true
     }
-  })
+  });
 
   return hasBorder
 }
@@ -229,7 +238,7 @@ function getBorderColor(rootObject) {
   const layers = rootObject.children()
 
   for (let i = 0; i < layers.length; i++) {
-    let style = layers[i].styledLayer().style()
+    let style = layers[i].usedStyle()
     color = style.firstEnabledBorder()
     if (color) break
   }

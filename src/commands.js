@@ -21,7 +21,7 @@ export function importIcons(context) {
   params.listIcon = files.selectIconsFiles()
   if (!params.listIcon.length) return
   const importedIcons = artboardProvider.initImport(context, params, artboardProvider.initImportIcons)
-  const label = (params.withMask) ? 'import-mask' : 'import';
+  const label = (params.withColor) ? 'import-mask' : 'import';
   analytics.action(context, 'icons', 'import', label, importedIcons)
 }
 
@@ -55,7 +55,7 @@ export function organizeIcons(context) {
   params.listIcon = selectedLayers
   artboardProvider.initImport(context, params, artboardProvider.initOrganizeIcons)
   params.listIcon.forEach(icon => icon.removeFromParent())
-  const label = (params.withMask) ? 'organize-mask' : 'organize';
+  const label = (params.withColor) ? 'organize-mask' : 'organize';
   analytics.action(context, 'icons', 'organize', label, params.listIcon.length)
 }
 
@@ -83,7 +83,7 @@ export function removeMaskOnSelectedArtboards(context) {
   const selectedArtboardsAndSymbols = utils.getSelectedArtboardsAndSymbols(context);
   if (selectedArtboardsAndSymbols.length === 0) return modals.newErrorModal('No artboards selected', 'Please select one or more artboards to add a mask.')
   selectedArtboardsAndSymbols.forEach((rootElement) => {
-    maskProvider.removeMask(context, rootElement.object)
+    maskProvider.removeColor(context, rootElement.object)
   })
   analytics.action(context, 'icons', 'remove mask', 'remove mask', selectedArtboardsAndSymbols.length)
 }

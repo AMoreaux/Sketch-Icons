@@ -1,16 +1,16 @@
 import utils from '../utils/utils'
 import svgProvider from './svg'
 import librariesProvider from './libraries'
-import logger from '../utils/logger'
+import sharedStyles from './sharedStyles'
 import switchVersion from '../utils/switchV3ToV4';
 import settingsProvider from "./settings";
 
 export default {
   initAddMaskOnSelectedArtboards,
   addColor,
-  removeMask,
+  removeColor,
   getMaskPropertiesFromArtboard,
-  registerMask
+  registerColor
 }
 
 /**
@@ -25,7 +25,7 @@ function initAddMaskOnSelectedArtboards(context, params, rootObjects) {
   rootObjects.forEach(async (rootObject) => {
     try {
       if (utils.svgHasStroke(rootObject.object) && settingsParams.convertStroke.data === '1') svgProvider.convertStrokeToFill(rootObject.object)
-      if (utils.hasMask(rootObject.object) && !utils.svgHasStroke(rootObject.object)) removeMask(context, rootObject.object);
+      // if (utils.hasMask(rootObject.object) && !utils.svgHasStroke(rootObject.object)) removeMask(context, rootObject.object);
       await addColor(context, rootObject.object, params)
     } catch (e) {
       console.log('>>>>>>>>>>>', e);
@@ -45,17 +45,24 @@ function addColor(context, rootObject, params) {
 
   if (String(rootObject.firstLayer().class()) === 'MSBitMapLayer') return
 
-  if (utils.svgHasStroke(rootObject)) {
+  removeColor(context, rootObject);
+
+  if (params.colorSource === 'sharedStyle') {
+    svgProvider.cleanSvg(rootObject)
+    sharedStyles.applySharedStyle(context, rootObject, params);
+  } else if (utils.svgHasStroke(rootObject)) {
     applyColor(rootObject, params);
   } else {
-
-    if (utils.hasMask(rootObject)) removeMask(context, rootObject)
     svgProvider.cleanSvg(rootObject)
-
     applyMask(context, rootObject, params)
   }
 
-  return registerMask(context, rootObject, params)
+  return registerColor(context, rootObject, params)
+}
+
+function removeColor(context, rootObject) {
+  if (utils.hasMask(rootObject) && !utils.svgHasStroke(rootObject)) removeMask(context, rootObject);
+  if (utils.hasSharedStyle(rootObject)) removeSharedStyle(context, rootObject);
 }
 
 /**
@@ -67,13 +74,20 @@ function addColor(context, rootObject, params) {
 function applyColor(rootObject, params) {
   const color = (params.colorPicker) ? params.colorPicker : librariesProvider.getColorFromSymbol(params.color).color
   rootObject.children().forEach((layer) => {
-    if (layer.styledLayer().style().hasEnabledBorder()) {
-      const style = layer.styledLayer().style()
-      style.enabledBorders().forEach((border) => {
-        border.color = color
-      })
+    if (layer.usedStyle().hasEnabledBorder()) {
+      const style = layer.usedStyle()
+      style.enabledBorders().forEach((border) => border.color = color)
     }
   })
+}
+
+function removeSharedStyle(context, rootObject){
+  const style = rootObject.firstLayer().style();
+  const fills = style.fills();
+  const fillColor = (fills.count() > 0) ? style.fills()[0].color() : MSColor.blackColor();
+  style.removeAllStyleFills();
+  style.addStylePartOfType(0).color = fillColor;
+  rootObject.firstLayer().sharedStyle = null;
 }
 
 /**
@@ -86,6 +100,7 @@ function removeMask(context, rootObject) {
 
   context.command.setValue_forKey_onLayer(null, "colorLib", rootObject)
   context.command.setValue_forKey_onLayer(null, "color", rootObject)
+  context.command.setValue_forKey_onLayer(null, "source", rootObject)
   context.command.setValue_forKey_onLayer(null, "colorPicker", rootObject)
 
   if (utils.svgHasStroke(rootObject)) {
@@ -107,23 +122,24 @@ function removeMask(context, rootObject) {
 }
 
 /**
- * @name registerMask
+ * @name registerColor
  * @description register properties of mask in artboard metadata
  * @param context
  * @param rootObject
  * @param params
  */
-function registerMask(context, rootObject, params) {
+function registerColor(context, rootObject, params) {
   if (params.color) {
     const libraryId = (params.colorLib) ? params.colorLib.libraryID() : null
-    const colorId = (typeof params.color === 'string') ? params.color : params.color.symbolID()
-
+    const colorId = (params.colorSource === 'sharedStyle') ? params.color.objectID() : params.color.symbolID()
     context.command.setValue_forKey_onLayer(libraryId, "colorLib", rootObject)
     context.command.setValue_forKey_onLayer(colorId, "color", rootObject)
+    context.command.setValue_forKey_onLayer(params.colorSource, "source", rootObject)
     context.command.setValue_forKey_onLayer(null, "colorPicker", rootObject)
   } else if (params.colorPicker) {
     context.command.setValue_forKey_onLayer(utils.convertMSColorToString(params.colorPicker), "colorPicker", rootObject)
     context.command.setValue_forKey_onLayer(null, "colorLib", rootObject)
+    context.command.setValue_forKey_onLayer(null, "source", rootObject)
     context.command.setValue_forKey_onLayer(null, "color", rootObject)
   }
 }
@@ -209,10 +225,10 @@ function getMaskSymbolFromLib(context, colorSymbolMaster, colorLibrary) {
 
   let importedSymbol;
   if (MSApplicationMetadata.metadata().appVersion >= 50) {
-    const shareableObjectReference = MSShareableObjectReference.referenceForShareableObject_inLibrary(colorSymbolMaster,colorLibrary);
-    importedSymbol = librairiesController.importShareableObjectReference_intoDocument(shareableObjectReference,context.document.documentData());
+    const shareableObjectReference = MSShareableObjectReference.referenceForShareableObject_inLibrary(colorSymbolMaster, colorLibrary);
+    importedSymbol = librairiesController.importShareableObjectReference_intoDocument(shareableObjectReference, context.document.documentData());
   } else {
-    importedSymbol = librairiesController.importForeignSymbol_fromLibrary_intoDocument_(colorSymbolMaster,colorLibrary,context.document.documentData());
+    importedSymbol = librairiesController.importForeignSymbol_fromLibrary_intoDocument_(colorSymbolMaster, colorLibrary, context.document.documentData());
   }
   const symbolMaster = (colorLibrary) ? importedSymbol.symbolMaster() : colorSymbolMaster;
   return symbolMaster.newSymbolInstance();
