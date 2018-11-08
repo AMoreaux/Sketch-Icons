@@ -1,4 +1,4 @@
-<a href="https://github.com/AMoreaux/Sketch-Icons/releases/download/v4.0.5/Sketch-Icons.sketchplugin.zip" target="_blank">![alt text](https://raw.githubusercontent.com/AMoreaux/Sketch-Icons/master/images/sketch-icons-4-cover.jpeg)</a>
+<a href="https://github.com/AMoreaux/Sketch-Icons/releases/download/v4.0.5/Sketch-Icons.sketchplugin.zip" target="_blank">![alt text](https://raw.githubusercontent.com/AMoreaux/Sketch-Icons/master/images/sketch-icons-cover.jpeg)</a>
 
 # Sketch Icons
 
@@ -44,9 +44,9 @@ You can now drag and drop your icons directly into Sketch (from a folder or an a
 
 ![alt text](https://raw.githubusercontent.com/AMoreaux/Sketch-Icons/master/images/organize-icons.gif)
 
-### Add a color mask on several icons
+### Add a color on several icons
 
-If you want to apply a color mask to an icon - or a set of icons - you can use this functionality `Plugins -> Sketch Icons -> Apply a color mask...`. You can also use the keyboard shortcut `cmd + shift + m`.
+If you want to apply a color to an icon - or a set of icons - you can use this functionality `Plugins -> Sketch Icons -> Apply a color...`. You can also use the keyboard shortcut `cmd + shift + m`.
 
 ![alt text](https://raw.githubusercontent.com/AMoreaux/Sketch-Icons/master/images/add-mask-icons.gif)
 
