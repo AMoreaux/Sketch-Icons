@@ -2,7 +2,7 @@
 
 # Sketch Icons
 
-A Sketch plugin that allows you to import a set of icons and automatically apply a color mask.
+A Sketch plugin that allows you to import a set of icons and automatically apply a color style.
 
 ✨ <a href="https://sketchicons.com" target="_blank">Discover our new website!</a>
 
@@ -16,10 +16,10 @@ A Sketch plugin that allows you to import a set of icons and automatically apply
 
 Since the arrival of nested symbols and Sketch libraries, our worfklow has been incredibly improved.
 
-But if, like us, you have wondered how to import all of your icons into Sketch and how to apply a color mask individually... Then this plug-in is made for you.
+But if, like us, you have wondered how to import all of your icons into Sketch and how to apply a color individually... Then this plug-in is made for you.
 
 1. Import a folder or a set of icons.
-2. Choose a color library and apply automatically a color mask.
+2. Choose a color library and apply automatically a color.
 3. Enjoy your dynamic icons library.
 
 That's all. ❤️
