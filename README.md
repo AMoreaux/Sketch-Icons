@@ -1,4 +1,4 @@
-<a href="https://github.com/AMoreaux/Sketch-Icons/releases/download/v4.0.5/Sketch-Icons.sketchplugin.zip" target="_blank">![alt text](https://raw.githubusercontent.com/AMoreaux/Sketch-Icons/master/images/sketch-icons-cover.jpeg)</a>
+<a href="https://github.com/AMoreaux/Sketch-Icons/releases/download/v5.0.0/Sketch-Icons.sketchplugin.zip" target="_blank">![alt text](https://raw.githubusercontent.com/AMoreaux/Sketch-Icons/master/images/sketch-icons-cover.jpeg)</a>
 
 # Sketch Icons
 
