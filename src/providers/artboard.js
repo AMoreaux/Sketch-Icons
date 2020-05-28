@@ -79,6 +79,7 @@ function setOrigin(context, setOfRootObject) {
   let size = 0;
 
   setOfRootObject.forEach(layer => {
+    layer = layer.sketchObject
     const layerSize = layer.frame().height();
     const origin = layer.origin()
     Y.push(origin.y - size);

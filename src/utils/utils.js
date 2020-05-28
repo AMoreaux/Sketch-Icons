@@ -1,7 +1,7 @@
 import MochaJSDelegate from './MochaJSDelegate.js'
 import logger from './logger'
 import settingsProvider from "../providers/settings";
-
+import { Document } from 'sketch';
 export default {
   clearSelection,
   getIconNameByNSUrl,
@@ -30,7 +30,8 @@ export default {
  * @param context
  */
 function clearSelection(context) {
-  context.api().selectedDocument.selectedLayers.clear()
+
+  Document.getSelectedDocument().selectedLayers.clear()
 }
 
 /**
@@ -259,8 +260,8 @@ function convertStringToMSColor(string) {
 
 function getRootObject(context) {
   const result = [];
-  context.api().selectedDocument.selectedPage.sketchObject.layers().forEach((layer) => {
-    let className = String(layer.class())
+  Document.getSelectedDocument().selectedPage.layers.forEach((layer) => {
+    let className = String(layer.sketchObject.class())
     if (className === 'MSArtboardGroup' || className === 'MSSymbolMaster') {
       result.push(layer)
     }

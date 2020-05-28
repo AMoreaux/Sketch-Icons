@@ -1,7 +1,7 @@
 {
-  "compatibleVersion": 47,
+  "compatibleVersion": 52,
   "bundleVersion": 1,
-  "version": "5.0.0",
+  "version": "5.0.1",
   "name": "Sketch-Icons",
   "identifier": "com.amoreaux.sketch-icons",
   "description": "Import your icons, apply a color mask and create a dynamic icons library.",
@@ -11,7 +11,7 @@
   "icon": "icons/icon-square-1.jpg",
   "commands": [
     {
-      "script": "commands.js",
+      "script": "__commands.js",
       "handler": "importIcons",
       "shortcut": "command shift i",
       "name": "Import icons...",
@@ -20,7 +20,7 @@
       "icon": "icons/icon-square-1.jpg"
     },
     {
-      "script": "commands.js",
+      "script": "__commands.js",
       "handler": "updateIconsOnSelectedArtboards",
       "name": "Replace icons...",
       "identifier": "update.icons.selected.artboard",
@@ -28,7 +28,7 @@
       "description": "Replace icons on selected artboards"
     },
     {
-      "script": "commands.js",
+      "script": "__commands.js",
       "handler": "addMaskOnSelectedArtboards",
       "shortcut": "command shift m",
       "name": "Apply color...",
@@ -37,7 +37,7 @@
       "description": "Apply color on selected artboards"
     },
     {
-      "script": "commands.js",
+      "script": "__commands.js",
       "handler": "addMaskOnSelectedArtboards",
       "name": "Replace color...",
       "identifier": "update.mask.selected.artboard",
@@ -45,7 +45,7 @@
       "description": "Replace color on selected artboard"
     },
     {
-      "script": "commands.js",
+      "script": "__commands.js",
       "handler": "removeMaskOnSelectedArtboards",
       "name": "Remove color",
       "identifier": "remove.mask.selected.artboard",
@@ -53,7 +53,7 @@
       "description": "Remove color on selected artboard"
     },
     {
-      "script": "commands.js",
+      "script": "__commands.js",
       "handler": "setSettings",
       "name": "Settings",
       "identifier": "settings.sketch.icons",
@@ -62,7 +62,7 @@
       "description": "Configure sketch icons"
     },
     {
-      "script": "commands.js",
+      "script": "__commands.js",
       "handler": "organizeIcons",
       "name": "Organize icons...",
       "identifier": "organize.icons.selected.layer",

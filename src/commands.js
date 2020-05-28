@@ -8,7 +8,6 @@ import { importModal, maskModal } from './modals/modals';
 import settingsModal from './modals/settings';
 import settingsProvider from './providers/settings'
 import analytics from './utils/analytics'
-
 /**
  * @name importIcons
  * @description trigger to start feature to import icons
